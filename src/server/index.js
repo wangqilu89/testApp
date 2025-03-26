@@ -5,10 +5,11 @@ const session = require('express-session');
 const path = require('path');
 require('dotenv').config();
 
+
 const authRoutes = require('./routes/auth');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 
 // Middleware
 app.use(express.json());
@@ -30,3 +31,4 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+

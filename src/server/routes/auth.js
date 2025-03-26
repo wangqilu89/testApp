@@ -1,6 +1,10 @@
 const express = require('express');
 const OAuth = require('oauth').OAuth;
-require('dotenv').config();
+const dotenv = require('dotenv');
+const path = require('path');
+dotenv.config({path:path.join(__dirname,'../env/.env')});
+
+console.log('ACCOUNT_ID:', process.env.ACCOUNT_ID)
 
 const router = express.Router();
 
@@ -13,7 +17,7 @@ const {
 
 const requestTokenUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/requesttoken`;
 const accessTokenUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/accesstoken`;
-const authorizeUrl = `https://${ACCOUNT_ID}.app.netsuite.com/app/login/oauth2/authorize.nl`;
+const authorizeUrl = `https://${ACCOUNT_ID}.app.netsuite.com/app/login/secure/authorizetoken.nl`;
 
 const oauth = new OAuth(
   requestTokenUrl,

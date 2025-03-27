@@ -4,34 +4,40 @@ const { oauth, staticVar } = require('../lib/nsOAuth');
 const { OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,CALLBACK_URL,ACCOUNT_ID,requestTokenUrl,accessTokenUrl,authorizeUrl} = staticVar
 
 
-router.post('/send', (req, res) => {
+router.post('/send', async (req, res) => {
+    //Access Tokens
+    const ACCESS_TOKEN  = req.session.accessToken;
+    const ACCESS_TOKEN_SECRET = req.session.accessTokenSecret;
+    if (!ACCESS_TOKEN  || !ACCESS_TOKEN_SECRET) {
+        return res.status(401).json({ error: 'User not authenticated with NetSuite' });
+    }
+
+    //Request Body payloads
     var refObj = req.body
     if (typeof refObj == 'string') {
         refObj = JSON.parse(refObj)
     }
-    const RESTLET_URL = refObj['restlet']
+    const SUITELET_URL = refObj['suitelet']
+    refObj['tokenKey'] = ACCESS_TOKEN 
+    refObj['tokenSecret'] = ACCESS_TOKEN_SECRET
     const payload = JSON.stringify(refObj);
-    const ACCESS_TOKEN  = req.session.accessToken;
-    const ACCESS_TOKEN_SECRET = req.session.accessTokenSecret;
-
-  if (!accessToken || !accessTokenSecret) {
-    return res.status(401).json({ error: 'User not authenticated with NetSuite' });
-  }
-  oauth.post(
-    RESTLET_URL,
-    ACCESS_TOKEN,
-    ACCESS_TOKEN_SECRET,
-    payload,
-    'application/json',
-    (err, data, response) => {
-      if (err) {
+    try {
+        const response = await fetch(SUITELET_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: payload
+        });
+    
+        const data = await response.text(); // or response.json() if JSON
+        res.send(data);
+    } 
+        catch (err) {
         console.error('❌ NetSuite error:', err);
-        return res.status(500).json({ error: err });
-      }
-
-      res.json({ message: '✅ NetSuite response:', data });
+        res.status(500).json({ error: 'Suitelet call failed' });
     }
-  );
+   
 });
 
 

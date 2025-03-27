@@ -33,7 +33,7 @@ router.post('/send', async (req, res) => {
         const data = await response.text(); // or response.json() if JSON
         res.send(data);
     } 
-        catch (err) {
+    catch (err) {
         console.error('❌ NetSuite error:', err);
         res.status(500).json({ error: 'Suitelet call failed' });
     }

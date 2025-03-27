@@ -1,20 +1,20 @@
-/**
- * The dashboard is a simple React component that contains several lists of tasks,
- * one for each group that belongs to the user.
- */
-
-import { connect } from 'react-redux';
 import React from 'react';
-import { ConnectedTaskList } from './TaskList';
+import { useNavigate } from 'react-router-dom';
 
-const Dashboard = ({groups})=>(
-    <div className="row">
-        {groups.map(group=>(
-            <ConnectedTaskList key={group.id} {...group} className="col"/>
-        ))}
+const Dashboard = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div>
+      <h1>Welcome to NetSuite Dashboard</h1>
+
+      <div>
+        <button onClick={() => navigate('/apply-leave')}>📝 Apply Leave</button>
+        <button onClick={() => navigate('/approve')}>✅ Approve Transactions</button>
+        <button onClick={() => navigate('/submit')}>📦 Submit Transactions</button>
+      </div>
     </div>
-);
+  );
+};
 
-const mapStateToProps = ({groups})=>({groups});
-
-export const ConnectedDashboard = connect(mapStateToProps)(Dashboard);
+export default Dashboard;

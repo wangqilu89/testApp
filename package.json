@@ -53,6 +53,7 @@
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.0.0",
+    "autoprefixer": "^10.4.21",
     "babel-loader": "^8.0.2",
     "concurrently": "^4.0.1",
     "cross-env": "^5.2.0",
@@ -60,7 +61,9 @@
     "jest": "^23.6.0",
     "mongodb": "^3.1.10",
     "nodemon": "^1.18.4",
+    "postcss": "^8.5.3",
     "style-loader": "^0.23.0",
+    "tailwindcss": "^4.0.17",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.7"
   }

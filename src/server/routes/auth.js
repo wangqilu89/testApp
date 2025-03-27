@@ -32,7 +32,7 @@ router.get('/callback', (req, res) => {
       req.session.accessToken = accessToken;
       req.session.accessTokenSecret = accessTokenSecret;
 
-      res.json({ message: 'OAuth success!', accessToken });
+      res.redirect('/dashboard');
     }
   );
 });

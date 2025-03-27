@@ -31,8 +31,9 @@ router.get('/callback', (req, res) => {
 
       req.session.accessToken = accessToken;
       req.session.accessTokenSecret = accessTokenSecret;
-
-      res.redirect('/dashboard');
+      res.redirect('http://localhost:3000/dashboard'); // or your React URL
+      
+      //res.redirect('/dashboard');
     }
   );
 });

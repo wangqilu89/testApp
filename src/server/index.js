@@ -3,10 +3,10 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-require('dotenv').config();
-
-
+const restletRoutes = require('./routes/restlet');
 const authRoutes = require('./routes/auth');
+
+require('dotenv').config();
 
 const app = express();
 const PORT = 5000;
@@ -21,6 +21,8 @@ app.use(session({
 
 // Mount routes
 app.use('/auth', authRoutes);
+app.use('/netsuite', restletRoutes);
+
 
 // Serve frontend in production
 app.use(express.static(path.join(__dirname, '../app/build')));

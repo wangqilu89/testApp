@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { oauth, staticVar } = require('../lib/nsOAuth');
-const { OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,CALLBACK_URL,ACCOUNT_ID,requestTokenUrl,accessTokenUrl,authorizeUrl} = staticVar
+const { OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,CALLBACK_URL,ACCOUNT_ID,requestTokenUrl,accessTokenUrl,authorizeUrl,role} = staticVar
 
 
 // Step 1: Start OAuth
 router.get('/start', (req, res) => {
-  oauth.getOAuthRequestToken((err, token, tokenSecret) => {
+  oauth.getOAuthRequestToken({role:role},(err, token, tokenSecret) => {
     if (err) return res.status(500).json({ error: 'Token request failed', details: err });
 
     req.session = req.session || {};

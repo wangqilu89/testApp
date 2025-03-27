@@ -1,7 +1,7 @@
 const OAuth = require('oauth').OAuth;
 const dotenv = require('dotenv');
 const path = require('path');
-dotenv.config({path:path.join(__dirname,'../env/.env')});
+dotenv.config({path:path.join(__dirname,'.env')});
 
 
 const {
@@ -10,6 +10,7 @@ const {
   CALLBACK_URL,
   ACCOUNT_ID
 } = process.env;
+
 
 const requestTokenUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/requesttoken`;
 const accessTokenUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/accesstoken`;
@@ -34,7 +35,8 @@ const staticVar = {
     ACCOUNT_ID:ACCOUNT_ID,
     requestTokenUrl:requestTokenUrl,
     accessTokenUrl:accessTokenUrl,
-    authorizeUrl:authorizeUrl
+    authorizeUrl:authorizeUrl,
+    role:1065
 }
 
 module.exports = {

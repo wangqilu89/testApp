@@ -9,7 +9,7 @@ const Login = () => {
     <div className="login-page">
       <h1>Welcome</h1>
       <p>Please login to NetSuite to continue</p>
-      <button onClick={handleLogin} className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">Login with NetSuite</button>
+      <button onClick={handleLogin}>Login with NetSuite</button>
     </div>
   );
 };

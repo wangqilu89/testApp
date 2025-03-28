@@ -23,9 +23,9 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: {
-    secure: true,
-    sameSite: 'none',
-    httpOnly:true
+    secure: process.env.NODE_ENV === 'production',
+    sameSite:process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    httpOnly: true
   }
 }));
 app.use(cors({origin:FRONT_END,credentials: true}));

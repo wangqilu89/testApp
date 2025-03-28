@@ -1,5 +1,5 @@
 {
-  "name": "mongo-express-react",
+  "name": "test-app",
   "version": "1.0.0",
   "description": "A full stack application with React and MongoDB (Easily deployed)",
   "main": "index.js",
@@ -34,9 +34,9 @@
     "mongodb": "^3.1.8",
     "ngrok": "^5.0.0-beta.2",
     "oauth": "^0.10.2",
-    "react": "^16.4.2",
-    "react-dom": "^16.5.0",
-    "react-redux": "^5.0.7",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
+    "react-redux": "^8.0.0",
     "react-router": "^4.3.1",
     "react-router-dom": "^4.3.1",
     "redux": "^4.0.0",
@@ -46,7 +46,7 @@
     "webpack": "^4.17.2"
   },
   "engines": {
-    "node": "9.2.0"
+    "node": "^22.14.0"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
@@ -67,5 +67,13 @@
     "tailwindcss": "^4.0.17",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.7"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wangqilu89/testApp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wangqilu89/testApp/issues"
+  },
+  "homepage": "https://github.com/wangqilu89/testApp#readme"
 }

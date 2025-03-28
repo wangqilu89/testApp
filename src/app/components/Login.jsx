@@ -2,7 +2,8 @@ import React from 'react';
 
 const Login = () => {
   const handleLogin = () => {
-    window.location.href = '/auth/start'; // backend route that redirects to NetSuite
+    window.location.href = 'https://bd20-58-185-132-250.ngrok-free.app/auth/start'; // backend route that redirects to NetSuite
+    //window.location.href = '/auth/start'; // backend route that redirects to NetSuite
   };
 
   return (

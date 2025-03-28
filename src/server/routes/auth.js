@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { oauth, staticVar } = require('../lib/nsOAuth');
-const { OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,CALLBACK_URL,ACCOUNT_ID,requestTokenUrl,accessTokenUrl,authorizeUrl,role} = staticVar
+const { OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,CALLBACK_URL,ACCOUNT_ID,requestTokenUrl,accessTokenUrl,authorizeUrl} = staticVar
 
 
 // Step 1: Start OAuth
 router.get('/start', (req, res) => {
-  oauth.getOAuthRequestToken({role:role},(err, token, tokenSecret) => {
+  oauth.getOAuthRequestToken((err, token, tokenSecret) => {
     if (err) return res.status(500).json({ error: 'Token request failed', details: err });
 
     req.session = req.session || {};
@@ -31,7 +31,7 @@ router.get('/callback', (req, res) => {
 
       req.session.accessToken = accessToken;
       req.session.accessTokenSecret = accessTokenSecret;
-      res.redirect('http://localhost:3000/dashboard'); // or your React URL
+      res.redirect('http://localhost:8080/dashboard'); // or your React URL
       
       //res.redirect('/dashboard');
     }

@@ -2,7 +2,7 @@ const OAuth = require('oauth').OAuth;
 const dotenv = require('dotenv');
 const path = require('path');
 dotenv.config({path:path.join(__dirname,'.env')});
-
+console.log(process.env.CALLBACK_URL)
 
 const {
   OAUTH_CONSUMER_KEY,
@@ -24,8 +24,7 @@ const oauth = new OAuth(
   '1.0',
   CALLBACK_URL,
   'HMAC-SHA256',
-  20,
-  {'role':'1065'}
+  20
 );
 
 const staticVar = {
@@ -35,8 +34,7 @@ const staticVar = {
     ACCOUNT_ID:ACCOUNT_ID,
     requestTokenUrl:requestTokenUrl,
     accessTokenUrl:accessTokenUrl,
-    authorizeUrl:authorizeUrl,
-    role:1065
+    authorizeUrl:authorizeUrl
 }
 
 module.exports = {

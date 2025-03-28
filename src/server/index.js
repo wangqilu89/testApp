@@ -5,6 +5,9 @@ const session = require('express-session');
 const path = require('path');
 const restletRoutes = require('./routes/restlet');
 const authRoutes = require('./routes/auth');
+const {FRONT_END} = require('./lib/nsOAuth').staticVar;
+
+
 
 require('dotenv').config();
 
@@ -16,10 +19,16 @@ app.use(express.json());
 app.use(session({
   secret: 'netsuite-secret',
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: {
+    secure: true,
+    sameSite: 'none',
+  }
 }));
+app.use(cors({origin:FRONT_END,credentials: true}));
 
 // Mount routes
+
 app.use('/auth', authRoutes);
 app.use('/netsuite', restletRoutes);
 

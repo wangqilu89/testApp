@@ -4,9 +4,10 @@
   "description": "A full stack application with React and MongoDB (Easily deployed)",
   "main": "index.js",
   "scripts": {
-    "build": "webpack -p",
+    "build": "vite build",
     "deploy": "npm run build && git commit -a -m deployment && git push heroku master",
-    "dev": "webpack-dev-server --open",
+    "dev": "vite",
+    "preview": "vite preview",
     "server": "cross-env NODE_ENV=production babel-node src/server",
     "server-dev": "nodemon src/server --exec babel-node src/server",
     "start-dev": "concurrently \"npm run server-dev\" \"npm run dev\"",
@@ -22,6 +23,7 @@
   "author": "Daniel 'The Code Whisperer' Stern",
   "license": "ISC",
   "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
     "axios": "^0.18.0",
     "body-parser": "^1.18.3",
     "bootstrap": "^4.1.3",
@@ -43,6 +45,7 @@
     "redux-logger": "^3.0.6",
     "redux-saga": "^0.16.2",
     "uuid": "^3.3.2",
+    "vite": "^6.2.3",
     "webpack": "^4.17.2"
   },
   "engines": {

@@ -8,7 +8,8 @@ const {
   OAUTH_CONSUMER_KEY,
   OAUTH_CONSUMER_SECRET,
   CALLBACK_URL,
-  ACCOUNT_ID
+  ACCOUNT_ID,
+  FRONT_END
 } = process.env;
 
 
@@ -34,7 +35,8 @@ const staticVar = {
     ACCOUNT_ID:ACCOUNT_ID,
     requestTokenUrl:requestTokenUrl,
     accessTokenUrl:accessTokenUrl,
-    authorizeUrl:authorizeUrl
+    authorizeUrl:authorizeUrl,
+    FRONT_END:FRONT_END
 }
 
 module.exports = {

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { oauth, staticVar } = require('../lib/nsOAuth');
-const { OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,CALLBACK_URL,ACCOUNT_ID,requestTokenUrl,accessTokenUrl,authorizeUrl} = staticVar
+const { OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,CALLBACK_URL,ACCOUNT_ID,requestTokenUrl,accessTokenUrl,authorizeUrl,FRONT_END} = staticVar
 
 
 // Step 1: Start OAuth
@@ -31,11 +31,27 @@ router.get('/callback', (req, res) => {
 
       req.session.accessToken = accessToken;
       req.session.accessTokenSecret = accessTokenSecret;
-      res.redirect('http://localhost:8080/dashboard'); // or your React URL
+      var htmlStr = "<html>"
+      htmlStr += "<body>"
+      htmlStr += "<script>"
+      htmlStr += " window.opener.postMessage('auth-success', '" + FRONT_END + "');"
+      htmlStr += "window.close();"
+      htmlStr += "</script>"
+      htmlStr += "<p>Login successful. You can close this window.</p>"
+      htmlStr += "</body>"
+
+      res.send(htmlStr);
       
       //res.redirect('/dashboard');
     }
   );
 });
 
+router.get('/status', (req, res) => {
+  if (req.session.accessToken && req.session.accessTokenSecret) {
+    res.json({ loggedIn: true });
+  } else {
+    res.json({ loggedIn: false });
+  }
+});
 module.exports = router;

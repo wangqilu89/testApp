@@ -1,13 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+  const navigate = useNavigate(); // ✅ hook must be inside the component
+
   const handleLogin = () => {
-    window.location.href = 'https://bd20-58-185-132-250.ngrok-free.app/auth/start'; // backend route that redirects to NetSuite
-    //window.location.href = '/auth/start'; // backend route that redirects to NetSuite
+    navigate('/authenticate');
   };
 
   return (
-    <div className="login-page">
+    <div>
       <h1>Welcome</h1>
       <p>Please login to NetSuite to continue</p>
       <button onClick={handleLogin}>Login with NetSuite</button>

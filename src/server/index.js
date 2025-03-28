@@ -17,13 +17,15 @@ const PORT = 5000;
 
 // Middleware
 app.use(express.json());
+app.set('trust proxy', 1);
 app.use(session({
   secret: 'netsuite-secret',
   resave: false,
   saveUninitialized: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production' ? true : false,
-    sameSite: 'none'
+    secure: true,
+    sameSite: 'none',
+    httpOnly:true
   }
 }));
 app.use(cors({origin:FRONT_END,credentials: true}));

@@ -21,6 +21,7 @@ router.get('/start', (req, res) => {
 // Step 2: Callback from NetSuite
 router.get('/callback', (req, res) => {
   console.log('Session at callback:', req.session);
+  console.log('tokenSecret:', req.session.tokenSecret);
   const { oauth_token, oauth_verifier } = req.query;
   const tokenSecret = req.session?.tokenSecret;
   console.log('token secret : ' + tokenSecret)

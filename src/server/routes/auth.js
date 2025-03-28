@@ -21,7 +21,7 @@ router.get('/start', (req, res) => {
 router.get('/callback', (req, res) => {
   const { oauth_token, oauth_verifier } = req.query;
   const tokenSecret = req.session?.tokenSecret;
-
+  console.log('token secret : ' + tokenSecret)
   oauth.getOAuthAccessToken(
     oauth_token,
     tokenSecret,

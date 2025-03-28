@@ -2,7 +2,7 @@ const OAuth = require('oauth').OAuth;
 const dotenv = require('dotenv');
 const path = require('path');
 dotenv.config({path:path.join(__dirname,'.env')});
-console.log(process.env.CALLBACK_URL)
+
 
 const {
   OAUTH_CONSUMER_KEY,

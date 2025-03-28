@@ -2,6 +2,7 @@
 
 const express = require('express');
 const session = require('express-session');
+const cors = require('cors'); 
 const path = require('path');
 const restletRoutes = require('./routes/restlet');
 const authRoutes = require('./routes/auth');
@@ -22,7 +23,7 @@ app.use(session({
   saveUninitialized: true,
   cookie: {
     secure: true,
-    sameSite: 'none',
+    sameSite: 'none'
   }
 }));
 app.use(cors({origin:FRONT_END,credentials: true}));

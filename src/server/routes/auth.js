@@ -6,7 +6,7 @@ const { OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,CALLBACK_URL,ACCOUNT_ID,request
 
 // Step 1: Start OAuth
 router.get('/start', (req, res) => {
-  console.log('Session at start:', req.session);
+  
   oauth.getOAuthRequestToken((err, token, tokenSecret) => {
     if (err) return res.status(500).json({ error: 'Token request failed', details: err });
 
@@ -20,11 +20,8 @@ router.get('/start', (req, res) => {
 
 // Step 2: Callback from NetSuite
 router.get('/callback', (req, res) => {
-  console.log('Session at callback:', req.session);
-  console.log('tokenSecret:', req.session.tokenSecret);
   const { oauth_token, oauth_verifier } = req.query;
   const tokenSecret = req.session?.tokenSecret;
-  console.log('token secret : ' + tokenSecret)
   oauth.getOAuthAccessToken(
     oauth_token,
     tokenSecret,

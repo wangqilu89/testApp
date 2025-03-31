@@ -2,7 +2,6 @@
 
 const express = require('express');
 const session = require('express-session');
-const RedisStore = require('connect-redis').default;
 const { createClient } = require('redis');
 
 const cors = require('cors'); 
@@ -18,7 +17,10 @@ require('dotenv').config();
 const app = express();
 const PORT = 5000;
 const redisClient = createClient({url: process.env.REDIS_URL});
+redisClient.connect().catch(console.error);
 
+const RedisStore = require('connect-redis').default;
+const redisStore = new RedisStore({ client: redisClient });
 
 // Middleware
 app.use(express.json());

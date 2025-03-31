@@ -2,6 +2,9 @@
 
 const express = require('express');
 const session = require('express-session');
+const RedisStore = require('connect-redis').default;
+const { createClient } = require('redis');
+
 const cors = require('cors'); 
 const path = require('path');
 const restletRoutes = require('./routes/restlet');
@@ -14,11 +17,14 @@ require('dotenv').config();
 
 const app = express();
 const PORT = 5000;
+const redisClient = createClient({url: process.env.REDIS_URL});
+
 
 // Middleware
 app.use(express.json());
 app.set('trust proxy', 1);
 app.use(session({
+  store: new RedisStore({ client: redisClient }),
   secret: 'netsuite-secret',
   resave: false,
   saveUninitialized: true,

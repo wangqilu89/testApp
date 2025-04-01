@@ -19,6 +19,8 @@ require('dotenv').config();
 const app = express();
 const PORT = 5000;
 
+/*
+//Start Test Environment
 app.use(express.json());
 app.set('trust proxy', 1);
 app.use(session({
@@ -33,7 +35,10 @@ app.use(session({
 }));
 app.use(cors({origin:FRONT_END,credentials: true}));
 
-/* Actual Environment
+//End Test Environment
+*/
+
+//Start Actual Environment
 const redisClient = createClient({ url: process.env.REDIS_URL });
 redisClient.connect().catch(console.error); // Always connect Redis
 
@@ -52,7 +57,9 @@ app.use(session({
   }
 }));
 app.use(cors({origin:FRONT_END,credentials: true}));
-*/
+//End Actual Environment
+
+
 
 // Mount routes
 

@@ -19,7 +19,21 @@ require('dotenv').config();
 const app = express();
 const PORT = 5000;
 
+app.use(express.json());
+app.set('trust proxy', 1);
+app.use(session({
+  secret: 'netsuite-secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite:process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    httpOnly: true
+  }
+}));
+app.use(cors({origin:FRONT_END,credentials: true}));
 
+/* Actual Environment
 const redisClient = createClient({ url: process.env.REDIS_URL });
 redisClient.connect().catch(console.error); // Always connect Redis
 
@@ -38,6 +52,7 @@ app.use(session({
   }
 }));
 app.use(cors({origin:FRONT_END,credentials: true}));
+*/
 
 // Mount routes
 
@@ -46,10 +61,13 @@ app.use('/netsuite', restletRoutes);
 
 
 // Serve frontend in production
+
 app.use(express.static(path.join(__dirname, '../app/build')));
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../app/build/index.html'));
+  res.send('Welcome to the homepage!');
+  //res.sendFile(path.join(__dirname, '../app/build/index.html'));
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

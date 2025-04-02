@@ -22,6 +22,8 @@ router.get('/start', (req, res) => {
 router.get('/callback', (req, res) => {
   const { oauth_token, oauth_verifier } = req.query;
   const tokenSecret = req.session?.tokenSecret;
+  const platform = req.query.platform || 'web'; // default to web if not provided
+
   oauth.getOAuthAccessToken(
     oauth_token,
     tokenSecret,
@@ -31,17 +33,22 @@ router.get('/callback', (req, res) => {
 
       req.session.accessToken = accessToken;
       req.session.accessTokenSecret = accessTokenSecret;
-      var htmlStr = "<html>"
-      htmlStr += "<body>"
-      htmlStr += "<script>"
-      htmlStr += " window.opener.postMessage('auth-success', '" + FRONT_END + "');"
-      htmlStr += "window.close();"
-      htmlStr += "</script>"
-      htmlStr += "<p>Login successful. You can close this window.</p>"
-      htmlStr += "</body>"
+      if (platform === 'mobile') {
+        // Deep link back to React Native app
+        return res.redirect('myapp://auth/callback?success=true');
+      } 
+      else {
+        var htmlStr = "<html>"
+        htmlStr += "<body>"
+        htmlStr += "<script>"
+        htmlStr += " window.opener.postMessage('auth-success', '" + FRONT_END + "');"
+        htmlStr += "window.close();"
+        htmlStr += "</script>"
+        htmlStr += "<p>Login successful. You can close this window.</p>"
+        htmlStr += "</body>"
 
-      res.send(htmlStr);
-      
+        res.send(htmlStr);
+      }
       //res.redirect('/dashboard');
     }
   );

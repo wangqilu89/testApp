@@ -15,9 +15,6 @@ export default function App() {
         <Stack.Screen name="Login" component={screens.Login} />
         <Stack.Screen name="Authenticate" component={screens.Authenticate} />
         <Stack.Screen name="Dashboard" component={screens.Dashboard} />
-        <Stack.Screen name="Leave" component={TabNavigator} />
-        <Stack.Screen name="Approve" component={TabNavigator} />
-        <Stack.Screen name="Submit" component={TabNavigator} />
       </Stack.Navigator>
     </NavigationContainer>
   );

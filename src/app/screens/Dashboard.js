@@ -8,6 +8,7 @@ export default function Dashboard() {
   const navigation = useNavigation();
 
   useEffect(() => {
+    let isMounted = true; // 👈 track if component is mounted
     const checkLoginStatus = async () => {
       for (let attempt = 0; attempt < 5; attempt++) {
         try {
@@ -27,10 +28,15 @@ export default function Dashboard() {
       }
 
       // If not logged in after retries, go to Login screen
-      navigation.replace('Login');
+      if (isMounted) {
+        navigation.replace('Login');
+      }
     };
 
     checkLoginStatus();
+    return () => {
+      isMounted = false; // cleanup on unmount
+    };
   }, []);
 
   return (
@@ -38,9 +44,9 @@ export default function Dashboard() {
       <Text style={[styles.heading]}>Welcome to NetSuite Dashboard</Text>
 
       <View style={[styles.buttonGroup]}>
-        <Button title="📝 Apply Leave" onPress={() => navigation.navigate('Leave')} />
-        <Button title="✅ Approve Transactions" onPress={() => navigation.navigate('Approve')} />
-        <Button title="📦 Submit Transactions" onPress={() => navigation.navigate('Submit')} />
+        <Button title="📝 Apply Leave" onPress={() => alert('Leave screen placeholder')} />
+        <Button title="✅ Approve Transactions" onPress={() => alert('Approve screen placeholder')} />
+        <Button title="📦 Submit Transactions" onPress={() => alert('Submit screen placeholder')} />
       </View>
     </View>
   );

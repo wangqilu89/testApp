@@ -12,7 +12,13 @@ const Screen = ({ title }) => (
 );
 
 export default function TabNavigator() {
+  return null;
+}
+
+/*
+export default function TabNavigator() {
   return (
+    
     <Tab.Navigator>
       <Tab.Screen name="Leave" children={() => <Screen title="Apply Leave" />} />
       <Tab.Screen name="Approve" children={() => <Screen title="Approve Transactions" />} />
@@ -20,5 +26,7 @@ export default function TabNavigator() {
       <Tab.Screen name="Profile" children={() => <Screen title="User Profile" />} />
       <Tab.Screen name="Settings" children={() => <Screen title="Settings" />} />
     </Tab.Navigator>
+    
   );
 }
+  */

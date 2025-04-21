@@ -2,12 +2,12 @@ import { View, Text, Button, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { postFunc, GetPostOptions } from '../services/common'; // your service function
+import { postFunc, GetPostOptions } from '../../services/common'; // 👈 update path
 
-export default function DashboardScreen() {
+export default function HomeScreen() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // ✅ Loading state
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -15,20 +15,18 @@ export default function DashboardScreen() {
     const checkLoginStatus = async () => {
       for (let attempt = 0; attempt < 5; attempt++) {
         try {
-          var data = await postFunc('https://testapp-capl.onrender.com/auth/status',{})
-          if (data.loggedIn) {
-            var result = await postFunc('https://testapp-capl.onrender.com/netsuite/send',GetPostOptions({restlet:'http://www.netsuite.com',command: 'Get User'}));
-            if (result?.userId) {
+          const data = await postFunc('https://testapp-capl.onrender.com/auth/status', {});
+        
+            if (data?.userId && data.id !== 0) {
               if (!isMounted) return;
-              setUserId(result.userId);
-              await AsyncStorage.setItem('userId', result.userId);
-              setIsLoading(false); // ✅ Stop loading
+              await AsyncStorage.setItem('userSession', JSON.stringify(data));
+              setIsLoading(false);
               return;
             } else {
               console.warn('Login check failed: User ID not found.');
               break;
             }
-          }
+          
         } catch (err) {
           console.warn('Login status check failed:', err);
         }
@@ -37,7 +35,7 @@ export default function DashboardScreen() {
       }
 
       if (isMounted) {
-        router.replace('/'); // Redirect to login
+        router.replace('/'); // redirect back to login
       }
     };
 
@@ -49,7 +47,6 @@ export default function DashboardScreen() {
   }, []);
 
   if (isLoading) {
-    // ✅ Show loading spinner while checking auth
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
@@ -58,18 +55,11 @@ export default function DashboardScreen() {
     );
   }
 
-  // ✅ Only show dashboard when loading is finished
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
       <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
         Welcome {userId ? `User ${userId}` : 'Guest'}
       </Text>
-
-      <View style={{ gap: 12 }}>
-        <Button title="📝 Apply Leave" onPress={() => alert('Leave screen placeholder')} />
-        <Button title="✅ Approve Transactions" onPress={() => alert('Approve screen placeholder')} />
-        <Button title="📦 Submit Transactions" onPress={() => alert('Submit screen placeholder')} />
-      </View>
     </View>
   );
 }

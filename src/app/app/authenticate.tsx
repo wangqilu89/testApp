@@ -19,7 +19,7 @@ export default function AuthenticateScreen() {
           if (event.origin !== 'https://testapp-capl.onrender.com') return;
           if (event.data === 'auth-success') {
             window.removeEventListener('message', handleMessage);
-            router.replace('/dashboard'); // ✅ move to dashboard
+            router.replace('/home'); // ✅ move to dashboard
           }
         };
 
@@ -31,7 +31,7 @@ export default function AuthenticateScreen() {
       } else {
         const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
         if (result.type === 'success') {
-          router.replace('/dashboard');
+          router.replace('/home');
         } else {
           router.replace('/'); // fallback back to login
         }

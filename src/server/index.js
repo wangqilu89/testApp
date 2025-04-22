@@ -31,7 +31,8 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     sameSite:process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     httpOnly: true
-  }
+  },
+  name: 'connect.sid' // Ensure the cookie name is explicitly set
 }));
 app.use(cors({origin:FRONT_END,credentials: true}));
 

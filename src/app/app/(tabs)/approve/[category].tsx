@@ -1,8 +1,8 @@
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Alert, ScrollView,Platform,Dimensions} from 'react-native';
-import { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Alert, ScrollView} from 'react-native';
+import { useEffect, useState, useRef} from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { postFunc, GetPostOptions } from '../../../services/common'; // 👈 update path
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
+import { postFunc, useWebCheck} from '@/services'; // 👈 update path
 
 const RESTLET_URL = 'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=2720&deploy=1';
 
@@ -13,9 +13,10 @@ export default function ApprovalCategoryScreen() {
   const [displayList, setDisplayList] = useState<any[]>([]); // ✅ Add this
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [massSelect, setmassSelect] = useState(true);
   const [page, setPage] = useState(1);
   const pageSize = 10; // Show 10 items at a time
-  const isWeb = ((Platform.OS === 'web') &&  !(Dimensions.get('window').width < 768)); // Only "true web" if wide
+  const isWeb = useWebCheck(); // Only "true web" if wide
   const backgroundColors = useRef<Record<string, any>>({}).current;
 
   const COLUMN_CONFIG: Record<string, { web: string[]; mobile: string[] }> = {
@@ -44,7 +45,7 @@ export default function ApprovalCategoryScreen() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await postFunc(RESTLET_URL, GetPostOptions({ command: `Get ${category} List` }));
+      const data = await postFunc(RESTLET_URL,{ command: `Get ${category} List` });
       setList(data || []);
       setDisplayList((data || []).slice(0, pageSize)); // Show only first 20 items initially
     } 
@@ -63,10 +64,7 @@ export default function ApprovalCategoryScreen() {
     setPage(nextPage);
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: backgroundColors[item.internalId]?.value ?? 'transparent',
-  }));
-
+  
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
         const isSelected = prev.includes(id);
@@ -74,7 +72,7 @@ export default function ApprovalCategoryScreen() {
         if (!backgroundColors[id]) {
             backgroundColors[id] = useSharedValue('transparent');
         }
-        backgroundColors[id].value = withTiming(isSelected ? 'transparent' : '#e0f7fa', { duration: 300 });
+        backgroundColors[id].value = withTiming(isSelected ? 'transparent' : '#e0f7fa', { duration: 300 , easing: Easing.inOut(Easing.ease)});
       
         return newSelectedIds;
 
@@ -82,11 +80,13 @@ export default function ApprovalCategoryScreen() {
   };
 
   const selectAll = () => {
-    if (selectedIds.length === list.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(list.map((item) => item.internalId));
-    }
+    displayList.forEach((item) => {
+        if (selectedIds.includes(item.internalId) != massSelect) {
+            toggleSelect(item['internalId'])
+        }
+    })
+    setmassSelect(!massSelect)
+    
   };
   
   const handleApprove = async () => {
@@ -96,7 +96,7 @@ export default function ApprovalCategoryScreen() {
     }
 
     try {
-      await postFunc(RESTLET_URL, GetPostOptions({ command: `Approve ${category}`, internalIds: selectedIds }));
+      await postFunc(RESTLET_URL,{ command: `Approve ${category}`, data: selectedIds });
       Alert.alert('Approved successfully!');
       router.back(); // Go back after success
     } catch (err) {
@@ -127,7 +127,7 @@ export default function ApprovalCategoryScreen() {
               return;
             }
             try {
-              await postFunc(RESTLET_URL, GetPostOptions({ command: `Reject ${category}`, internalIds: selectedIds, reason }));
+              await postFunc(RESTLET_URL,{ command: `Reject ${category}`, data: selectedIds, reason });
               Alert.alert('Rejected successfully!');
               router.back(); // Go back after success
             } catch (err) {
@@ -212,7 +212,7 @@ export default function ApprovalCategoryScreen() {
             onPress={selectAll}
         >
             <Text style={{ color: 'white', fontWeight: 'bold' }}>
-            {selectedIds.length === list.length ? 'Unselect All' : 'Select All'}
+            {massSelect? 'Select All' : 'Unselect All'}
             </Text>
         </TouchableOpacity>
         </View>
@@ -226,22 +226,19 @@ export default function ApprovalCategoryScreen() {
                 isWeb ? (
                   <View style={{ flexDirection: 'row', backgroundColor: '#004C6C', paddingVertical: 10 }}>
                     {columnTitles.map((title, index) => (
-                      <Text
-                        style={{
-                          flex: 1,
-                          color: 'white',
-                          fontWeight: 'bold',
-                          textAlign: 'center',
-                        }}
-                      >
+                      <Text key={index} style={{flex: 1,color: 'white',fontWeight: 'bold',textAlign: 'center'}}>
                         {toProperCase(title)}
                       </Text>
                     ))}
                   </View>
                 ) : null
               }
-            renderItem={({ item }) => (
-            isWeb?(<Animated.View style={[{ flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#ccc'},animatedStyle]}>
+            renderItem={({item}) => {
+                const animatedStyle = useAnimatedStyle(() => ({
+                    backgroundColor: backgroundColors[item.internalId]?.value ?? 'transparent',
+                  }));
+                
+                  return isWeb?(<Animated.View style={[{ flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#ccc'},animatedStyle]}>
                 <TouchableOpacity onPress={() => toggleSelect(item.internalId)} style={{ flex: 1, alignItems: 'center' }}><Text style={{ fontSize: 20 }}>{selectedIds.includes(item.internalId) ? '☑️' : '⬜'}</Text></TouchableOpacity>
                 {columnTitles.slice(1).map((colName, index) => {
                     
@@ -258,7 +255,7 @@ export default function ApprovalCategoryScreen() {
                     <Text style={{ fontSize: 14 }}>{item.hours} hours</Text>
                 </TouchableOpacity>
             </Animated.View>)
-            )}
+            }}
             onEndReached={() => {
                 if (displayList.length < list.length) {
                 loadMore();

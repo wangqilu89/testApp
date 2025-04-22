@@ -1,8 +1,8 @@
-const postFunc = async (URL:string,options: object) => {
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const postFunc = async (URL:string,payload: object = {}) => {
     try {
-        if (!options.hasOwnProperty('credentials')) {
-            options.credentials = 'include' ; // ✅ Force session cookies
-        }  
+      const options = await GetPostOptions(payload);
       const response = await fetch(URL,options);
       const data = await response.json();
       return data;
@@ -13,18 +13,29 @@ const postFunc = async (URL:string,options: object) => {
   };
 
 
-const GetPostOptions = (payload:object) => {
-    return {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+
+const GetPostOptions = async (payload:object) => {
+    const sid = await AsyncStorage.getItem('connect.sid');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(sid ? { Cookie: `connect.sid=${sid}` } : {}),
+    };
+    
+    const options: RequestInit = {
+      method: 'POST',
+      credentials:'include',
+      headers,
+    };
+
+    if (Object.keys(payload).length > 0) {
+      options.body = JSON.stringify(payload);
     }
-}
   
+    return options;
+}
+
+
 
 export {
-    postFunc,
-    GetPostOptions
+    postFunc
   };

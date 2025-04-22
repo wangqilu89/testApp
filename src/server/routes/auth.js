@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { oauth, staticVar } = require('../lib/nsOAuth');
 const { OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,CALLBACK_URL,ACCOUNT_ID,requestTokenUrl,accessTokenUrl,authorizeUrl,FRONT_END} = staticVar
-
+const {  PostNS } = require('../lib/nsPost'); // 👈 Import it
 
 // Step 1: Start OAuth
 router.get('/start', (req, res) => {
@@ -34,10 +34,12 @@ router.get('/callback', (req, res) => {
       req.session.accessToken = accessToken;
       req.session.accessTokenSecret = accessTokenSecret;
       if (platform === 'mobile') {
+        console.log('In Mobile')
         // Deep link back to React Native app
         return res.redirect('myapp://auth/callback?success=true');
       } 
       else {
+        
         var htmlStr = "<html>"
         htmlStr += "<body>"
         htmlStr += "<script>"
@@ -46,6 +48,7 @@ router.get('/callback', (req, res) => {
         htmlStr += "</script>"
         htmlStr += "<p>Login successful. You can close this window.</p>"
         htmlStr += "</body>"
+        console.log('In Web , ' + htmlStr)
 
         res.send(htmlStr);
       }
@@ -54,11 +57,29 @@ router.get('/callback', (req, res) => {
   );
 });
 
-router.get('/status', (req, res) => {
+router.get('/status', async (req, res) => {
   if (req.session.accessToken && req.session.accessTokenSecret) {
-    res.json({ loggedIn: true });
+    req['body'] = {suitelet:'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=2720&deploy=1',command:'Get User'}
+    await  PostNS(req,res)
   } else {
-    res.json({ loggedIn: false });
+    res.json({id:0,role:0,group:0});
   }
 });
+
+router.post('/logout', (req, res) => {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destroy error:', err);
+        return res.status(500).json({ success: false, error: 'Failed to logout' });
+      }
+      res.clearCookie('connect.sid'); // ✅ Important to clear cookie on backend too
+      res.json({ success: true });
+    });
+  } else {
+    res.json({ success: true });
+  }
+});
+
+
 module.exports = router;

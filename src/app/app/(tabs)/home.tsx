@@ -2,11 +2,11 @@ import { View, Text, Button, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { postFunc, GetPostOptions } from '../../services/common'; // 👈 update path
+import { postFunc } from '@/services/common'; // 👈 update path
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
+  const [user, setUser] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -16,9 +16,10 @@ export default function HomeScreen() {
       for (let attempt = 0; attempt < 5; attempt++) {
         try {
           const data = await postFunc('https://testapp-capl.onrender.com/auth/status', {});
-        
-            if (data?.userId && data.id !== 0) {
+            console.log(data)
+            if (data?.id && data.id !== 0) {
               if (!isMounted) return;
+              setUser(data)
               await AsyncStorage.setItem('userSession', JSON.stringify(data));
               setIsLoading(false);
               return;
@@ -58,7 +59,7 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
       <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
-        Welcome {userId ? `User ${userId}` : 'Guest'}
+        Welcome {user.id ? `User ${user.name}` : 'Guest'}
       </Text>
     </View>
   );

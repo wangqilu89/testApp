@@ -1,3 +1,6 @@
+const { staticVar } = require('@/lib/nsOAuth');
+const {SUITELET} = staticVar
+
 async function PostNS(req, res) {
   const ACCESS_TOKEN = req.session.accessToken;
   const ACCESS_TOKEN_SECRET = req.session.accessTokenSecret;
@@ -12,18 +15,12 @@ async function PostNS(req, res) {
       refObj = JSON.parse(refObj);
     }
 
-    const SUITELET_URL = refObj['suitelet'];
-
-    if (!SUITELET_URL) {
-      return res.status(400).json({ error: 'Suitelet URL is missing in request.' });
-    }
-
     refObj['tokenKey'] = ACCESS_TOKEN;
     refObj['tokenSecret'] = ACCESS_TOKEN_SECRET;
 
     const payload = JSON.stringify(refObj);
 
-    const response = await fetch(SUITELET_URL, {
+    const response = await fetch(SUITELET, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload,

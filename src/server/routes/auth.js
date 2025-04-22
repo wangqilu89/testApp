@@ -34,7 +34,7 @@ router.get('/callback', (req, res) => {
       req.session.accessToken = accessToken;
       req.session.accessTokenSecret = accessTokenSecret;
       if (platform === 'mobile') {
-        console.log('In Mobile')
+        
         // Deep link back to React Native app
         return res.redirect('myapp://auth/callback?success=true');
       } 
@@ -48,7 +48,7 @@ router.get('/callback', (req, res) => {
         htmlStr += "</script>"
         htmlStr += "<p>Login successful. You can close this window.</p>"
         htmlStr += "</body>"
-        console.log('In Web , ' + htmlStr)
+        htmlStr += "</html>"
 
         res.send(htmlStr);
       }

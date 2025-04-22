@@ -16,6 +16,8 @@ export default function IndexScreen() {
         const authWindow = window.open(authUrl, '_blank', 'width=600,height=700');
 
         const handleMessage = (event: any) => {
+          console.log('origin :' + event.origin)
+          console.log('Data : ' + event.data)
           if (event.origin !== 'https://testapp-capl.onrender.com') return;
           if (event.data === 'auth-success') {
             window.removeEventListener('message', handleMessage);

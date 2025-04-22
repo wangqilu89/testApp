@@ -1,5 +1,3 @@
-
-
 async function PostNS(req, res) {
   const ACCESS_TOKEN = req.session.accessToken;
   const ACCESS_TOKEN_SECRET = req.session.accessTokenSecret;

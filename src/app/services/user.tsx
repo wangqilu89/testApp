@@ -49,7 +49,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   useEffect(() => {
-    let isMounted = true;
+    
     let refreshInterval: NodeJS.Timeout;
 
     const checkLoginStatus = async () => {
@@ -59,7 +59,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('Auth check:', data);
 
           if (data?.id && data.id !== 0) {
-            if (!isMounted) return;
+            
             setUser(data);
             await AsyncStorage.setItem('userSession', JSON.stringify(data));
             const sid = await getConnectSid(URL);

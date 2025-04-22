@@ -57,14 +57,22 @@ router.get('/callback', (req, res) => {
   );
 });
 
-router.get('/status', async (req, res) => {
+const handleStatusCheck = async (req, res) => {
   if (req.session.accessToken && req.session.accessTokenSecret) {
-    req['body'] = {restlet:'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=3356&deploy=1',command:'Get User'}
-    await  PostNS(req,res)
+    req.body = {
+      restlet: 'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=3356&deploy=1',
+      command: 'Get User',
+    };
+    await PostNS(req, res);
   } else {
-    res.json({id:0,role:0,group:0});
+    res.json({ id: 0, role: 0, group: 0 });
   }
-});
+};
+
+
+router.get('/status', handleStatusCheck);
+
+router.post('/status', handleStatusCheck);
 
 router.post('/logout', (req, res) => {
   if (req.session) {

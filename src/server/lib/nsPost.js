@@ -19,7 +19,7 @@ async function PostNS(req, res) {
     refObj['tokenSecret'] = ACCESS_TOKEN_SECRET;
 
     const payload = JSON.stringify(refObj);
-    console.log(SUITELET)
+    
 
     const response = await fetch(SUITELET, {
       method: 'POST',

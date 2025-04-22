@@ -1,4 +1,4 @@
-const { staticVar } = require('@/lib/nsOAuth');
+const { staticVar } = require('../lib/nsOAuth');
 const {SUITELET} = staticVar
 
 async function PostNS(req, res) {

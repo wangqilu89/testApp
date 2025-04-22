@@ -19,14 +19,15 @@ async function PostNS(req, res) {
     refObj['tokenSecret'] = ACCESS_TOKEN_SECRET;
 
     const payload = JSON.stringify(refObj);
+    console.log(SUITELET)
 
     const response = await fetch(SUITELET, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json','User-Agent' : 'Mozilla/5.0'},
       body: payload,
     });
 
-    const data = await response.text(); // or you can use .json() if you expect JSON always
+    const data = await response.json(); // or you can use .json() if you expect JSON always
     return res.send(data);
   } catch (err) {
     console.error('❌ NetSuite error:', err);

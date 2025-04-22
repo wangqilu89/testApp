@@ -59,7 +59,7 @@ router.get('/callback', (req, res) => {
 
 router.get('/status', async (req, res) => {
   if (req.session.accessToken && req.session.accessTokenSecret) {
-    req['body'] = {restlet:'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=2720&deploy=1',command:'Get User'}
+    req['body'] = {restlet:'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=3356&deploy=1',command:'Get User'}
     await  PostNS(req,res)
   } else {
     res.json({id:0,role:0,group:0});

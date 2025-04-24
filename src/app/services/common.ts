@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const postFunc = async (URL:string,payload: object = {}) => {
+const postFunc = async (URL:string,payload: object = {},method:string="POST") => {
     try {
-      const options = await GetPostOptions(payload);
+      method = method.toUpperCase()
+      const options = await GetPostOptions(payload,method);
       const response = await fetch(URL,options);
       const data = await response.json();
       return data.success.data;
@@ -14,7 +15,7 @@ const postFunc = async (URL:string,payload: object = {}) => {
 
 
 
-const GetPostOptions = async (payload:object) => {
+const GetPostOptions = async (payload:object,method:string) => {
     const sid = await AsyncStorage.getItem('connect.sid');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -22,12 +23,12 @@ const GetPostOptions = async (payload:object) => {
     };
     
     const options: RequestInit = {
-      method: 'POST',
+      method: method,
       credentials:'include',
       headers,
     };
 
-    if (Object.keys(payload).length > 0) {
+    if (Object.keys(payload).length > 0 && method != 'GET') {
       options.body = JSON.stringify(payload);
     }
   

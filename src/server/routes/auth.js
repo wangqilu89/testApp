@@ -14,7 +14,8 @@ router.get('/start', (req, res) => {
     req.session.tokenSecret = tokenSecret;
 
     const redirectUrl = `${authorizeUrl}?oauth_token=${token}`;
-    res.redirect(redirectUrl);
+    //res.redirect(redirectUrl);
+    res.json({success:{data:{url:redirectUrl,account:ACCOUNT_ID}}}); 
   });
 });
 

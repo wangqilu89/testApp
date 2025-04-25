@@ -9,7 +9,10 @@ function getOAuthHeader(url, method, tokenKey, tokenSecret, consumerKey, consume
       key: consumerKey,
       secret: consumerSecret
     },
-    signature_method: 'HMAC-SHA256'
+    signature_method: 'HMAC-SHA256',
+    hash_function(baseString, key) {
+      return crypto.createHmac('sha256', key).update(baseString).digest('base64');
+    }
   });
 
   const request_data = { url, method };

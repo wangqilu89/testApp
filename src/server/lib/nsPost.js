@@ -1,5 +1,25 @@
+const OAuth = require('oauth-1.0a');
+const crypto = require('crypto');
 const { staticVar } = require('../lib/nsOAuth');
-const {SUITELET} = staticVar
+const {SUITELET,OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET} = staticVar
+
+function getOAuthHeader(url, method, tokenKey, tokenSecret, consumerKey, consumerSecret) {
+  const oauth = OAuth({
+    consumer: {
+      key: consumerKey,
+      secret: consumerSecret
+    },
+    signature_method: 'HMAC-SHA256',
+    hash_function(baseString, key) {
+      return crypto.createHmac('sha256', key).update(baseString).digest('base64');
+    }
+  });
+
+  const request_data = { url, method };
+  const token = { key: tokenKey, secret: tokenSecret };
+  return oauth.toHeader(oauth.authorize(request_data, token));
+}
+
 
 async function PostNS(req, res) {
   const ACCESS_TOKEN = req.session.accessToken;
@@ -15,6 +35,15 @@ async function PostNS(req, res) {
       refObj = JSON.parse(refObj);
     }
 
+    const oauthHeader = getOAuthHeader(
+      SUITELET,
+      'POST',
+      ACCESS_TOKEN,
+      ACCESS_TOKEN_SECRET,
+      OAUTH_CONSUMER_KEY,
+      OAUTH_CONSUMER_SECRET
+    );
+
     refObj['tokenKey'] = ACCESS_TOKEN;
     refObj['tokenSecret'] = ACCESS_TOKEN_SECRET;
 
@@ -23,7 +52,7 @@ async function PostNS(req, res) {
 
     const response = await fetch(SUITELET, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json','User-Agent' : 'Mozilla/5.0'},
+      headers: { 'Content-Type': 'application/json','User-Agent' : 'Mozilla/5.0',...oauthHeader},
       body: payload,
     });
 

@@ -35,8 +35,12 @@ async function PostNS(req, res) {
       refObj = JSON.parse(refObj);
     }
 
+    const finalWeb = refObj['restlet'] || SUITELET
+
+    console.log(finalWeb)
+
     const oauthHeader = getOAuthHeader(
-      SUITELET,
+      finalWeb,
       'POST',
       ACCESS_TOKEN,
       ACCESS_TOKEN_SECRET,
@@ -50,7 +54,7 @@ async function PostNS(req, res) {
     const payload = JSON.stringify(refObj);
     
 
-    const response = await fetch(SUITELET, {
+    const response = await fetch(finalWeb, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json','User-Agent' : 'Mozilla/5.0',...oauthHeader},
       body: payload,

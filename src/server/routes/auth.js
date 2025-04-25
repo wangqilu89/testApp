@@ -32,8 +32,8 @@ router.get('/callback', (req, res) => {
     (err, accessToken, accessTokenSecret) => {
       if (err) return res.status(500).json({ error: 'Access token failed', details: err });
 
-      req.session.accessToken = accessToken;
-      req.session.accessTokenSecret = accessTokenSecret;
+      req.session.accessToken = accessToken.trim();
+      req.session.accessTokenSecret = accessTokenSecret.trim();
       if (platform === 'mobile') {
         
         // Deep link back to React Native app

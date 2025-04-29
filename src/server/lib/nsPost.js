@@ -1,7 +1,7 @@
 const OAuth = require('oauth-1.0a');
 const crypto = require('crypto');
 const { staticVar } = require('../lib/nsOAuth');
-const {SUITELET,OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,ACCOUNT_ID} = staticVar
+const {SUITELET,OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,OAUTH_TOKEN_KEY,OAUTH_TOKEN_SECRET,ACCOUNT_ID} = staticVar
 
 function getOAuthHeader(url, method, tokenKey, tokenSecret, consumerKey, consumerSecret) {
   const oauth = OAuth({
@@ -25,8 +25,18 @@ function getOAuthHeader(url, method, tokenKey, tokenSecret, consumerKey, consume
 
 
 async function PostNS(req, res) {
-  const ACCESS_TOKEN = req.session.accessToken;
-  const ACCESS_TOKEN_SECRET = req.session.accessTokenSecret;
+  const account = req.query.acc || '0';
+  let ACCESS_TOKEN = null
+  let ACCESS_TOKEN_SECRET = null
+  if (account == '1') {
+    ACCESS_TOKEN = OAUTH_TOKEN_KEY;
+    ACCESS_TOKEN_SECRET = OAUTH_TOKEN_SECRET;
+  }
+  else {
+    ACCESS_TOKEN = req.session.accessToken;
+    ACCESS_TOKEN_SECRET = req.session.accessTokenSecret;
+  }
+  
 
   if (!ACCESS_TOKEN || !ACCESS_TOKEN_SECRET) {
     return res.status(401).json({ error: 'User not authenticated with NetSuite' });

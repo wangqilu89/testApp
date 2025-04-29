@@ -2,9 +2,9 @@ import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Alert, Scrol
 import { useEffect, useState, useRef} from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
-import { postFunc, useWebCheck} from '@/services'; // 👈 update path
+import { postFunc, useWebCheck,RESTLET,SERVER_URL} from '@/services'; // 👈 update path
 
-const RESTLET_URL = 'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=2720&deploy=1';
+
 
 export default function ApprovalCategoryScreen() {
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function ApprovalCategoryScreen() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await postFunc(RESTLET_URL,{ command: `Get ${category} List` });
+      const data = await postFunc(RESTLET,{restlet:RESTLET,command: `Get ${category} List` });
       setList(data || []);
       setDisplayList((data || []).slice(0, pageSize)); // Show only first 20 items initially
     } 
@@ -96,7 +96,7 @@ export default function ApprovalCategoryScreen() {
     }
 
     try {
-      await postFunc(RESTLET_URL,{ command: `Approve ${category}`, data: selectedIds });
+      await postFunc(SERVER_URL + '/restlet/send?acc=1',{ command: `Approve ${category}`, data: selectedIds });
       Alert.alert('Approved successfully!');
       router.back(); // Go back after success
     } catch (err) {
@@ -127,7 +127,7 @@ export default function ApprovalCategoryScreen() {
               return;
             }
             try {
-              await postFunc(RESTLET_URL,{ command: `Reject ${category}`, data: selectedIds, reason });
+              await postFunc(SERVER_URL + '/restlet/send?acc=1',{ command: `Reject ${category}`, data: selectedIds, reason });
               Alert.alert('Rejected successfully!');
               router.back(); // Go back after success
             } catch (err) {

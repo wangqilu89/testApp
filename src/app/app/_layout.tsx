@@ -35,7 +35,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />         {/* Login */}
         <Stack.Screen name="authenticate" options={{ headerShown: false }} />  {/* OAuth */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />         {/* Tabs Group */}
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />         {/* Tabs Group */}
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

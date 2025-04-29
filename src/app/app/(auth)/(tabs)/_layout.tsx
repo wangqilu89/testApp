@@ -8,20 +8,18 @@ import { HapticTab } from '@/components/HapticTab';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { UserProvider, useUser} from '@/services'; 
+
 
 
 export default function TabLayout() {
    
   return (
-    <UserProvider>
       <InnerTabs />
-    </UserProvider>
   );
 }
 
 const InnerTabs = () => {
-  const { user } = useUser(); // ✅ Now safe because wrapped by UserProvider
+  
   const colorScheme = useColorScheme();
   const isWeb = useWebCheck();
   return (
@@ -40,6 +38,8 @@ const InnerTabs = () => {
         <Tabs.Screen name="approve-main" options={{ title: 'Approve' }} />
         <Tabs.Screen name="resource-main" options={{ title: 'Resources' }} />
         <Tabs.Screen name="more-main" options={{ title: 'More' }} />
+        {/* ❗️Hide dynamic subpages from bottom tabs */}
+        <Tabs.Screen name="approve/[category]" options={{ href: null }} />
       </Tabs>
   );
 }

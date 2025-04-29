@@ -2,11 +2,11 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 
 const approvals = [
-  { id: 'timesheets', title: 'Approve Timesheets' },
-  { id: 'expenses', title: 'Approve Expense Claims' },
-  { id: 'leave', title: 'Approve Leave' },
-  { id: 'invoices', title: 'Approve Invoices' },
-  { id: 'lost', title: 'Lost Services' },
+  { id: 'timesheets', title: 'Timesheets' },
+  { id: 'expenses', title: 'Expense Claims' },
+  { id: 'leave', title: 'Leaves' },
+  { id: 'invoices', title: 'Invoices' },
+  { id: 'lost', title: 'Lost Clients' },
 ];
 
 export default function ApproveTransactionsScreen() {

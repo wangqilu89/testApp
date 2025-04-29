@@ -61,12 +61,11 @@ async function PostNS(req, res) {
       OAUTH_CONSUMER_SECRET
     );
 
-    refObj['tokenKey'] = ACCESS_TOKEN;
-    refObj['tokenSecret'] = ACCESS_TOKEN_SECRET;
+    //refObj['tokenKey'] = ACCESS_TOKEN;
+    //refObj['tokenSecret'] = ACCESS_TOKEN_SECRET;
 
     const payload = JSON.stringify(refObj);
-    console.log('Payload: ' + payload)
-
+    
     const response = await fetch(finalWeb, {
       method: 'POST',
       headers: oauthHeader,

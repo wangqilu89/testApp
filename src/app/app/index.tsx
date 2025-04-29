@@ -10,8 +10,8 @@ export default function IndexScreen() {
   useEffect(() => {
     const authenticate = async () => {
       const redirectUri = 'myapp://auth/callback';
-      const platform = Platform.OS === 'web' ? 'web' : 'mobile';
-
+      const platform = (Platform.OS === 'web' ? 'web' : 'mobile');
+      console.log('SERVERURL:' + SERVER_URL)
       let authUrl = SERVER_URL + `/auth/start?platform=${platform}`
       if (Platform.OS === 'web') {
         // ✅ Web: full page redirect

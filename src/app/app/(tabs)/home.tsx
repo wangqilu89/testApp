@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import {  useUser } from '@/services'; // 👈 update path
 
 export default function HomeScreen() {
-  const { user, loading } = useUser(); // ✅ Pull from context
+const { user, loading } = useUser(); // ✅ Pull from context
 
   
   if (loading) {

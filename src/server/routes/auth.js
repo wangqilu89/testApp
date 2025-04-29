@@ -18,7 +18,7 @@ router.get('/start', (req, res) => {
   
   oauth.getOAuthRequestToken((err, token, tokenSecret) => {
     if (err) return res.status(500).json({ error: 'Token request failed', details: err });
-
+    
     req.session = req.session || {};
     req.session.tokenSecret = tokenSecret;
     req.session.origin = origin || MIDDLEWARE_URL

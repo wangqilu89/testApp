@@ -4,6 +4,14 @@ const { oauth, staticVar } = require('../lib/nsOAuth');
 const { MIDDLEWARE_URL,authorizeUrl} = staticVar
 const {  PostNS } = require('../lib/nsPost'); // 👈 Import it
 
+const nullValidation = (value) => {
+    if (value == null || value == 'NaN' || value == '' || value == undefined || value == '&nbsp;') {
+		  return true;
+		} else {
+		  return false;
+		}
+}
+
 // Step 1: Start OAuth
 router.get('/start', (req, res) => {
   const { origin,platform} = req.query; 
@@ -26,7 +34,8 @@ router.get('/start', (req, res) => {
 router.get('/callback', (req, res) => {
   const { oauth_token, oauth_verifier } = req.query;
   const tokenSecret = req.session?.tokenSecret;
-  const platform = req.query.platform || 'web'; // default to web if not provided
+  const platform = (!nullValidation(req.query.platform)? req.query.platform:(!nullValidation(req.session?.platform) ? req.session.platform : 'web'));// default to web if not provided
+  const origin = (!nullValidation(req.session?.origin)?req.session.origin:MIDDLEWARE_URL);
 
   oauth.getOAuthAccessToken(
     oauth_token,
@@ -43,7 +52,7 @@ router.get('/callback', (req, res) => {
         return res.redirect('myapp://auth/callback?success=true');
       } 
       else {
-        res.redirect('/home');
+        res.redirect(`${origin}/home`);
         
       }
       

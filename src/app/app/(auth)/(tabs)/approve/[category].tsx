@@ -11,29 +11,25 @@ const AnimatedRow = ({isWeb,item,selected,colNames,toggleSelect,backgroundColors
   const animatedStyle = useAnimatedStyle(() => ({backgroundColor: backgroundColors[item.internalid]?.value ?? 'transparent'}));
 
   return (
-    isWeb?(
-      <TouchableOpacity onPress={() => toggleSelect(item.internalid)}>
+    <TouchableOpacity onPress={() => toggleSelect(item.internalid)}>
       <Animated.View style={[{flexDirection: 'row',paddingVertical: 10,borderBottomWidth: 1,borderBottomColor: '#ccc'},animatedStyle]}>
-        
+        {isWeb ? (
+          <>
           <Text style={{ flex: 1, alignItems: 'center' ,fontSize: 20 }}>{selected ? '☑️' : '⬜'}</Text>
-        
-          {colNames.map((colName, index) => (
+          {colNames.slice(1).map((colName, index) => (
             <Text key={index} style={{ flex: 1, textAlign: 'center' }}>{item[colName] ?? ''}</Text>
           ))} 
-        
+          </>
+        ):(
+          <>
+          {colNames.map((colName, index) => (
+            <Text key={index} style={{ flex: 1, textAlign: 'center' }}>{item[colName] ?? ''}</Text>
+          ))}
+          </> 
+        )
+      }
       </Animated.View>
     </TouchableOpacity>
-    ):(
-     
-      <TouchableOpacity onPress={() => toggleSelect(item.internalid)} style={{ flex: 1, alignItems: 'center' }}>
-         <Animated.View style={[{flexDirection: 'row',paddingVertical: 10,borderBottomWidth: 1,borderBottomColor: '#ccc'},animatedStyle]}>
-        {colNames.map((colName, index) => (
-          <Text key={index} style={{ flex: 1, textAlign: 'center' }}>{item[colName] ?? ''}</Text>
-        ))} 
-        </Animated.View>
-      </TouchableOpacity>
-      
-    )
   );
 };
 
@@ -143,12 +139,7 @@ export default function ApprovalCategoryScreen() {
       const finalArry: string[] = selectedIds.flatMap(elem => elem.split(','));
       
       await postFunc(SERVER_URL + '/netsuite/send?acc=1',{ command: `Approve ${category}`, data: finalArry});
-      selectedIds.forEach((elem) => {
-        elem.split(',').forEach((id)=> { 
-          finalArry.push(id)
-        })
-      })
-      await postFunc(SERVER_URL + '/netsuite/send?acc=1',{ command: `Approve ${category}`, data: finalArry});
+
       Alert.alert('Approved successfully!');
       router.back(); // Go back after success
     } catch (err) {
@@ -258,7 +249,7 @@ export default function ApprovalCategoryScreen() {
           keyExtractor={(item) => item.internalid}
           stickyHeaderIndices={[0]}
           ListHeaderComponent={
-            <View style={{ flexDirection: 'row', backgroundColor: '#004C6C', paddingVertical: 10,display:isWeb?'flex':'none'}}>
+            <View style={{ flexDirection: 'row', backgroundColor: '#004C6C', paddingVertical: 10,display:'flex'}}>
                 {columnTitles.map((title, index) => (
                   <Text key={index} style={{ flex: 1, color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
                     {toProperCase(title)}
@@ -268,7 +259,7 @@ export default function ApprovalCategoryScreen() {
           }
           renderItem={({ item }) => {
             return (
-              <AnimatedRow isWeb={isWeb} item={item} selected={selectedIds.includes(item.internalid)} toggleSelect={toggleSelect} colNames={columnTitles.slice(1)} backgroundColors={backgroundColors}/>
+              <AnimatedRow isWeb={isWeb} item={item} selected={selectedIds.includes(item.internalid)} toggleSelect={toggleSelect} colNames={columnTitles} backgroundColors={backgroundColors}/>
             )
           }}
           onEndReached={() => {

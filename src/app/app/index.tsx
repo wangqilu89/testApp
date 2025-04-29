@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { View, Text, ActivityIndicator, Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
+import {SERVER_URL} from '@/services';
 
 export default function IndexScreen() {
   const router = useRouter();
@@ -10,27 +11,15 @@ export default function IndexScreen() {
     const authenticate = async () => {
       const redirectUri = 'myapp://auth/callback';
       const platform = Platform.OS === 'web' ? 'web' : 'mobile';
-      const authUrl = `https://testapp-capl.onrender.com/auth/start?platform=${platform}`;
 
+      let authUrl = SERVER_URL + `/auth/start?platform=${platform}`
       if (Platform.OS === 'web') {
-        const authWindow = window.open(authUrl, '_blank', 'width=600,height=700');
-
-        const handleMessage = (event: any) => {
-          console.log('origin :' + event.origin)
-          console.log('Data : ' + event.data)
-          if (event.origin !== 'https://testapp-capl.onrender.com') return;
-          if (event.data === 'auth-success') {
-            window.removeEventListener('message', handleMessage);
-            router.replace('/home'); // ✅ move to dashboard
-          }
-        };
-
-        window.addEventListener('message', handleMessage);
-
-        return () => {
-          window.removeEventListener('message', handleMessage);
-        };
-      } else {
+        // ✅ Web: full page redirect
+        const origin = location.origin
+        authUrl += `&origin=${encodeURIComponent(origin)}`
+        location.href = authUrl;
+      } 
+      else {
         const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
         if (result.type === 'success') {
           router.replace('/home');

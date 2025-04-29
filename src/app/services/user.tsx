@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { postFunc} from '@/services/common';
+import { SERVER_URL,postFunc} from '@/services/common';
 import { useRouter } from 'expo-router';
 
 import { Platform, Dimensions } from 'react-native';
@@ -9,9 +9,15 @@ type User = {
   id: string;
   name: string;
   email: string;
-  group:string;
-  department:string;
-  role:string;
+  group: {
+    id: string;
+    name: string;
+  };
+  department: {
+    id: string;
+    name: string;
+  };
+  role: string;
 };
 
 type UserContextType = {
@@ -23,7 +29,7 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const URL = 'https://testapp-capl.onrender.com'
+
 
 const getConnectSid = async (url: string) => {
     try {
@@ -55,14 +61,14 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const checkLoginStatus = async () => {
       for (let attempt = 0; attempt < 5; attempt++) {
         try {
-          const data = await postFunc(URL + '/auth/status', {});
+          const data = await postFunc(SERVER_URL + '/auth/status', {});
           console.log('Auth check:', data);
 
           if (data?.id && data.id !== 0) {
             
             setUser(data);
             await AsyncStorage.setItem('userSession', JSON.stringify(data));
-            const sid = await getConnectSid(URL);
+            const sid = await getConnectSid(SERVER_URL);
             if (sid) {
                 await AsyncStorage.setItem('connect.sid', sid);
             }
@@ -95,7 +101,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     init();
 
     return () => {
-        isMounted = false;
+        
         clearInterval(refreshInterval); // ✅ Clear on unmount
       };
   }, []);
@@ -107,7 +113,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-        await postFunc(URL + '/auth/logout')
+        await postFunc(SERVER_URL + '/auth/logout')
 
     } catch (error) {
         console.warn('Failed to logout from server:', error);

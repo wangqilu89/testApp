@@ -1,8 +1,16 @@
-{
+import 'dotenv/config'; // auto load .env at build time
+
+export default {
   "expo": {
     "name": "app",
     "slug": "app",
     "version": "1.0.0",
+    "extra": {
+      "SERVER_URL": process.env.SERVER_URL,
+      "RESTLET": process.env.RESTLET,
+      "USER_ID": process.env.USER_ID,
+      "REACT_ENV":process.env.REACT_ENV
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",

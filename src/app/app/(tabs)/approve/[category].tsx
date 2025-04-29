@@ -2,11 +2,12 @@ import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Alert, Scrol
 import { useEffect, useState, useRef} from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
-import { postFunc, useWebCheck,RESTLET,SERVER_URL} from '@/services'; // 👈 update path
-
+import { postFunc, useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID} from '@/services'; // 👈 update path
+import {  useUser } from '@/services';
 
 
 export default function ApprovalCategoryScreen() {
+  const {user} = useUser(); // ✅ Pull from context
   const router = useRouter();
   const { category } = useLocalSearchParams();
   const [list, setList] = useState<any[]>([]);
@@ -45,12 +46,12 @@ export default function ApprovalCategoryScreen() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await postFunc(RESTLET,{restlet:RESTLET,command: `Get ${category} List` });
+      const data = await postFunc(SERVER_URL + '/restlet/send?acc=1',{restlet:RESTLET,user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),command: `Get ${category} List`});
       setList(data || []);
       setDisplayList((data || []).slice(0, pageSize)); // Show only first 20 items initially
     } 
     catch (err) {
-      console.error('Failed to fetch timesheets:', err);
+      console.error(`Failed to fetch ${category} :`, err);
     } 
     finally {
       setLoading(false);

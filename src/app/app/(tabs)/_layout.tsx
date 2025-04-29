@@ -31,7 +31,8 @@ const InnerTabs = () => {
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
-          tabBarStyle: isWeb ? { display: 'none' } : { position: 'absolute' },
+          tabBarStyle: isWeb ? {  position: 'relative' } : { position: 'absolute' }
+          //tabBarStyle: isWeb ? { display: 'none' } : { position: 'absolute' }
         }}
       >
         <Tabs.Screen name="home" options={{ title: 'Home' }} />

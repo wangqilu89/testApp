@@ -1,4 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+const { SERVER_URL, RESTLET,REACT_ENV,USER_ID} = Constants.expoConfig?.extra || {};
+
 
 const postFunc = async (URL:string,payload: object = {},method:string="POST") => {
     try {
@@ -35,8 +38,10 @@ const GetPostOptions = async (payload:object,method:string) => {
     return options;
 }
 
-
-
 export {
-    postFunc
+    postFunc,
+    RESTLET,
+    SERVER_URL,
+    REACT_ENV,
+    USER_ID
   };

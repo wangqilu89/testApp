@@ -24,14 +24,15 @@ const AnimatedRow = ({isWeb,item,selected,colNames,toggleSelect,backgroundColors
       </Animated.View>
     </TouchableOpacity>
     ):(
-      <Animated.View style={[{flexDirection: 'row',paddingVertical: 10,borderBottomWidth: 1,borderBottomColor: '#ccc'},animatedStyle]}>
+     
       <TouchableOpacity onPress={() => toggleSelect(item.internalid)} style={{ flex: 1, alignItems: 'center' }}>
-       
+         <Animated.View style={[{flexDirection: 'row',paddingVertical: 10,borderBottomWidth: 1,borderBottomColor: '#ccc'},animatedStyle]}>
         {colNames.map((colName, index) => (
           <Text key={index} style={{ flex: 1, textAlign: 'center' }}>{item[colName] ?? ''}</Text>
         ))} 
+        </Animated.View>
       </TouchableOpacity>
-      </Animated.View>
+      
     )
   );
 };

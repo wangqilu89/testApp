@@ -40,20 +40,10 @@ router.get('/callback', (req, res) => {
         return res.redirect('myapp://auth/callback?success=true');
       } 
       else {
+        res.redirect('/home');
         
-        var htmlStr = "<html>"
-        htmlStr += "<body>"
-        htmlStr += "<script>"
-        htmlStr += " window.opener.postMessage('auth-success', '" + FRONT_END + "');"
-        htmlStr += "window.close();"
-        htmlStr += "</script>"
-        htmlStr += "<p>Login successful. You can close this window.</p>"
-        htmlStr += "</body>"
-        htmlStr += "</html>"
-
-        res.send(htmlStr);
       }
-      //res.redirect('/dashboard');
+      
     }
   );
 });

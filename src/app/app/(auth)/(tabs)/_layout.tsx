@@ -1,5 +1,5 @@
 
-import { Tabs,useRouter } from 'expo-router';
+import { Tabs,useRouter,Slot  } from 'expo-router';
 import React, { useState,useRef } from 'react';
 
 
@@ -52,28 +52,26 @@ const WebTabs = () => {
   const [parentId, setParentId] = useState<string | null>(null);
   
   const [submenuDirection, setSubmenuDirection] = useState<'left' | 'right'>('right');
-  const [rectObj,setRectObj] = useState<GenericObject>({top:0,right:0,bottom:0,left:0,width:0,height:0,x:0,y:0});
+  const [rectObj,setRectObj] = useState<GenericObject>({top:38,right:0,bottom:0,left:0,width:0,height:0,x:0,y:0});
    
   const containerStyle: React.CSSProperties = {
     display: 'flex',
     backgroundColor: '#777', // grey background
-    padding: '6px 10px',
     overflowX: 'auto',
-   
-    margin: '20px',
+    //margin: '20px',
   };
 
   const mainButtonStyle: React.CSSProperties = {
     color: 'white',
     backgroundColor: '#878787', // dark highlight if active
-    border: 'none',
+    border: '1px solid white',
     padding: '10px 16px',
     fontSize: '14px',
     fontWeight: 'bold',
     cursor: 'pointer',
     textAlign: 'center',
-    whiteSpace: 'nowrap',
-    borderBottom: 'none',
+    width:'150px',
+    maxWidth:'150px',
   };
   
   const HoverButton = ({refkey,label,navigate,children}:{refkey:string,label:string,navigate:string|null,children?: React.ReactNode}) => {
@@ -82,13 +80,13 @@ const WebTabs = () => {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleMouseEnter = (event:React.MouseEvent) => {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
+        
         const rect = event.currentTarget.getBoundingClientRect();
         const spaceRight = window.innerWidth - rect.right;
         setSubmenuDirection(spaceRight < 200 ? 'left' : 'right');
+        
         if (navigate) {
+          setHoveredId(parent)
         }
         else {
           setParentId(parent)
@@ -104,13 +102,14 @@ const WebTabs = () => {
       }
     }
     const handleMouseLeave = () => {
-      timeoutRef.current = setTimeout(() => {
-        setHoveredId(null);
-        setParentId(null);
-      }, 200); // short delay to allow hover transition
+      setHoveredId(null);
+      setParentId(null);
+      
+      
     };
     return (
       <div onMouseEnter={(event) => handleMouseEnter(event)}  onMouseLeave={handleMouseLeave}>
+      
       <button onClick={handleClick} style={{...mainButtonStyle}} >{label}</button>
       {children}
       </div>
@@ -121,7 +120,7 @@ const WebTabs = () => {
     if (hoveredId === key) {
       const ids = key.split('.')
       const parent = ((ids.length > 1 )? ids.slice(0, -1).join('.') : null);
-      const menuStyle: React.CSSProperties = {position:'fixed',top: `${rectObj.top}px`,padding: 10,marginBottom: '10px',borderRadius: 6,whiteSpace: 'nowrap',zIndex: 9999,...(parent ? { [submenuDirection]: '100%' } : {})}
+      const menuStyle: React.CSSProperties = {position:'fixed',top: `${rectObj.top}px`,width:'150px',maxWidth:'150px',marginBottom: '10px',borderRadius: 6,whiteSpace: 'nowrap',zIndex: 9999,...(parent ? { [submenuDirection]: '100%' } : {})}
 
       let refStr = ''
       let hoveredItem = WebData
@@ -135,7 +134,7 @@ const WebTabs = () => {
       }
       return (
         <div style={menuStyle}>
-          <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+          <ul style={{listStyleType: 'none', padding: 0, margin: 0 }}>
           {hoveredItem.map((sub) => (
             <li key={sub.id}>
               <HoverButton refkey={sub.id} label={sub.label} navigate={sub.navigate || null} >
@@ -173,5 +172,5 @@ const WebTabs = () => {
 
 export default function TabLayout() {
   const isWeb = useWebCheck();
-  return isWeb ? <WebTabs /> : <MobileTabs />;
+  return isWeb ? <><WebTabs /><Slot /></>: <MobileTabs />;
 }

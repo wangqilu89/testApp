@@ -1,10 +1,13 @@
 import { View, Text, Button, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
 
+
+
 import {  useUser } from '@/services'; // 👈 update path
 
 export default function HomeScreen() {
-const { user, loading } = useUser(); // ✅ Pull from context
+  
+  const { user, loading } = useUser(); // ✅ Pull from context
 
   
   if (loading) {
@@ -17,6 +20,7 @@ const { user, loading } = useUser(); // ✅ Pull from context
   }
 
   return (
+   
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
       <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
         Welcome {user ? `User ${user.name}` : 'Guest'}
@@ -24,5 +28,6 @@ const { user, loading } = useUser(); // ✅ Pull from context
       {/* Example logout button */}
       {/* <Button title="Logout" onPress={logout} /> */}
     </View>
+    
   );
 }

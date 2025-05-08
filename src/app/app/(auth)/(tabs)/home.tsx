@@ -21,9 +21,9 @@ export default function HomeScreen() {
 
   return (
    
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20,height:'100%'}}>
       <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
-        Welcome {user ? `User ${user.name}` : 'Guest'}
+        Welcome {user ? `${user.name}` : 'Guest'}
       </Text>
       {/* Example logout button */}
       {/* <Button title="Logout" onPress={logout} /> */}

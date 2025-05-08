@@ -1,7 +1,7 @@
 
 import { Tabs,useRouter,Slot  } from 'expo-router';
 import React, { useState,useRef } from 'react';
-
+import { Ionicons } from '@expo/vector-icons'; 
 
 import { useWebCheck} from '@/services'; // 👈 update path
 import { HapticTab } from '@/components/HapticTab';
@@ -30,15 +30,15 @@ const MobileTabs = () => {
       <Tabs screenOptions={{tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint, headerShown: false,
           tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
-          tabBarStyle: { position: 'absolute' }
+          tabBarStyle: { position: 'absolute',height: 55}
          
         }}
       >
-        <Tabs.Screen name="home" options={{ title: 'Home' }} />
-        <Tabs.Screen name="hr-main" options={{ title: 'HR' }} />
-        <Tabs.Screen name="approve-main" options={{ title: 'Approve' }} />
-        <Tabs.Screen name="resource-main" options={{ title: 'Resources' }} />
-        <Tabs.Screen name="more-main" options={{ title: 'More' }} />
+        <Tabs.Screen name="home" options={{ title: 'Home',tabBarIcon:({ color, size }) => (<Ionicons name="home" color={color} size={size} />)}} />
+        <Tabs.Screen name="hr-main" options={{ title: 'HR',tabBarIcon:({ color, size }) => (<Ionicons name="person" color={color} size={size} />) }} />
+        <Tabs.Screen name="approve-main" options={{ title: 'Approve',tabBarIcon:({ color, size }) => (<Ionicons name="checkbox" color={color} size={size} />) }} />
+        <Tabs.Screen name="resource-main" options={{ title: 'Resources',tabBarIcon:({ color, size }) => (<Ionicons name="people" color={color} size={size} />) }} />
+        <Tabs.Screen name="more-main" options={{ title: 'More',tabBarIcon:({ color, size }) => (<Ionicons name="ellipsis-horizontal" color={color} size={size} />)}} />
         {/* ❗️Hide dynamic subpages from bottom tabs */}
         <Tabs.Screen name="approve/[category]" options={{ href: null }} />
         <Tabs.Screen name="index" options={{ href: null }} />
@@ -58,6 +58,7 @@ const WebTabs = () => {
     display: 'flex',
     backgroundColor: '#777', // grey background
     overflowX: 'auto',
+    zIndex: 9999,
     //margin: '20px',
   };
 
@@ -120,7 +121,7 @@ const WebTabs = () => {
     if (hoveredId === key) {
       const ids = key.split('.')
       const parent = ((ids.length > 1 )? ids.slice(0, -1).join('.') : null);
-      const menuStyle: React.CSSProperties = {position:'fixed',top: `${rectObj.top}px`,width:'150px',maxWidth:'150px',marginBottom: '10px',borderRadius: 6,whiteSpace: 'nowrap',zIndex: 9999,...(parent ? { [submenuDirection]: '100%' } : {})}
+      const menuStyle: React.CSSProperties = {position:'fixed',top: `${rectObj.top}px`,width:'150px',maxWidth:'150px',marginBottom: '10px',borderRadius: 6,whiteSpace: 'nowrap',...(parent ? { [submenuDirection]: '100%' } : {})}
 
       let refStr = ''
       let hoveredItem = WebData
@@ -172,5 +173,5 @@ const WebTabs = () => {
 
 export default function TabLayout() {
   const isWeb = useWebCheck();
-  return isWeb ? <><WebTabs /><Slot /></>: <MobileTabs />;
+  return isWeb ? <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}><WebTabs /><div style={{ flex: 1, overflow: 'auto' }}><Slot /></div></div>: <MobileTabs />;
 }

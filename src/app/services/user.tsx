@@ -59,6 +59,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     let refreshInterval: NodeJS.Timeout;
 
     const checkLoginStatus = async () => {
+      
       for (let attempt = 0; attempt < 5; attempt++) {
         try {
           const data = await postFunc(SERVER_URL + '/auth/status', {});
@@ -86,7 +87,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
         await new Promise((res) => setTimeout(res, 500));
       }
-
+      await logout();
     };
 
     const init = async () => {

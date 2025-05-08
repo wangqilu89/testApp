@@ -7,31 +7,7 @@ import { postFunc, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID} fro
 type GenericObject = Record<string, any>;
 type AnimatedRowProps = {isWeb:boolean,item: any,selected: boolean,colNames: string[],toggleSelect: (id: string) => void, backgroundColors: GenericObject}
 
-const AnimatedRow = ({isWeb,item,selected,colNames,toggleSelect,backgroundColors}:AnimatedRowProps) => {
-  const animatedStyle = useAnimatedStyle(() => ({backgroundColor: backgroundColors[item.internalid]?.value ?? 'transparent'}));
 
-  return (
-    <TouchableOpacity onPress={() => toggleSelect(item.internalid)}>
-      <Animated.View style={[{flexDirection: 'row',paddingVertical: 10,borderBottomWidth: 1,borderBottomColor: '#ccc'},animatedStyle]}>
-        {isWeb ? (
-          <>
-          <Text style={{ flex: 1, alignItems: 'center' ,fontSize: 20 }}>{selected ? '☑️' : '⬜'}</Text>
-          {colNames.slice(1).map((colName, index) => (
-            <Text key={index} style={{ flex: 1, textAlign: 'center' }}>{item[colName] ?? ''}</Text>
-          ))} 
-          </>
-        ):(
-          <>
-          {colNames.map((colName, index) => (
-            <Text key={index} style={{ flex: 1, textAlign: 'center' }}>{item[colName] ?? ''}</Text>
-          ))}
-          </> 
-        )
-      }
-      </Animated.View>
-    </TouchableOpacity>
-  );
-};
 
 
 
@@ -48,7 +24,7 @@ export default function ApprovalCategoryScreen() {
   const pageSize = 10; // Show 10 items at a time
   const isWeb = useWebCheck(); // Only "true web" if wide
   const backgroundColors = useRef<GenericObject>({}).current;
-  const selectTransparent = useSharedValue('transparent')
+  
 
   const COLUMN_CONFIG: Record<string, { web: string[]; mobile: string[] }> = {
     timesheets: {
@@ -80,7 +56,7 @@ export default function ApprovalCategoryScreen() {
       data = data|| []
       data.forEach((elem:GenericObject) => {
         if (!backgroundColors[elem.internalid]) {
-          backgroundColors[elem.internalid] = selectTransparent;
+          backgroundColors[elem.internalid] = useSharedValue('transparent');
         }
       });
 
@@ -104,11 +80,37 @@ export default function ApprovalCategoryScreen() {
     setPage(nextPage);
   };
 
+  const AnimatedRow = ({isWeb,item,selected,colNames,toggleSelect,backgroundColors}:AnimatedRowProps) => {
+    const animatedStyle = useAnimatedStyle(() => ({backgroundColor: backgroundColors[item.internalid]?.value ?? 'transparent'}));
+  
+    return (
+      <TouchableOpacity onPress={() => toggleSelect(item.internalid)}>
+        <Animated.View style={[{flexDirection: 'row',paddingVertical: 10,borderBottomWidth: 1,borderBottomColor: '#ccc'},animatedStyle]}>
+          {isWeb ? (
+            <>
+            <Text style={{ flex: 1, alignItems: 'center' ,fontSize: 20,textAlign:'center'}}>{selected ? '☑️' : '⬜'}</Text>
+            {colNames.slice(1).map((colName, index) => (
+              <Text key={index} style={{ flex: 1, textAlign: 'left'}}>{item[colName] ?? ''}</Text>
+            ))} 
+            </>
+          ):(
+            <>
+            {colNames.map((colName, index) => (
+              <Text key={index} style={{ flex: 1, textAlign: 'center' }}>{item[colName] ?? ''}</Text>
+            ))}
+            </> 
+          )
+        }
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  };
   
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
         const isSelected = prev.includes(id);
         const newSelectedIds = isSelected ? prev.filter((i) => i !== id) : [...prev, id];
+        
         backgroundColors[id].value = withTiming(
           isSelected ? 'transparent' : '#e0f7fa',
           { duration: 300, easing: Easing.inOut(Easing.ease) }
@@ -210,7 +212,7 @@ export default function ApprovalCategoryScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ height:'100%',flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
         <Text style={{ marginTop: 20 }}>Loading List...</Text>
       </View>
@@ -219,7 +221,7 @@ export default function ApprovalCategoryScreen() {
 
   if (list.length == 0) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center',height:'100%'}}>
         <Text>No records found.</Text>
       </View>
     );
@@ -227,24 +229,25 @@ export default function ApprovalCategoryScreen() {
 
 
   return (
-    <ScrollView horizontal={isWeb}>
+    <>
       {/* Web: Horizontal Scroll enabled */}
         <View style={{ flex: 1, padding: 20 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
             
-            <TouchableOpacity onPress={handleApprove} style={{ backgroundColor: '#28a745',padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+            <TouchableOpacity onPress={handleApprove} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
               <Text style={{ color: 'white', fontWeight: 'bold' }}>Approve Selected</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleReject} style={{ backgroundColor: '#dc3545',padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+            <TouchableOpacity onPress={handleReject} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Reject Selected</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={selectAll} style={{backgroundColor: '#004C6C',padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+            <TouchableOpacity onPress={selectAll} style={{backgroundColor: '#004C6C',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>{massSelect? 'Select All' : 'Unselect All'}</Text>
             </TouchableOpacity>
         </View>
         
         {/* Timesheet List */}
         <FlatList
+          style={{width:'100%'}}
           data={displayList}
           keyExtractor={(item) => item.internalid}
           stickyHeaderIndices={[0]}
@@ -272,6 +275,6 @@ export default function ApprovalCategoryScreen() {
 
         
         </View>
-    </ScrollView>
+    </>
   );
 }

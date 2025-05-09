@@ -1,30 +1,22 @@
-import { View, Text, Button, ActivityIndicator } from 'react-native';
-import { useEffect, useState } from 'react';
-
-
-
-import {  useUser } from '@/services'; // 👈 update path
+import { View, Text} from 'react-native';
+import {  useUser,LoadingScreen} from '@/services'; // 👈 update path
+import { useThemedStyles } from '@/styles';
 
 export default function HomeScreen() {
   
   const { user, loading } = useUser(); // ✅ Pull from context
-
+  const {CommonItems,Header} = useThemedStyles()
   
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 20 }}>Checking authentication...</Text>
-      </View>
+      <LoadingScreen txt="Checking authentication..."/>
     );
   }
 
   return (
    
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20,height:'100%'}}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
-        Welcome {user ? `${user.name}` : 'Guest'}
-      </Text>
+    <View style={[CommonItems.view,CommonItems.container]}>
+      <Text style={[CommonItems.text,Header.text,{backgroundColor:'transparent',marginBottom: 20 }]}>Welcome {user ? `${user.name}` : 'Guest'}</Text>
       {/* Example logout button */}
       {/* <Button title="Logout" onPress={logout} /> */}
     </View>

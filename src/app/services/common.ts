@@ -16,7 +16,7 @@ const postFunc = async (URL:string,payload: object = {},method:string="POST") =>
     }
   };
 
-
+  
 
 const GetPostOptions = async (payload:object,method:string) => {
     const sid = await AsyncStorage.getItem('connect.sid');
@@ -37,6 +37,8 @@ const GetPostOptions = async (payload:object,method:string) => {
   
     return options;
 }
+
+
 
 export {
     postFunc,

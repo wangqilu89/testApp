@@ -1,8 +1,8 @@
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Alert, ScrollView} from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Alert} from 'react-native';
 import { useEffect, useState, useRef} from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
-import { postFunc, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID} from '@/services'; // 👈 update path
+import { postFunc, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,LoadingScreen} from '@/services'; // 👈 update path
 
 type GenericObject = Record<string, any>;
 type AnimatedRowProps = {isWeb:boolean,item: any,selected: boolean,colNames: string[],toggleSelect: (id: string) => void, backgroundColors: GenericObject}
@@ -212,10 +212,8 @@ export default function ApprovalCategoryScreen() {
 
   if (loading) {
     return (
-      <View style={{ height:'100%',flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 20 }}>Loading List...</Text>
-      </View>
+      <LoadingScreen txt="Loading List..."/>
+      
     );
   }
 

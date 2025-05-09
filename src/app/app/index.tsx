@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
-import { View, Text, ActivityIndicator, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
-import {SERVER_URL} from '@/services';
+import {SERVER_URL,LoadingScreen} from '@/services';
+
 
 export default function IndexScreen() {
+  
+
   const router = useRouter();
 
   useEffect(() => {
@@ -33,9 +36,6 @@ export default function IndexScreen() {
   }, []);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Authenticating with NetSuite...</Text>
-      <ActivityIndicator size="large" style={{ marginTop: 20 }} />
-    </View>
+    <LoadingScreen txt="Authenticating with NetSuite..."/>
   );
 }

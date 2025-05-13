@@ -1,20 +1,34 @@
+
 import { View, Text, TouchableOpacity, FlatList, Alert} from 'react-native';
 import { useEffect, useState, useRef} from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
 import { postFunc, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,LoadingScreen} from '@/services'; // 👈 update path
+import { MainPage} from '@/services'; // 👈 update path
 
 type GenericObject = Record<string, any>;
 type AnimatedRowProps = {isWeb:boolean,item: any,selected: boolean,colNames: string[],toggleSelect: (id: string) => void, backgroundColors: GenericObject}
 
+const approvals = [
+  { id: 'timesheets', title: 'Timesheets',icon:'time-outline'},
+  { id: 'expenses', title: 'Expense Claims',icon:'card-outline'},
+  { id: 'leave', title: 'Leaves',icon:'calendar-outline'},
+  { id: 'invoices', title: 'Invoices',icon:'file-tray-full-outline'},
+  { id: 'lost', title: 'Lost Clients',icon:'reader-outline'},
+];
 
 
+function MainScreen() {
+  return (
+    <MainPage redirect="approve" pages={approvals} title="Approve"/>
+  );
+}
 
 
-export default function ApprovalCategoryScreen() {
+function ApprovalCategoryScreen({ category }: { category: string }) {
   const { user} = useUser(); // ✅ Pull from context
   const router = useRouter();
-  const { category } = useLocalSearchParams();
+  
   const [list, setList] = useState<GenericObject[]>([]);
   const [displayList, setDisplayList] = useState<GenericObject[]>([]); // ✅ Add this
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -206,14 +220,21 @@ export default function ApprovalCategoryScreen() {
 
 
   useEffect(() => {
-    fetchData();
-    
+    if (category && category != 'index') {
+      fetchData();
+    }
   }, [category]);
 
   if (loading) {
     return (
       <LoadingScreen txt="Loading List..."/>
       
+    );
+  }
+
+  if (!category || category == 'index') {
+    return (
+      <MainPage redirect="approve" pages={approvals} title="Approve"/>
     );
   }
 
@@ -276,3 +297,12 @@ export default function ApprovalCategoryScreen() {
     </>
   );
 }
+
+export default function ApproveTransactionsScreen() {
+  const { category } = useLocalSearchParams();
+  if (!category) {
+    return <MainScreen />;
+  }
+  return <ApprovalCategoryScreen category={category as string} />;
+}
+ 

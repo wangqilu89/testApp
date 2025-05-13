@@ -5,7 +5,7 @@ import { useThemedStyles } from '@/styles';
 export default function HomeScreen() {
   
   const { user, loading } = useUser(); // ✅ Pull from context
-  const {CommonItems,Header} = useThemedStyles()
+  const {Page,ReactTag,Header} = useThemedStyles()
   
   if (loading) {
     return (
@@ -15,8 +15,8 @@ export default function HomeScreen() {
 
   return (
    
-    <View style={[CommonItems.view,CommonItems.container]}>
-      <Text style={[CommonItems.text,Header.text,{backgroundColor:'transparent',marginBottom: 20 }]}>Welcome {user ? `${user.name}` : 'Guest'}</Text>
+    <View style={[Page.container]}>
+      <Text style={[ReactTag.text,Header.textReverse,{marginBottom: 20 }]}>Welcome {user ? `${user.name}` : 'Guest'}</Text>
       {/* Example logout button */}
       {/* <Button title="Logout" onPress={logout} /> */}
     </View>

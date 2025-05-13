@@ -36,13 +36,12 @@ const MobileTabs = () => {
         }}
       >
         <Tabs.Screen name="home" options={{ title: 'Home',tabBarIcon:({ color, size }) => (<Ionicons name="home" color={color} size={size} />)}} />
-        <Tabs.Screen name="hr-main" options={{ title: 'HR',tabBarIcon:({ color, size }) => (<Ionicons name="person" color={color} size={size} />) }} />
-        <Tabs.Screen name="approve-main" options={{ title: 'Approve',tabBarIcon:({ color, size }) => (<Ionicons name="checkbox" color={color} size={size} />) }} />
+        <Tabs.Screen name="hr/index" options={{ title: 'HR',tabBarIcon:({ color, size }) => (<Ionicons name="person" color={color} size={size} />) }} />
+        <Tabs.Screen name="approve/index" options={{ title: 'Approve',tabBarIcon:({ color, size }) => (<Ionicons name="checkbox" color={color} size={size} />) }} />
         <Tabs.Screen name="resource-main" options={{ title: 'Resources',tabBarIcon:({ color, size }) => (<Ionicons name="people" color={color} size={size} />) }} />
         <Tabs.Screen name="more-main" options={{ title: 'More',tabBarIcon:({ color, size }) => (<Ionicons name="ellipsis-horizontal" color={color} size={size} />)}} />
         {/* ❗️Hide dynamic subpages from bottom tabs */}
-        <Tabs.Screen name="approve/[category]" options={{ href: null }} />
-        <Tabs.Screen name="index" options={{ href: null }} />
+        <Tabs.Screen name="index" options={{ href: null}} />
       </Tabs>
   );
 }

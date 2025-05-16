@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, FlatList, Alert} from 'react-native';
 import { useEffect, useState, useRef} from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
-import { postFunc, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,LoadingScreen} from '@/services'; // 👈 update path
-import { MainPage} from '@/services'; // 👈 update path
+import { FetchData, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,LoadingScreen,MainPage,NoRecords} from '@/services'; // 👈 update path
+import {useThemedStyles} from '@/styles';
 
 type GenericObject = Record<string, any>;
 type AnimatedRowProps = {isWeb:boolean,item: any,selected: boolean,colNames: string[],toggleSelect: (id: string) => void, backgroundColors: GenericObject}
@@ -25,10 +25,9 @@ function MainScreen() {
 }
 
 
-function ApprovalCategoryScreen({ category }: { category: string }) {
-  const { user} = useUser(); // ✅ Pull from context
-  const router = useRouter();
+function ApprovalCategoryScreen({ category,user}: { category: string,user:GenericObject|null}) {
   
+  const router = useRouter();
   const [list, setList] = useState<GenericObject[]>([]);
   const [displayList, setDisplayList] = useState<GenericObject[]>([]); // ✅ Add this
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -38,7 +37,8 @@ function ApprovalCategoryScreen({ category }: { category: string }) {
   const pageSize = 10; // Show 10 items at a time
   const isWeb = useWebCheck(); // Only "true web" if wide
   const backgroundColors = useRef<GenericObject>({}).current;
-  
+  const {Page,Header,ReactTag,CategoryButton} = useThemedStyles()
+  const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
   const COLUMN_CONFIG: Record<string, { web: string[]; mobile: string[] }> = {
     timesheets: {
@@ -62,11 +62,12 @@ function ApprovalCategoryScreen({ category }: { category: string }) {
       mobile: ["customer", "lost_reason",  "lost_date"],
     },
   };
+ 
 
-  const fetchData = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      let data = await postFunc(SERVER_URL + '/netsuite/send?acc=1',{restlet:RESTLET,user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),command: `Get ${category} List`});
+      let data = await FetchData({...BaseObj,command:`Approve - Get ${category} List`});
       data = data|| []
       data.forEach((elem:GenericObject) => {
         if (!backgroundColors[elem.internalid]) {
@@ -153,8 +154,8 @@ function ApprovalCategoryScreen({ category }: { category: string }) {
 
     try {
       const finalArry: string[] = selectedIds.flatMap(elem => elem.split(','));
+      await FetchData({...BaseObj,command:`Approve - Approve ${category}`, data: finalArry});
       
-      await postFunc(SERVER_URL + '/netsuite/send?acc=1',{ command: `Approve ${category}`, data: finalArry});
 
       Alert.alert('Approved successfully!');
       router.back(); // Go back after success
@@ -186,7 +187,7 @@ function ApprovalCategoryScreen({ category }: { category: string }) {
               return;
             }
             try {
-              await postFunc(SERVER_URL + '/netsuite/send?acc=1',{ command: `Reject ${category}`, data: selectedIds, reason });
+              await FetchData({...BaseObj,command:`Approve - Reject ${category}`, data: selectedIds, reason });
               Alert.alert('Rejected successfully!');
               router.back(); // Go back after success
             } catch (err) {
@@ -221,7 +222,7 @@ function ApprovalCategoryScreen({ category }: { category: string }) {
 
   useEffect(() => {
     if (category && category != 'index') {
-      fetchData();
+      loadData();
     }
   }, [category]);
 
@@ -234,15 +235,14 @@ function ApprovalCategoryScreen({ category }: { category: string }) {
 
   if (!category || category == 'index') {
     return (
-      <MainPage redirect="approve" pages={approvals} title="Approve"/>
+      <MainScreen />
     );
   }
 
   if (list.length == 0) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center',height:'100%'}}>
-        <Text>No records found.</Text>
-      </View>
+      <NoRecords />
+      
     );
   }
 
@@ -250,7 +250,7 @@ function ApprovalCategoryScreen({ category }: { category: string }) {
   return (
     <>
       {/* Web: Horizontal Scroll enabled */}
-        <View style={{ flex: 1, padding: 20 }}>
+        <View style={[Page.container]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
             
             <TouchableOpacity onPress={handleApprove} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
@@ -262,7 +262,7 @@ function ApprovalCategoryScreen({ category }: { category: string }) {
             <TouchableOpacity onPress={selectAll} style={{backgroundColor: '#004C6C',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>{massSelect? 'Select All' : 'Unselect All'}</Text>
             </TouchableOpacity>
-        </View>
+          </View>
         
         {/* Timesheet List */}
         <FlatList
@@ -300,9 +300,11 @@ function ApprovalCategoryScreen({ category }: { category: string }) {
 
 export default function ApproveTransactionsScreen() {
   const { category } = useLocalSearchParams();
+  const { user} = useUser(); // ✅ Pull from context
+  
   if (!category) {
     return <MainScreen />;
   }
-  return <ApprovalCategoryScreen category={category as string} />;
+  return <ApprovalCategoryScreen category={category as string} user={user} />;
 }
  

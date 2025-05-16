@@ -14,8 +14,21 @@ const postFunc = async (URL:string,payload: object = {},method:string="POST") =>
       console.error('Error calling API:', error);
       throw error;
     }
-  };
-
+};
+const FetchData = async (o:Record<string, any>) => {
+  o.restlet ??= RESTLET;
+  o.user ??= USER_ID;
+  o.middleware ??= SERVER_URL + '/netsuite/send?acc=1'
+  try {
+    let data = await postFunc(o.middleware,o);
+    data = data|| []
+    return data
+  } 
+  catch (err) {
+    console.error(`Failed to fetch command - ${o.command}:`, err);
+  } 
+  
+};
   
 
 const GetPostOptions = async (payload:object,method:string) => {
@@ -45,5 +58,6 @@ export {
     RESTLET,
     SERVER_URL,
     REACT_ENV,
-    USER_ID
+    USER_ID,
+    FetchData
 };

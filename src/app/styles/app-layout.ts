@@ -13,6 +13,8 @@ export const useThemedStyles = () => {
     verticalCenter:{alignItems: 'center'},
     horizontalLeft:{justifyContent: 'flex-start'},
     verticalLeft:{alignItems: 'flex-start'},
+    horizontalRight:{justifyContent: 'flex-end'},
+    verticalRight:{alignItems: 'flex-end'},
   })
   
   
@@ -37,6 +39,7 @@ export const useThemedStyles = () => {
   })
   const Header = StyleSheet.create({
     container:{width:'100%',backgroundColor:Theme.background,padding:5,...Align.horizontalCenter},
+    view: {...Align.verticalCenter,color:Theme.textReverse,fontSize: 24, fontWeight: 'bold'},
     text: {textAlign: 'center',color:Theme.textReverse,fontSize: 24, fontWeight: 'bold'},
     textReverse: {textAlign: 'center',color:Theme.text,fontSize: 24, fontWeight: 'bold'}
   })
@@ -45,12 +48,21 @@ export const useThemedStyles = () => {
       text:{...Align.horizontalLeft ,textAlign: 'left',color:Theme.mooreReverse,backgroundColor: 'transparent',fontSize: 18, fontWeight: 'bold' },
       icon:{...Align.horizontalLeft ,textAlign: 'left',color:Theme.mooreReverse,backgroundColor: 'transparent',fontSize: 24, fontWeight: 'bold'}
   })
+
+  const Listing = StyleSheet.create({
+    container:{flexDirection: 'row',paddingVertical: 10,borderBottomWidth: 1,borderBottomColor: Theme.text},
+    text:{...Align.horizontalLeft ,textAlign: 'left',color:Theme.mooreReverse,backgroundColor: 'transparent',fontSize: 18, fontWeight: 'bold' },
+    number:{...Align.horizontalRight ,textAlign: 'right',color:Theme.mooreReverse,backgroundColor: 'transparent',fontSize: 18, fontWeight: 'bold' }
   
+  })
+  const Form = StyleSheet.create({
+    container:{flex:1,width:'100%',...Align.verticalLeft},
+    rowContainer:{flexDirection: 'row',width:'100%',backgroundColor: 'transparent',paddingTop:10,paddingBottom:10},
+    label:{width:150,color:Theme.text,textAlign: 'left',fontSize: 16, fontWeight: 'bold',...Align.horizontalLeft},
+    input:{flex:1,color:Theme.text,textAlign: 'left',fontSize: 16,padding:0,height:20}
+  })
 
-  
-
-
-  return {Theme,ReactTag,Page, Header,CategoryButton}
+  return {Theme,ReactTag,Page, Header,CategoryButton,Listing,Form}
 }
 
 

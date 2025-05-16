@@ -8,7 +8,7 @@ import { HapticTab } from '@/components/HapticTab';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useThemedStyles } from '@/styles';
+
 
 type MenuItem = {
   id: string;
@@ -173,5 +173,17 @@ const WebTabs = () => {
 
 export default function TabLayout() {
   const isWeb = useWebCheck();
-  return isWeb ? <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}><WebTabs /><div style={{ flex: 1, overflow: 'auto' }}><Slot /></div></div>: <MobileTabs />;
+  if (isWeb) {
+    return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <WebTabs />
+      <div style={{ flex: 1, overflow: 'auto' }}><Slot /></div>
+    </div>
+    )
+  }
+  return (
+    <MobileTabs />
+  )
+
+  
 }

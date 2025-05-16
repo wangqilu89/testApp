@@ -1,12 +1,15 @@
 
-import {  View, Text, TouchableOpacity, FlatList, Button,Platform,TextInput} from 'react-native';
-import { useEffect, useState} from 'react';
+import { View, Text, TouchableOpacity, FlatList, Button,Platform,TextInput} from 'react-native';
+import { useEffect, useState,useCallback} from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated from 'react-native-reanimated';
 import { useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData} from '@/services'; // 👈 functions
 import { LoadingScreen, NoRecords, MainPage,MainViewer,FilterDropdown} from '@/services'; // 👈 Common Screens
+import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete} from '@/services';
+import debounce from 'lodash.debounce';
+
 import {useThemedStyles} from '@/styles';
-import DateTimePicker from '@react-native-community/datetimepicker';
+
 
 
 
@@ -147,10 +150,12 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
     }
     
     const ClaimForm = ({id}:{id:string}) => {
-        
+
         const [loading, setLoading] = useState(false);
-        const [formData, setFormData] = useState({date: new Date(),id,project: '',category: '',value: '',file: null as any});
+        const [formData, setFormData] = useState({date: new Date(),id,project:{},category: '',value: '',file: null as any});
         const [showDate, setShowDate] = useState(false);
+        const [tempData,setTempData] = useState('')
+        
         const updateData = (key:keyof typeof formData,value: any) => {
             setFormData(prev => ({ ...prev, [key]: value }));
         }
@@ -165,28 +170,13 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
         return (
             <View style={[Page.container]}>
                 <View style={[Header.container]}><Text style={[Header.text]}>Expense Claim</Text></View>
-                <View style={[Form.container]}>
-                    <View style={[Form.rowContainer,{display:'none'}]}>
-                        <Text style={[Form.label]}>ID:</Text>
-                        <TextInput keyboardType="numeric" value={formData.id} onChangeText={(text) => updateData('id', text)} style={[Form.input]}/>
-                    </View>
-                    <View style={[Form.rowContainer]}>
-                        <Text style={[Form.label]}>Date:</Text>
-                        <TouchableOpacity style={[Form.input]} onPress={() => setShowDate(true)} >
-                            <Text style={[Form.input]}>{formData.date.toISOString().split('T')[0]}</Text>   
-                        </TouchableOpacity>
-                        {showDate && (
-                            <DateTimePicker
-                            value={formData.date}
-                            mode="date"
-                            display="default"
-                            onChange={(e, selectedDate) => {
-                                setShowDate(Platform.OS === 'ios');
-                                if (selectedDate) updateData('date',selectedDate);
-                            }}
-                            />
-                        )}
-                    </View>
+                <FormContainer>
+                
+
+                    <FormTextInput label="ID " def={formData.id} onChange={(text) => updateData('id', text)} AddStyle={{StyleRow:{display:'none'}}}/>
+                    <FormDateInput label='Date ' def={formData.date} onChange={(selectedDate)=>{updateData('date',selectedDate.date)}}/>
+                    <FormAutoComplete label="Project " def={formData.project} onChange={()=>{}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR - Get Project Listing",keyword:query})}/>
+                    
                     <View style={[Form.rowContainer]}>
                         <Text style={[Form.label]}>Project:</Text>
                         <FilterDropdown style={Form.input} command={{ ...BaseObj, command: "HR - Get Project Listing" }} onSelect={(item) => updateData('project',item.id)} />
@@ -195,10 +185,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
                         <Text style={[Form.label]}>Category:</Text>
                         <FilterDropdown style={Form.input} command={{ ...BaseObj, command: "HR - Get Category Listing" }} onSelect={(item) => updateData('category',item.id)} />
                     </View>
-                    <View style={[Form.rowContainer]}>
-                        <Text style={[Form.label]}>Value:</Text>
-                        <TextInput keyboardType="numeric" value={formData.value} onChangeText={(text) => updateData('value', text)} style={[Form.input]} />
-                    </View>
+                    <FormNumericInput label="Value " def={formData.value} onChange={debounce((text) => updateData('value', text),500)} />
                     <View style={[Form.rowContainer]}>
                         <Text style={[Form.label]}>Upload Document:</Text>
                         
@@ -206,10 +193,9 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
                         <Button title="Pick Image from Gallery" onPress={(item)=> {}} />
                         {formData.file && <Text style={{ marginTop: 10 }}>Selected: {formData.file.name || formData.file.uri}</Text>}
                     </View>
-                    <View style={[Form.rowContainer,{width:'100%',justifyContent:'center'}]}>
-                        <Button title="Submit" onPress={(item)=> {}} />
-                    </View>
-                </View>
+                    <FormSubmit onPress={()=>{}}/>
+                    
+                </FormContainer>
             </View>
         )
     }
@@ -239,7 +225,7 @@ function DocumentView({url,doc}:{url:string,doc:string}) {
 export default function HRScreen() {
     const {category,id = '0',url = '',doc = ''} = useLocalSearchParams<Partial<{ category: string; id: string; url: string; doc: string }>>();
     const { user} = useUser(); // ✅ Pull from context
-    console.log(category)
+    
     switch (category){
         case 'attachment':
             return <DocumentView url={url} doc={doc} />;

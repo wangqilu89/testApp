@@ -18,17 +18,6 @@ export const useThemedStyles = () => {
   })
   
   
-  /*
-  const CommonItems = StyleSheet.create({
-    view:{justifyContent: 'center',alignItems: 'center', flex: 1},
-    row: {justifyContent: 'center',alignItems: 'center', flexDirection: 'row'},
-    text:{ marginTop: 20,color:Theme.text,backgroundColor:'transparent'},
-    spaced: {marginVertical: 8},
-    theme:defaultTheme,
-    reverseTheme:reverseTheme
-  })
-  */
-
   const ReactTag = StyleSheet.create({
     text:{marginTop: 20,color:Theme.text,backgroundColor:'transparent'},
     view:{...Align.horizontalCenter, flex: 1}
@@ -56,10 +45,11 @@ export const useThemedStyles = () => {
   
   })
   const Form = StyleSheet.create({
-    container:{flex:1,width:'100%',...Align.verticalLeft},
+    container:{flex:1,paddingLeft:10},
     rowContainer:{flexDirection: 'row',width:'100%',backgroundColor: 'transparent',paddingTop:10,paddingBottom:10},
     label:{width:150,color:Theme.text,textAlign: 'left',fontSize: 16, fontWeight: 'bold',...Align.horizontalLeft},
-    input:{flex:1,color:Theme.text,textAlign: 'left',fontSize: 16,padding:0,height:20}
+    input:{flex:1,color:Theme.text,textAlign: 'left',fontSize: 16,padding:0,height:20},
+    button:{backgroundColor:Theme.backgroundReverse,fontSize:16,paddingTop:7,paddingBottom:7,paddingLeft:10,paddingRight:10,fontWeight:'bold',borderRadius:10,color: 'white'}
   })
 
   return {Theme,ReactTag,Page, Header,CategoryButton,Listing,Form}

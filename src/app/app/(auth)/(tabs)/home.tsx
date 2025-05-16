@@ -14,12 +14,12 @@ export default function HomeScreen() {
   }
 
   return (
-   
+
     <View style={[Page.container]}>
       <Text style={[ReactTag.text,Header.textReverse,{marginBottom: 20 }]}>Welcome {user ? `${user.name}` : 'Guest'}</Text>
       {/* Example logout button */}
       {/* <Button title="Logout" onPress={logout} /> */}
     </View>
-    
+
   );
 }

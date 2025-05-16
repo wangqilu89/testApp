@@ -113,7 +113,7 @@ const FormAutoComplete = ({label = 'Select',def={id:'',name:''},onChange = () =>
           return;
         }
         if (items?.length) {
-            setResult(items.filter(items => items.toLowerCase().includes(q.toLowerCase())));
+            setResult(items.filter(items => items.name?.toLowerCase().includes(q.toLowerCase())));
             return;
         }
         if (loadList) {

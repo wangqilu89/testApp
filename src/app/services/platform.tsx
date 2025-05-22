@@ -1,11 +1,12 @@
-import { View, Text, ActivityIndicator,Platform, Dimensions, FlatList, TouchableOpacity,ViewStyle,TextStyle,StyleSheet} from 'react-native';
+import { View, Text, ActivityIndicator,Platform, Dimensions, FlatList, TouchableOpacity,Alert,Modal,Linking,Image,TextStyle,ViewStyle} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons'; 
 import { WebView } from 'react-native-webview';
-import Autocomplete from 'react-native-autocomplete-input';
-import { FetchData} from '@/services'; 
 import {useThemedStyles} from '@/styles';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
+
 
 type SubMenu = {
   id:string,
@@ -104,36 +105,102 @@ const MainViewer = ({url,doc}:{url:string,doc:string}) => {
 
 }
 
-const FilterDropdown = ({command,onSelect,style}: {command:Command,onSelect: (item: any) => void,style?: ViewStyle & TextStyle}) => {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<any[]>([]);
-  
-  const loadDropdown = async (q: string) => {
-      setQuery(q);
-      if (q.length < 2) {
-        setResults([]);
-        return;
+const AttachmentField =({ defaultValue,onChange,style}: { defaultValue?: {uri: string,name: string,type: string},onChange?:(item: any) => void,style?:TextStyle & ViewStyle})  => {
+  const [prompt,setPrompt] = useState(false)
+  const [uploadedFile, setUploadedFile] = useState<{uri: string;name: string;type: string;} | null>(null);
+  const pickFrom = async(place:string): Promise<{uri: string;name: string;type: string;} | undefined> => {
+    try {
+      setPrompt(false);
+      let newObj = {uri:'',name:'',type:''}
+      switch (place) {
+          case 'document': {
+            const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
+            if (result?.assets && result.assets.length > 0) {
+              const file = result.assets[0];
+              newObj = { uri: file.uri, name: file.name, type: file.mimeType ?? 'application/octet-stream' }
+            }
+          }
+          break;
+
+          case 'gallery': {
+            const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            
+            if (status !== 'granted') {
+              throw Error('Permission Needed');
+            }
+            
+            const result = await ImagePicker.launchImageLibraryAsync({mediaTypes: ['images'],allowsEditing:true,quality: 1});
+
+            if (!result.canceled) {
+              const file = result.assets[0];
+              newObj = { uri: file.uri, name: file.fileName ?? 'photo.jpg', type: file.type ?? 'image/jpeg' };
+
+            }
+          }
+          break;
+
+          case 'camera': {
+            const {status} = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+              throw Error('Permission Needed');
+            }
+
+            const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'],allowsEditing:true,quality: 1});
+
+            if (!result.canceled) {
+              const file = result.assets[0];
+              newObj = { uri: file.uri, name: 'photo.jpg', type: file.type ?? 'image/jpeg' };
+            }
+          }
+          break;
+
       }
-      
-      try {
-        const data = await FetchData({...command,keyword:q});
-        setResults(data);
-      } catch (err) {
-        console.error(err);
-      } 
+      return newObj
+    }
+    catch (err:any) {
+      Alert.alert(`Error on ${place}`,err.message)
+    }
+  }
+
+  const openExternal = () => {
+    if (uploadedFile?.uri) Linking.openURL(uploadedFile.uri);
   };
+
+  useEffect(() => {
+    if (defaultValue) {
+      setUploadedFile(defaultValue);
+    }
+  }, [defaultValue]);
+
   return (
-    <Autocomplete inputContainerStyle={StyleSheet.flatten(style)} data={results} defaultValue={query} onChangeText={loadDropdown} 
-      flatListProps={{
-        keyExtractor: (_, idx) => idx.toString(),
-        renderItem: ({ item }) => (
-          <TouchableOpacity onPress={() => { setQuery(item.name); onSelect(item); setResults([]); }}>
-            <Text style={{ padding: 8 }}>{item.name}</Text>
+    <View style={{flexDirection:'column',flex:1}}>
+      <TouchableOpacity style={[{flex:1},style]} onPress={() => setPrompt(true)} ><Text style={[style]}>{uploadedFile ? 'Update Document or Image' : 'Upload Document or Image'}</Text></TouchableOpacity>
+      
+
+      <Modal visible={prompt} animationType="slide" transparent={true} onRequestClose={() => setPrompt(false)}>
+        <TouchableOpacity style={{flex: 1,justifyContent: 'flex-end',backgroundColor:'#a7adb280'}} activeOpacity={1} onPressOut={() => setPrompt(false)}>
+          <View style={{padding: 20}}>
+            <Text style={{backgroundColor:'transparent',color:'white',fontSize: 18,fontWeight: 'bold',marginBottom: 12,textAlign: 'center'}}>Choose Upload Source</Text>
+            <View style={{borderRadius:20,backgroundColor: 'white'}}>
+              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = await pickFrom('camera');if (fileObj) {setUploadedFile(fileObj);onChange?.(fileObj);};}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📷 Take Photo</Text></TouchableOpacity>
+              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = await pickFrom('gallery');if (fileObj) {setUploadedFile(fileObj);onChange?.(fileObj);};}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>🖼 Gallery</Text></TouchableOpacity>
+              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = await pickFrom('document');if (fileObj) {setUploadedFile(fileObj);onChange?.(fileObj);};}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📄 Pick File</Text></TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      {uploadedFile && (
+          <TouchableOpacity style={[{flex:1},style]} onPress={openExternal}>
+            {uploadedFile.type?.startsWith('image/')?
+              (<Image source={{ uri: uploadedFile.uri }} style={{ width: 100, height: 100, marginTop: 8, borderRadius: 4 }}/>):
+              (<Text style={[style]}>📎 {uploadedFile.name ?? 'Unnamed file'}</Text>)
+            }
+            
           </TouchableOpacity>
-        )
-      }}
-    />
-  )
+      )}
+    </ View>
+  );
+
 }
 
 
@@ -144,5 +211,5 @@ export {
   MainPage,
   NoRecords,
   MainViewer,
-  FilterDropdown
+  AttachmentField
 };

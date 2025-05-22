@@ -10,7 +10,7 @@ import { useState} from 'react';
 
 import { WebView } from 'react-native-webview';
 import Autocomplete from 'react-native-autocomplete-input';
-import { FetchData} from '@/services'; 
+import { AttachmentField} from '@/services'; 
 import {useThemedStyles} from '@/styles';
 import debounce from 'lodash.debounce';
 
@@ -54,6 +54,16 @@ const FormTextInput = ({label,def,onChange = () => {},AddStyle}:{label?:string,d
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
             <TextInput keyboardType="default" defaultValue={def} onChangeText={onChange} style={[Form.input,AddStyle?.StyleInput]}/>
+        </FormCommon>
+        
+    )
+}
+
+const FormAttachFile = ({label,def,onChange = () => {},AddStyle}:{label?:string,def?:{uri: string,name: string,type: string},onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
+    const {Form} = useThemedStyles();
+    return (
+        <FormCommon label={label} AddStyle={AddStyle}>
+            <AttachmentField defaultValue={def} onChange={onChange} style={AddStyle?.StyleInput}/>
         </FormCommon>
         
     )
@@ -153,7 +163,7 @@ const FormAutoComplete = ({label = 'Select',def={id:'',name:''},onChange = () =>
 }
 
 
-export {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormCommon,FormAutoComplete};
+export {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormCommon,FormAutoComplete,FormAttachFile};
 
 
 

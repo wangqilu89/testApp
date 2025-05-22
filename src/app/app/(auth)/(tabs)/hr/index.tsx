@@ -4,8 +4,8 @@ import { useEffect, useState,useCallback} from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated from 'react-native-reanimated';
 import { useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData} from '@/services'; // 👈 functions
-import { LoadingScreen, NoRecords, MainPage,MainViewer,FilterDropdown} from '@/services'; // 👈 Common Screens
-import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete} from '@/services';
+import { LoadingScreen, NoRecords, MainPage,MainViewer} from '@/services'; // 👈 Common Screens
+import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete,FormAttachFile} from '@/services';
 import debounce from 'lodash.debounce';
 
 import {useThemedStyles} from '@/styles';
@@ -58,6 +58,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
         const pattern  = new RegExp('val')
         
         
+        
         const loadMore = () => {
             const nextPage = page + 1;
             const nextItems = list.slice(0, nextPage * pageSize); // Expand by another 20 items
@@ -67,7 +68,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
         
         const loadList = async () => {
             setLoading(true);
-            const data = await FetchData({...BaseObj,command:'HR - Get Expense List'});
+            const data = await FetchData({...BaseObj,command:'HR : Get Expense List'});
             if (data) {
                 setList(data);
                 setDisplayList(data.slice(0, pageSize)); // Show only first 20 items initially
@@ -81,10 +82,14 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
                 <Animated.View style={[Listing.container]}>
                 <>
                     {colNames.map((colName, index) => {
-                        if (pattern.test(colName)) {
-                            return (<Text key={index} style={[Listing.number]}>{item[colName] ?? ''}</Text>)
+                        let val = item[colName]
+                        if (typeof val === 'object' && val !== null) {
+                            val = val.name ?? '';
                         }
-                            return (<Text key={index} style={[Listing.text]}>{item[colName] ?? ''}</Text>)
+                        if (pattern.test(colName)) {
+                            return (<Text key={index} style={[Listing.number]}>{val ?? ''}</Text>)
+                        }
+                            return (<Text key={index} style={[Listing.text]}>{val ?? ''}</Text>)
                     })} 
                 </>   
             
@@ -92,6 +97,24 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
             </TouchableOpacity>
             );
         };
+
+        const ListRow = (data:GenericObject) => {
+            const [collapsed,setCollapsed] = useState(false)
+            data.value.forEach
+            return (
+                <>
+                    <TouchableOpacity onPress={() => setCollapsed(!collapsed)}>
+                        <View style={[Header.container, {backgroundColor: '#ccc'}]}>
+                        <Text style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>{data.key} {collapsed ? '▼' : '▲'}</Text>
+                        </View>
+                    </TouchableOpacity>
+                    {collapsed && data.value.map((item: GenericObject, index: number) => (
+                        <AnimatedRow item={item} colNames={COLUMN_CONFIG[isWeb ? 'web' : 'mobile']}/> 
+                    ))
+                    }
+                </>
+            )
+        }
 
         useEffect(() => {
         
@@ -132,7 +155,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
                 }
                 renderItem={({ item }) => {
                     return (
-                    <AnimatedRow item={item} colNames={COLUMN_CONFIG[isWeb ? 'web' : 'mobile']}/>
+                        <ListRow data={item} />
                     )
                 }}
                 onEndReached={() => {
@@ -152,7 +175,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
     const ClaimForm = ({id}:{id:string}) => {
 
         const [loading, setLoading] = useState(false);
-        const [formData, setFormData] = useState({date: new Date(),id,project:{},category: '',value: '',file: null as any});
+        const [formData, setFormData] = useState({date: new Date(),id,project:{},category: {},value: '',file: null as any});
         const [showDate, setShowDate] = useState(false);
         const [tempData,setTempData] = useState('')
         
@@ -175,24 +198,12 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
 
                     <FormTextInput label="ID " def={formData.id} onChange={(text) => updateData('id', text)} AddStyle={{StyleRow:{display:'none'}}}/>
                     <FormDateInput label='Date ' def={formData.date} onChange={(selectedDate)=>{updateData('date',selectedDate.date)}}/>
-                    <FormAutoComplete label="Project " def={formData.project} onChange={()=>{}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR - Get Project Listing",keyword:query})}/>
-                    
-                    <View style={[Form.rowContainer]}>
-                        <Text style={[Form.label]}>Project:</Text>
-                        <FilterDropdown style={Form.input} command={{ ...BaseObj, command: "HR - Get Project Listing" }} onSelect={(item) => updateData('project',item.id)} />
-                    </View>
-                    <View style={[Form.rowContainer]}>
-                        <Text style={[Form.label]}>Category:</Text>
-                        <FilterDropdown style={Form.input} command={{ ...BaseObj, command: "HR - Get Category Listing" }} onSelect={(item) => updateData('category',item.id)} />
-                    </View>
+                    <FormAutoComplete label="Project " def={formData.project} onChange={(item)=>{updateData('project',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Project Listing",keyword:query})}/>
+                    <FormAutoComplete label="Category " def={formData.category} onChange={(item)=>{updateData('category',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Category Listing",keyword:query})}/>
+                 
                     <FormNumericInput label="Value " def={formData.value} onChange={debounce((text) => updateData('value', text),500)} />
-                    <View style={[Form.rowContainer]}>
-                        <Text style={[Form.label]}>Upload Document:</Text>
-                        
-                        <Button title="Pick File or Image" onPress={(item)=> {}} />
-                        <Button title="Pick Image from Gallery" onPress={(item)=> {}} />
-                        {formData.file && <Text style={{ marginTop: 10 }}>Selected: {formData.file.name || formData.file.uri}</Text>}
-                    </View>
+                    <FormAttachFile label="Attach File " def={formData.file} onChange={(file) => {updateData('file',file)}}/>
+                    
                     <FormSubmit onPress={()=>{}}/>
                     
                 </FormContainer>

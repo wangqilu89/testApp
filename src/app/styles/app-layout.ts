@@ -45,8 +45,8 @@ export const useThemedStyles = () => {
   
   })
   const Form = StyleSheet.create({
-    container:{flex:1,paddingLeft:10},
-    rowContainer:{flexDirection: 'row',width:'100%',backgroundColor: 'transparent',paddingTop:10,paddingBottom:10},
+    container:{flex:1,paddingLeft:10,width:'100%'},
+    rowContainer:{flexDirection: 'row',backgroundColor: 'transparent',paddingTop:15,paddingBottom:15,marginLeft:5,marginRight:20},
     label:{width:150,color:Theme.text,textAlign: 'left',fontSize: 16, fontWeight: 'bold',...Align.horizontalLeft},
     input:{flex:1,color:Theme.text,textAlign: 'left',fontSize: 16,padding:0,height:20},
     button:{backgroundColor:Theme.backgroundReverse,fontSize:16,paddingTop:7,paddingBottom:7,paddingLeft:10,paddingRight:10,fontWeight:'bold',borderRadius:10,color: 'white'}

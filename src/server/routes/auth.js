@@ -64,7 +64,7 @@ const handleStatusCheck = async (req, res) => {
   if (req.session.accessToken && req.session.accessTokenSecret) {
     req.body = {
       restlet: 'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=3356&deploy=1',
-      command: 'Get User',
+      command: 'App : Get User',
     };
     await PostNS(req, res);
   } else {

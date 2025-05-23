@@ -10,10 +10,10 @@ type GenericObject = Record<string, any>;
 type AnimatedRowProps = {isWeb:boolean,item: any,selected: boolean,colNames: string[],toggleSelect: (id: string) => void, backgroundColors: GenericObject}
 
 const approvals = [
-  { id: 'timesheets', title: 'Timesheets',icon:'time-outline'},
-  { id: 'expenses', title: 'Expense Claims',icon:'card-outline'},
+  { id: 'timesheet', title: 'Timesheets',icon:'time-outline'},
+  { id: 'expense', title: 'Expense Claims',icon:'card-outline'},
   { id: 'leave', title: 'Leaves',icon:'calendar-outline'},
-  { id: 'invoices', title: 'Invoices',icon:'file-tray-full-outline'},
+  { id: 'invoice', title: 'Invoices',icon:'file-tray-full-outline'},
   { id: 'lost', title: 'Lost Clients',icon:'reader-outline'},
 ];
 
@@ -37,27 +37,27 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
   const pageSize = 10; // Show 10 items at a time
   const isWeb = useWebCheck(); // Only "true web" if wide
   const backgroundColors = useRef<GenericObject>({}).current;
-  const {Page,Header,ReactTag,CategoryButton} = useThemedStyles()
+  const {Form,Listing,ListHeader,Page} = useThemedStyles()
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
   const COLUMN_CONFIG: Record<string, { web: string[]; mobile: string[] }> = {
-    timesheets: {
+    timesheet: {
       web: ["select", "employee", "weekdate", "customer", "memo", "total_hours", "total_timecosts", "approved_hours","approved_costs"],
       mobile: ["employee", "weekdate", "customer","total_hours"],
     },
-    expenseclaims: {
+    expenseclaim: {
       web: ["select", "employee_name", "Claim Date", "Amount", "Currency", "Status"],
       mobile: ["employee_name", "Amount", "Claim Date"],
     },
-    leaveapplications: {
+    leave: {
       web: ["select", "employee_name", "leave_type", "start_date", "end_date", "status"],
       mobile: ["employee_name", "leave_type", "start_date", "end_date"],
     },
-    invoices: {
+    invoice: {
       web: ["select", "customer", "invoice", "amount", "due_date", "status"],
       mobile: ["customer", "amount", "due_date"],
     },
-    lostservices: {
+    lost: {
       web: ["select", "customer", "lost_reason", "amount", "lost_date", "owner"],
       mobile: ["customer", "lost_reason",  "lost_date"],
     },
@@ -67,7 +67,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
   const loadData = async () => {
     setLoading(true);
     try {
-      let data = await FetchData({...BaseObj,command:`Approve - Get ${category} List`});
+      let data = await FetchData({...BaseObj,command:`Approve : Get ${category} List`});
       data = data|| []
       data.forEach((elem:GenericObject) => {
         if (!backgroundColors[elem.internalid]) {
@@ -100,18 +100,18 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
   
     return (
       <TouchableOpacity onPress={() => toggleSelect(item.internalid)}>
-        <Animated.View style={[{flexDirection: 'row',paddingVertical: 10,borderBottomWidth: 1,borderBottomColor: '#ccc'},animatedStyle]}>
+        <Animated.View style={[Listing.container,animatedStyle]}>
           {isWeb ? (
             <>
-            <Text style={{ flex: 1, alignItems: 'center' ,fontSize: 20,textAlign:'center'}}>{selected ? '☑️' : '⬜'}</Text>
+            <Text style={[Listing.text]}>{selected ? '☑️' : '⬜'}</Text>
             {colNames.slice(1).map((colName, index) => (
-              <Text key={index} style={{ flex: 1, textAlign: 'left'}}>{item[colName] ?? ''}</Text>
+              <Text key={index} style={[Listing.text]}>{item[colName] ?? ''}</Text>
             ))} 
             </>
           ):(
             <>
             {colNames.map((colName, index) => (
-              <Text key={index} style={{ flex: 1, textAlign: 'center' }}>{item[colName] ?? ''}</Text>
+              <Text key={index} style={[Listing.text]}>{item[colName] ?? ''}</Text>
             ))}
             </> 
           )
@@ -154,7 +154,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
 
     try {
       const finalArry: string[] = selectedIds.flatMap(elem => elem.split(','));
-      await FetchData({...BaseObj,command:`Approve - Approve ${category}`, data: finalArry});
+      await FetchData({...BaseObj,command:`Approve : Approve ${category}`, data: finalArry});
       
 
       Alert.alert('Approved successfully!');
@@ -187,7 +187,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
               return;
             }
             try {
-              await FetchData({...BaseObj,command:`Approve - Reject ${category}`, data: selectedIds, reason });
+              await FetchData({...BaseObj,command:`Approve : Reject ${category}`, data: selectedIds, reason });
               Alert.alert('Rejected successfully!');
               router.back(); // Go back after success
             } catch (err) {
@@ -266,14 +266,14 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
         
         {/* Timesheet List */}
         <FlatList
-          style={{width:'100%'}}
+          style={[Form.container]}
           data={displayList}
           keyExtractor={(item) => item.internalid}
           stickyHeaderIndices={[0]}
           ListHeaderComponent={
-            <View style={{ flexDirection: 'row', backgroundColor: '#004C6C', paddingVertical: 10,display:'flex'}}>
+            <View style={[ListHeader.container]}>
                 {columnTitles.map((title, index) => (
-                  <Text key={index} style={{ flex: 1, color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                  <Text key={index} style={[ListHeader.text]}>
                     {toProperCase(title)}
                   </Text>
                 ))}

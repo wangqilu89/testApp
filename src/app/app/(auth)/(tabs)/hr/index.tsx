@@ -1,13 +1,13 @@
 
 import { View, Text, TouchableOpacity, FlatList, Button,Platform,TextInput} from 'react-native';
-import { useEffect, useState,useCallback} from 'react';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState,useCallback,useRef} from 'react';
+import { useRouter, useLocalSearchParams} from 'expo-router';
 import Animated from 'react-native-reanimated';
-import { useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData} from '@/services'; // 👈 functions
+import { useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField} from '@/services'; // 👈 functions
 import { LoadingScreen, NoRecords, MainPage,MainViewer} from '@/services'; // 👈 Common Screens
 import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete,FormAttachFile} from '@/services';
 import debounce from 'lodash.debounce';
-
+import { Ionicons } from '@expo/vector-icons'; 
 import {useThemedStyles} from '@/styles';
 
 
@@ -32,7 +32,7 @@ function MainScreen() {
 function ExpenseClaim({ category,id,user}: { category: string, id:string,user:GenericObject|null}) {
     
     const router = useRouter();
-    const {Page,Header,Listing,Form} = useThemedStyles();
+    const {Page,Header,Listing,Form,ListHeader} = useThemedStyles();
     
     const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
     
@@ -47,18 +47,19 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
         const [loading, setLoading] = useState(true);
         const [list, setList] = useState<GenericObject[]>([]);
         const [displayList, setDisplayList] = useState<GenericObject[]>([]); // ✅ Add this
-        
+        const [search, setSearch] = useState('');
         const [page, setPage] = useState(1);
+        const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
         const pageSize = 10; // Show 10 items at a time
         const isWeb = useWebCheck(); // Only "true web" if wide   
         const COLUMN_CONFIG: { web: string[]; mobile: string[] } = {
-            web: ["date","category","project","memo","val_amount","status","link"],
-            mobile: ["date","category","project","val_amount","status"]
+            web: ["date","category","project","memo","status","val_amount"],
+            mobile: ["date","category","project","status","val_amount"]
         };
         const pattern  = new RegExp('val')
+
         
-        
-        
+        /*Function */
         const loadMore = () => {
             const nextPage = page + 1;
             const nextItems = list.slice(0, nextPage * pageSize); // Expand by another 20 items
@@ -71,56 +72,95 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
             const data = await FetchData({...BaseObj,command:'HR : Get Expense List'});
             if (data) {
                 setList(data);
+                
                 setDisplayList(data.slice(0, pageSize)); // Show only first 20 items initially
+                
             }
             setLoading(false);
         }
+
+        const toggleCollapse = (key: string) => {
+            setExpandedKeys((prev) =>
+              prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+            );
+        };
+
+        /*React Objects */
         const AnimatedRow = ({item,colNames}:AnimatedRowProps) => {
             
             return (
-            <TouchableOpacity onPress={() => router.push({pathname: '/hr' as any, params: { url: encodeURIComponent(item.url),doc:item.doc} })}>
-                <Animated.View style={[Listing.container]}>
-                <>
+            <TouchableOpacity onPress={() => {}}>
+                <View style={[Listing.container]}>
                     {colNames.map((colName, index) => {
                         let val = item[colName]
                         if (typeof val === 'object' && val !== null) {
                             val = val.name ?? '';
                         }
                         if (pattern.test(colName)) {
-                            return (<Text key={index} style={[Listing.number]}>{val ?? ''}</Text>)
+                            return (<Text numberOfLines={2} ellipsizeMode="tail" key={index} style={[Listing.number]} accessibilityHint={val ?? ''}>{val ?? ''}</Text>)
                         }
-                            return (<Text key={index} style={[Listing.text]}>{val ?? ''}</Text>)
+                            return (<Text numberOfLines={2} ellipsizeMode="tail" key={index} style={[Listing.text]} accessibilityHint={val ?? ''}>{val ?? ''}</Text>)
                     })} 
-                </>   
-            
-                </Animated.View>
+                </View>
             </TouchableOpacity>
             );
         };
 
-        const ListRow = (data:GenericObject) => {
-            const [collapsed,setCollapsed] = useState(false)
-            data.value.forEach
+        const ListRow = ({data, isCollapsed, toggleCollapse }:{data:GenericObject,isCollapsed:boolean,toggleCollapse: () => void}) => {
             return (
                 <>
-                    <TouchableOpacity onPress={() => setCollapsed(!collapsed)}>
-                        <View style={[Header.container, {backgroundColor: '#ccc'}]}>
-                        <Text style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>{data.key} {collapsed ? '▼' : '▲'}</Text>
+                    <TouchableOpacity onPress={toggleCollapse}>
+                        <View style={[Header.container, {backgroundColor: '#ccc',flexDirection:'row',justifyContent:'space-between',paddingVertical:10,paddingHorizontal:20,borderBottomWidth:1}]}>
+                            <Text style={{flex:1,fontWeight: 'bold',textAlign:'left'}}>{data.key}</Text>
+                            <Text style={{flex:1,fontWeight: 'bold',textAlign:'right'}}>{data['val_amount']}</Text>
                         </View>
                     </TouchableOpacity>
-                    {collapsed && data.value.map((item: GenericObject, index: number) => (
+                    {isCollapsed && data.value.map((item: GenericObject, index: number) => (
                         <AnimatedRow item={item} colNames={COLUMN_CONFIG[isWeb ? 'web' : 'mobile']}/> 
                     ))
                     }
                 </>
             )
         }
-
-        useEffect(() => {
         
+        useEffect(() => {
             loadList();
         
         }, []);
+        useEffect(() => {
+            setExpandedKeys([]);
+          }, [search]);
+          
+        useEffect(() => {
+            const keyword = search.trim().toLowerCase();
+           
+            
+            if (keyword === '') {
+                const paginated = list.slice(0, page * pageSize);
+                setDisplayList(paginated);
+                
+            } 
+            else {
+                
+                const filtered = list.flatMap((i) => {
+                    const newArry = i.value.filter((item: GenericObject) =>
+                      Object.values(item).some((val) =>
+                        String(typeof val === 'object' ? val?.name ?? '' : val)
+                          .toLowerCase()
+                          .includes(keyword)
+                      )
+                    );
+                  
+                    return newArry.length > 0 ? [{ key: i.key, value: newArry,val_amount:i['val_amount']}] : [];
+                });
+                  
+                setDisplayList(filtered);  
+                
+                
+               
+            }
+            
+        }, [search,page,list]);
         if (list.length == 0) {
             return (
               <NoRecords />
@@ -133,29 +173,36 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
             );
         }
         return (
-        <View style={[Page.container]}>
+        <View style={[Page.container,{flexDirection:'column'}]}>
             {/*HEADER */}
             <View style={[Header.container]}><Text style={[Header.text]}>List of Claims</Text></View>
-            {/*LISTING*/}
+           {/*Search*/}
+           <SearchField search={search} onChange={setSearch} />
+           
+             {/*LISTING*/}
+             
             <FlatList
-                style={[Page.container]}
+                style={[Form.container]}
+                
                 data={displayList}
-                keyExtractor={(item) => item.internalid}
+                keyExtractor={(item) => item.key}
                 stickyHeaderIndices={[0]}
                 ListHeaderComponent={
-                    <View style={[Header.container]}>
+                    <View style={[ListHeader.container,{borderTopRightRadius:10,borderTopLeftRadius:10}]}>
                         {COLUMN_CONFIG[isWeb ? 'web' : 'mobile'].map((title, index) => {
                             const RawStr = title.split('_')
                             const FinalStr = toProperCase(RawStr[RawStr.length - 1])
                             return (
-                                <Text key={index} style={[Header.text]}>{FinalStr}</Text>
+                                <Text key={title} style={[ListHeader.text]}>{FinalStr}</Text>
                             )
                         })}
                     </View>
                 }
                 renderItem={({ item }) => {
+                    
                     return (
-                        <ListRow data={item} />
+                        <ListRow data={item} isCollapsed={expandedKeys.includes(item.key)} toggleCollapse={() => toggleCollapse(item.key)}/>
+                        
                     )
                 }}
                 onEndReached={() => {
@@ -164,7 +211,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
                     }
                 }}
                 onEndReachedThreshold={0.5}
-                />
+            />
 
         
         </View>

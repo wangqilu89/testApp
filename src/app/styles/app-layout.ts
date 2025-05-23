@@ -39,20 +39,26 @@ export const useThemedStyles = () => {
   })
 
   const Listing = StyleSheet.create({
-    container:{flexDirection: 'row',paddingVertical: 10,borderBottomWidth: 1,borderBottomColor: Theme.text},
-    text:{...Align.horizontalLeft ,textAlign: 'left',color:Theme.mooreReverse,backgroundColor: 'transparent',fontSize: 18, fontWeight: 'bold' },
-    number:{...Align.horizontalRight ,textAlign: 'right',color:Theme.mooreReverse,backgroundColor: 'transparent',fontSize: 18, fontWeight: 'bold' }
+    container:{flexDirection: 'row',padding: 15,borderBottomWidth: 1,borderBottomColor: Theme.text},
+    text:{...Align.horizontalLeft ,textAlign: 'left',color:Theme.text,backgroundColor: 'transparent',fontSize: 14,flex:1},
+    number:{...Align.horizontalRight ,textAlign: 'right',color:Theme.text,backgroundColor: 'transparent',fontSize: 14,flex:1}
+  
+  })
+  const ListHeader = StyleSheet.create({
+    container:{...Header.container,flexDirection: 'row',paddingVertical: 10,display:'flex'},
+    text:{...Header.text,textAlign: 'center',backgroundColor: 'transparent',fontSize: 14, fontWeight: 'bold',flex:1}
+
   
   })
   const Form = StyleSheet.create({
-    container:{flex:1,paddingLeft:10,width:'100%'},
+    container:{flex:1,paddingLeft:15,paddingRight:15,width:'100%'},
     rowContainer:{flexDirection: 'row',backgroundColor: 'transparent',paddingTop:15,paddingBottom:15,marginLeft:5,marginRight:20},
     label:{width:150,color:Theme.text,textAlign: 'left',fontSize: 16, fontWeight: 'bold',...Align.horizontalLeft},
     input:{flex:1,color:Theme.text,textAlign: 'left',fontSize: 16,padding:0,height:20},
     button:{backgroundColor:Theme.backgroundReverse,fontSize:16,paddingTop:7,paddingBottom:7,paddingLeft:10,paddingRight:10,fontWeight:'bold',borderRadius:10,color: 'white'}
   })
 
-  return {Theme,ReactTag,Page, Header,CategoryButton,Listing,Form}
+  return {Theme,ReactTag,Page, Header,CategoryButton,Listing,Form,ListHeader}
 }
 
 

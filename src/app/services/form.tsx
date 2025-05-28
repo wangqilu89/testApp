@@ -38,7 +38,7 @@ const FormRow = ({styles,children}:{styles?: ViewStyle,children: React.ReactNode
 const FormLabel = ({label,styles}:{label?:string,styles?:TextStyle}) => {
     const {Form} = useThemedStyles();
     return (
-        <Text style={[Form.label,styles]}>{label}</Text>
+        <Text style={[Form.label,styles,{paddingTop:15,paddingBottom:15}]}>{label}</Text>
     )
 }
 const FormCommon = ({label,children,AddStyle}:{label?:string,children?:React.ReactNode,AddStyle?:KeyStyles}) => {
@@ -53,8 +53,11 @@ const FormTextInput = ({label,def,onChange = () => {},AddStyle}:{label?:string,d
     const {Form} = useThemedStyles();
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
-            <TextInput keyboardType="default" defaultValue={def} onChangeText={onChange} style={[Form.input,AddStyle?.StyleInput]}/>
+            <View style={{height:'100%',flex:1}}>
+            <TextInput keyboardType="default" defaultValue={def} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
+            </View>
         </FormCommon>
+        
         
     )
 }
@@ -79,7 +82,9 @@ const FormNumericInput = ({label,def,onChange = () => {},AddStyle}:{label?:strin
     };
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
-            <TextInput inputMode="decimal" value={temp} onChangeText={handleChange} style={[Form.input,AddStyle?.StyleInput]}/>
+            <View style={{height:'100%',flex:1}}>
+            <TextInput inputMode="decimal" value={temp} onChangeText={handleChange} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
+            </View>
         </FormCommon>
     )
 }
@@ -91,7 +96,11 @@ const FormDateInput = ({label = 'Date',def = new Date(),onChange = () => {},AddS
     def.setHours(def.getHours() + 8)
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
-            <TouchableOpacity style={[Form.input,AddStyle?.StyleInput]} onPress={() => setShowDate(true)} ><Text style={[Form.input,AddStyle?.StyleInput]}>{def.toISOString().split('T')[0]}</Text></TouchableOpacity>
+            <TouchableOpacity style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setShowDate(true)} >
+                
+                <Text style={[Form.input,AddStyle?.StyleInput]}>{def.toISOString().split('T')[0]}</Text>
+                
+            </TouchableOpacity>
             <Modal isVisible={showDate} >
                 <View style={{backgroundColor:'white',flexDirection:'column'}}>
                     <TouchableOpacity onPress={() => setShowDate(false)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
@@ -104,9 +113,10 @@ const FormDateInput = ({label = 'Date',def = new Date(),onChange = () => {},AddS
 const FormSubmit = ({label = 'Submit',onPress = () => {},AddStyle}:{label?:string,onPress?: (item: any) => void,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     return (
-        <FormRow styles={{width:'100%',justifyContent:'center',...AddStyle?.StyleRow}}>
+        <FormRow styles={{justifyContent:'center',...AddStyle?.StyleRow}}>
+            <View style={{paddingTop:15,paddingBottom:15}}>
             <Text style={[Form.button,AddStyle?.StyleInput]} onPress={onPress}>{label}</Text>
-            
+            </View>
         </FormRow>
 
     )
@@ -139,17 +149,23 @@ const FormAutoComplete = ({label = 'Select',def={id:'',name:''},onChange = () =>
 
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
-            <TouchableOpacity style={[Form.input,AddStyle?.StyleInput]} onPress={() => setModal(true)} ><Text style={[Form.input,AddStyle?.StyleInput]}>{temp.name}</Text></TouchableOpacity>
+
+            <TouchableOpacity style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setModal(true)} >
+                
+                <Text style={[Form.input,AddStyle?.StyleInput]}>{temp.name}</Text>
+                
+            </TouchableOpacity>
             <Modal isVisible={modal} >
                 <View style={{backgroundColor:'white',flexDirection:'column'}}>
                     <TouchableOpacity onPress={() => setModal(false)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
-                    <TextInput placeholder="Search" value={temp.name} onChangeText={debounce(loadDropdown,500)}/>
+                    
+                    <TextInput placeholder={"Search " + label} defaultValue={temp.name} onChangeText={debounce(loadDropdown,500)}   style={{borderRadius:5,borderWidth:1,marginLeft:10,marginRight:10,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}}/>
                     {result.length > 0 && (
                         <FlatList
                         data={result}
                         keyExtractor={(item, index) => index.toString()}
                         renderItem={({ item }) => (
-                            <TouchableOpacity onPress={() => {setTemp(item);onChange?.(item);setResult([])}}>
+                            <TouchableOpacity style={{paddingLeft:10,borderBottomWidth:1}} onPress={() => {setTemp(item);onChange?.(item);setResult([]);setModal(false)}}>
                                 <Text style={{ padding: 8 }}>{item.name}</Text>
                             </TouchableOpacity>
                         )}

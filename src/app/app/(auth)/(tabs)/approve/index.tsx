@@ -248,8 +248,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
 
 
   return (
-    <>
-      {/* Web: Horizontal Scroll enabled */}
+
         <View style={[Page.container]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
             
@@ -264,37 +263,37 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
             </TouchableOpacity>
           </View>
         
-        {/* Timesheet List */}
-        <FlatList
-          style={[Form.container]}
-          data={displayList}
-          keyExtractor={(item) => item.internalid}
-          stickyHeaderIndices={[0]}
-          ListHeaderComponent={
-            <View style={[ListHeader.container]}>
-                {columnTitles.map((title, index) => (
-                  <Text key={index} style={[ListHeader.text]}>
-                    {toProperCase(title)}
-                  </Text>
-                ))}
-            </View>
-          }
-          renderItem={({ item }) => {
-            return (
-              <AnimatedRow isWeb={isWeb} item={item} selected={selectedIds.includes(item.internalid)} toggleSelect={toggleSelect} colNames={columnTitles} backgroundColors={backgroundColors}/>
-            )
-          }}
-          onEndReached={() => {
-            if (displayList.length < list.length) {
-              loadMore();
+          {/* Timesheet List */}
+          <FlatList
+            style={[Form.container]}
+            data={displayList}
+            keyExtractor={(item) => item.internalid}
+            stickyHeaderIndices={[0]}
+            ListHeaderComponent={
+              <View style={[ListHeader.container]}>
+                  {columnTitles.map((title, index) => (
+                    <Text key={index} style={[ListHeader.text]}>
+                      {toProperCase(title)}
+                    </Text>
+                  ))}
+              </View>
             }
-          }}
-          onEndReachedThreshold={0.5}
-        />
+            renderItem={({ item }) => {
+              return (
+                <AnimatedRow isWeb={isWeb} item={item} selected={selectedIds.includes(item.internalid)} toggleSelect={toggleSelect} colNames={columnTitles} backgroundColors={backgroundColors}/>
+              )
+            }}
+            onEndReached={() => {
+              if (displayList.length < list.length) {
+                loadMore();
+              }
+            }}
+            onEndReachedThreshold={0.5}
+          />
 
         
         </View>
-    </>
+    
   );
 }
 

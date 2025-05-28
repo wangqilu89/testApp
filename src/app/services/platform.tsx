@@ -106,6 +106,7 @@ const MainViewer = ({url,doc}:{url:string,doc:string}) => {
 }
 
 const AttachmentField =({ defaultValue,onChange,style}: { defaultValue?: {uri: string,name: string,type: string},onChange?:(item: any) => void,style?:TextStyle & ViewStyle})  => {
+  const {CategoryButton} = useThemedStyles()
   const [prompt,setPrompt] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<{uri: string;name: string;type: string;} | null>(null);
   const pickFrom = async(place:string): Promise<{uri: string;name: string;type: string;} | undefined> => {
@@ -174,7 +175,9 @@ const AttachmentField =({ defaultValue,onChange,style}: { defaultValue?: {uri: s
 
   return (
     <View style={{flexDirection:'column',flex:1}}>
-      <TouchableOpacity style={[{flex:1},style]} onPress={() => setPrompt(true)} ><Text style={[style]}>{uploadedFile ? 'Update Document or Image' : 'Upload Document or Image'}</Text></TouchableOpacity>
+      <TouchableOpacity style={[{flex:1,flexDirection:'row',paddingLeft:10,paddingTop:15,paddingBottom:15},style]} onPress={() => setPrompt(true)} >
+      <Ionicons name='attach-outline' style={[CategoryButton.icon]}/><Text style={[style,{flex:1}]}>{uploadedFile ? 'Update Document or Image' : 'Upload Document or Image'}</Text>
+      </TouchableOpacity>
       
 
       <Modal visible={prompt} animationType="slide" transparent={true} onRequestClose={() => setPrompt(false)}>
@@ -206,7 +209,7 @@ const AttachmentField =({ defaultValue,onChange,style}: { defaultValue?: {uri: s
 const SearchField = ({search,onChange,style}:{search?:string,onChange?:(item: any) => void,style?:TextStyle & ViewStyle}) => {
   const {Page,Theme} = useThemedStyles()
   return (
-  <View style={[Page.container,{height:'auto',justifyContent:'space-between',flexDirection:'row'}]}>
+  <View style={[Page.container,{height:'auto',justifyContent:'space-between',flexDirection:'row',paddingBottom:15}]}>
     <View style={{flex:1}}></View>
     <View style={{flex:1,borderWidth: 1, padding: 8, margin: 10,borderRadius: 20,flexDirection:'row',justifyContent:'space-between',backgroundColor:'transparent',borderColor:Theme.text}}>
       <View style={{width:30}}><Ionicons name="search" color={Theme.text} size={20} /></View>

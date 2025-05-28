@@ -23,7 +23,7 @@ export const useThemedStyles = () => {
     view:{...Align.horizontalCenter, flex: 1}
   })
   const Page = StyleSheet.create({
-    container:{width:'100%',height:'100%',backgroundColor:Theme.pageBackground,...Align.horizontalCenter,...Align.verticalCenter},
+    container:{width:'100%',height:'100%',paddingBottom: 60,backgroundColor:Theme.pageBackground,...Align.horizontalCenter,...Align.verticalCenter},
     listContainer:{width:'100%'}
   })
   const Header = StyleSheet.create({
@@ -52,10 +52,10 @@ export const useThemedStyles = () => {
   })
   const Form = StyleSheet.create({
     container:{flex:1,paddingLeft:15,paddingRight:15,width:'100%'},
-    rowContainer:{flexDirection: 'row',backgroundColor: 'transparent',paddingTop:15,paddingBottom:15,marginLeft:5,marginRight:20},
+    rowContainer:{flexDirection: 'row',width:'100%',backgroundColor: 'transparent',marginLeft:5,marginRight:20},
     label:{width:150,color:Theme.text,textAlign: 'left',fontSize: 16, fontWeight: 'bold',...Align.horizontalLeft},
     input:{flex:1,color:Theme.text,textAlign: 'left',fontSize: 16,padding:0,height:20},
-    button:{backgroundColor:Theme.backgroundReverse,fontSize:16,paddingTop:7,paddingBottom:7,paddingLeft:10,paddingRight:10,fontWeight:'bold',borderRadius:10,color: 'white'}
+    button:{backgroundColor:Theme.backgroundReverse,fontSize:16,paddingTop:7,paddingBottom:7,paddingLeft:20,paddingRight:20,fontWeight:'bold',borderRadius:10,color:Theme.textReverse}
   })
 
   return {Theme,ReactTag,Page, Header,CategoryButton,Listing,Form,ListHeader}

@@ -73,9 +73,10 @@ const MainPage = ({redirect,title,pages}:{redirect:string;title:string,pages:Sub
 const NoRecords = () => {
   const {Page,Header} = useThemedStyles()
   return (
-    <View style={[Page.container]}>
+    <View style={[Page.container,{flex:1,height:'auto'}]}>
         <Text style={[Header.textReverse]}>No records found.</Text>
-      </View>
+    </View>
+    
   )
 }
 
@@ -105,10 +106,10 @@ const MainViewer = ({url,doc}:{url:string,doc:string}) => {
 
 }
 
-const AttachmentField =({ defaultValue,onChange,style}: { defaultValue?: {uri: string,name: string,type: string},onChange?:(item: any) => void,style?:TextStyle & ViewStyle})  => {
+const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { defaultValue?: {uri: string,name: string,type: string} | { uri: string; name: string; type: string }[] | null,onChange?:(item: any) => void,multiple?:boolean,style?:TextStyle & ViewStyle})  => {
   const {CategoryButton} = useThemedStyles()
   const [prompt,setPrompt] = useState(false)
-  const [uploadedFile, setUploadedFile] = useState<{uri: string;name: string;type: string;} | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<{uri: string;name: string;type: string;}[]>([]);
   const pickFrom = async(place:string): Promise<{uri: string;name: string;type: string;} | undefined> => {
     try {
       setPrompt(false);
@@ -161,46 +162,124 @@ const AttachmentField =({ defaultValue,onChange,style}: { defaultValue?: {uri: s
     catch (err:any) {
       Alert.alert(`Error on ${place}`,err.message)
     }
+  } 
+
+  const AddFile = (newfile:{uri: string;name: string;type: string;}) => {
+    setUploadedFile((prev) => {
+      const next = multiple ? [...prev, newfile] : [newfile];
+      onChange?.(next); // notify parent of the updated list
+      return next;
+      
+    })
   }
 
-  const openExternal = () => {
-    if (uploadedFile?.uri) Linking.openURL(uploadedFile.uri);
-  };
+  const RemoveFile = (item: { uri: string; name: string; type: string }, index: number) => {
+    setUploadedFile((prev) => {
+      const next = prev.filter((_, i) => i !== index)
+      onChange?.(next);
+      return next;
+    })
+  }
+  
+  const AddPick = async(place:string) => {
+    const NewFile = await pickFrom(place);
+    if (NewFile) {
+      AddFile(NewFile)
+    }
+    
+  }
+  
+
+  const AttachShow = ({UploadFile,index,style}:{UploadFile:{uri: string;name: string;type: string;},index:number,style?:TextStyle & ViewStyle}) => {
+    const openExternal = () => {
+      if (UploadFile?.uri) Linking.openURL(UploadFile.uri);
+    };
+    return (
+        <View style={{flexDirection:'row',width:'100%'}}>
+          <TouchableOpacity style={[{flex:1},style]} onPress={openExternal}>
+            {UploadFile.type?.startsWith('image/')?
+              (<Image source={{ uri: UploadFile.uri }} style={{ width: 100, height: 100, marginTop: 8, borderRadius: 4 }}/>):
+              (<Text style={[style]}>📎 {UploadFile.name ?? 'Unnamed file'}</Text>)
+            }  
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => RemoveFile(UploadFile,index)}>
+            <Ionicons name='close' style={[CategoryButton.icon,{color:'red'}]}/>
+          </TouchableOpacity>
+        </View>
+    )
+  }
+
 
   useEffect(() => {
-    if (defaultValue) {
-      setUploadedFile(defaultValue);
+    if (!defaultValue) return;
+
+    const normalized = Array.isArray(defaultValue) ? defaultValue : [defaultValue];
+
+    // prevent duplicate re-renders
+    const isSame = uploadedFile.length === normalized.length &&
+      uploadedFile.every((f, i) =>
+        f.uri === normalized[i].uri &&
+        f.name === normalized[i].name &&
+        f.type === normalized[i].type
+      );
+
+    if (!isSame) {
+      setUploadedFile(normalized);
     }
   }, [defaultValue]);
 
+  useEffect(() => {
+    const autoPickOnWeb = async () => {
+      if (Platform.OS === 'web' && prompt) {
+        const fileObj = await pickFrom('document');
+        if (fileObj) {
+          AddFile(fileObj);
+          setPrompt(false); // close modal after selection
+        }
+      }
+    }
+    autoPickOnWeb();
+  },[prompt])
+  
   return (
     <View style={{flexDirection:'column',flex:1}}>
-      <TouchableOpacity style={[{flex:1,flexDirection:'row',paddingLeft:10,paddingTop:15,paddingBottom:15},style]} onPress={() => setPrompt(true)} >
-      <Ionicons name='attach-outline' style={[CategoryButton.icon]}/><Text style={[style,{flex:1}]}>{uploadedFile ? 'Update Document or Image' : 'Upload Document or Image'}</Text>
+      {/* Upload File Listing */}
+      {uploadedFile.length > 0 && (
+        <View style={{flexDirection:'row',flex:1}}>
+          
+          <FlatList
+            style={{borderWidth:1,flex:1,marginLeft:10}}       
+            data={uploadedFile}
+            keyExtractor={(item) => item.uri}
+            stickyHeaderIndices={[0]}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item,index}) => {   
+                return (
+                  <AttachShow UploadFile={item} index={index} style={style} />
+                )
+            }}
+          />
+          <View style={{flex:1}} ></View>
+        </View>
+      )}
+      <TouchableOpacity style={[{flex:1,flexDirection:'row',paddingLeft:10,paddingTop:(uploadedFile.length > 0?0:15),paddingBottom:15},style]} onPress={() => setPrompt(true)} >
+        <Ionicons name='attach-outline' style={[CategoryButton.icon]}/><Text style={[style,{flex:1}]}>{uploadedFile ? 'Update Document or Image' : 'Upload Document or Image'}</Text>
       </TouchableOpacity>
       
-
-      <Modal visible={prompt} animationType="slide" transparent={true} onRequestClose={() => setPrompt(false)}>
+      {/*Open Modal to choose file selection */}
+      <Modal visible={prompt && Platform.OS != 'web'} animationType="slide" transparent={true} onRequestClose={() => setPrompt(false)}>
         <TouchableOpacity style={{flex: 1,justifyContent: 'flex-end',backgroundColor:'#a7adb280'}} activeOpacity={1} onPressOut={() => setPrompt(false)}>
           <View style={{padding: 20}}>
             <Text style={{backgroundColor:'transparent',color:'white',fontSize: 18,fontWeight: 'bold',marginBottom: 12,textAlign: 'center'}}>Choose Upload Source</Text>
             <View style={{borderRadius:20,backgroundColor: 'white'}}>
-              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = await pickFrom('camera');if (fileObj) {setUploadedFile(fileObj);onChange?.(fileObj);};}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📷 Take Photo</Text></TouchableOpacity>
-              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = await pickFrom('gallery');if (fileObj) {setUploadedFile(fileObj);onChange?.(fileObj);};}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>🖼 Gallery</Text></TouchableOpacity>
-              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = await pickFrom('document');if (fileObj) {setUploadedFile(fileObj);onChange?.(fileObj);};}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📄 Pick File</Text></TouchableOpacity>
+              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = AddPick('camera');}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📷 Take Photo</Text></TouchableOpacity>
+              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = AddPick('gallery');}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>🖼 Gallery</Text></TouchableOpacity>
+              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = AddPick('document');}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📄 Pick File</Text></TouchableOpacity>
             </View>
           </View>
         </TouchableOpacity>
       </Modal>
-      {uploadedFile && (
-          <TouchableOpacity style={[{flex:1},style]} onPress={openExternal}>
-            {uploadedFile.type?.startsWith('image/')?
-              (<Image source={{ uri: uploadedFile.uri }} style={{ width: 100, height: 100, marginTop: 8, borderRadius: 4 }}/>):
-              (<Text style={[style]}>📎 {uploadedFile.name ?? 'Unnamed file'}</Text>)
-            }
-            
-          </TouchableOpacity>
-      )}
+      
     </ View>
   );
 

@@ -1,7 +1,7 @@
 
 import { View, Text, TouchableOpacity, FlatList, Button,Platform,TextInput} from 'react-native';
 import { useEffect, useState,useCallback,useRef} from 'react';
-import { useRouter, useLocalSearchParams} from 'expo-router';
+import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
 import Animated from 'react-native-reanimated';
 import { useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField} from '@/services'; // 👈 functions
 import { LoadingScreen, NoRecords, MainPage,MainViewer} from '@/services'; // 👈 Common Screens
@@ -31,8 +31,9 @@ function MainScreen() {
 
 function ExpenseClaim({ category,id,user}: { category: string, id:string,user:GenericObject|null}) {
     
+    const pathname = usePathname();
     const router = useRouter();
-    const {Page,Header,Listing,Form,ListHeader} = useThemedStyles();
+    const {Page,Header,Listing,Form,ListHeader,CategoryButton} = useThemedStyles();
     
     const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
     
@@ -161,11 +162,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
             }
             
         }, [search,page,list]);
-        if (list.length == 0) {
-            return (
-              <NoRecords />
-            );
-        }
+        
         if (loading) {
             return (
               <LoadingScreen txt="Loading..."/>
@@ -175,52 +172,71 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
         return (
         <View style={[Page.container,{flexDirection:'column'}]}>
             {/*HEADER */}
-            <View style={[Header.container]}><Text style={[Header.text]}>List of Claims</Text></View>
-           {/*Search*/}
-           <SearchField search={search} onChange={setSearch} />
-           
-             {/*LISTING*/}
-             
-            <FlatList
-                style={[Form.container]}
-                
-                data={displayList}
-                keyExtractor={(item) => item.key}
-                stickyHeaderIndices={[0]}
-                ListHeaderComponent={
-                    <View style={[ListHeader.container,{borderTopRightRadius:10,borderTopLeftRadius:10}]}>
-                        {COLUMN_CONFIG[isWeb ? 'web' : 'mobile'].map((title, index) => {
-                            const RawStr = title.split('_')
-                            const FinalStr = toProperCase(RawStr[RawStr.length - 1])
-                            return (
-                                <Text key={title} style={[ListHeader.text]}>{FinalStr}</Text>
-                            )
-                        })}
-                    </View>
-                }
-                renderItem={({ item }) => {
+            {!isWeb && (
+            <View style={[Header.container,{flexDirection:'row'}]}>
+                <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.back()}>
+                    <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+                </TouchableOpacity>
+                <Text style={[Header.text,{flex:1,width:'auto'}]}>List of Claims</Text>
+                <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({ pathname:pathname as any,params: { category: 'submit-expense' } })}>
+                    <Ionicons name="add" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+                </TouchableOpacity>
+            </View>
+            )}
+            {list.length > 0 ? (
+                <View style={{flex:1,flexDirection:'column',width:'100%'}}>
+                    {/*Search*/}
+                    <SearchField search={search} onChange={setSearch} />
+            
+                    {/*LISTING*/}
                     
-                    return (
-                        <ListRow data={item} isCollapsed={expandedKeys.includes(item.key)} toggleCollapse={() => toggleCollapse(item.key)}/>
+                    <FlatList
+                        style={[Form.container]}
                         
-                    )
-                }}
-                onEndReached={() => {
-                    if (displayList.length < list.length) {
-                    loadMore();
-                    }
-                }}
-                onEndReachedThreshold={0.5}
-            />
+                        data={displayList}
+                        keyExtractor={(item) => item.key}
+                        stickyHeaderIndices={[0]}
+                        ListHeaderComponent={
+                            <View style={[ListHeader.container,{borderTopRightRadius:10,borderTopLeftRadius:10}]}>
+                                {COLUMN_CONFIG[isWeb ? 'web' : 'mobile'].map((title, index) => {
+                                    const RawStr = title.split('_')
+                                    const FinalStr = toProperCase(RawStr[RawStr.length - 1])
+                                    return (
+                                        <Text key={title} style={[ListHeader.text]}>{FinalStr}</Text>
+                                    )
+                                })}
+                            </View>
+                        }
+                        renderItem={({ item }) => {
+                            
+                            return (
+                                <ListRow data={item} isCollapsed={expandedKeys.includes(item.key)} toggleCollapse={() => toggleCollapse(item.key)}/>
+                                
+                            )
+                        }}
+                        onEndReached={() => {
+                            if (displayList.length < list.length) {
+                            loadMore();
+                            }
+                        }}
+                        onEndReachedThreshold={0.5}
+                        
+                    />
+                </View>
+            ) : (
+                <View style={{flex:1,flexDirection:'column',width:'100%'}}>
+                    <NoRecords />
+                </View>
 
-        
+            )}
+             
         </View>
         
         )
     }
     
     const ClaimForm = ({id}:{id:string}) => {
-
+        const isWeb = useWebCheck(); 
         const [loading, setLoading] = useState(false);
         const [formData, setFormData] = useState({date: new Date(),id,project:{},category: {},value: '',file: null as any});
         const [showDate, setShowDate] = useState(false);
@@ -239,7 +255,15 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
         
         return (
             <View style={[Page.container]}>
-                <View style={[Header.container]}><Text style={[Header.text]}>Expense Claim</Text></View>
+                {!isWeb && (
+                <View style={[Header.container,{flexDirection:'row'}]}>
+                    <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.back()}>
+                        <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+                    </TouchableOpacity>
+                    <Text style={[Header.text,{flex:1,width:'auto'}]}>Expense Claim</Text>
+                
+                </View>
+                )}
                 <FormContainer>
                 
 

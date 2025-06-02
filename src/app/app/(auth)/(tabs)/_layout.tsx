@@ -20,8 +20,13 @@ type GenericObject = Record<string, any>;
 
 const WebData:MenuItem[] = [
   {id:'1',label:'Home',navigate:'/home'},
-  {id:'2',label:'Approve',details:[{ id: '2.1', label: 'Timesheets',navigate:'/approve/timesheets'},{ id: '2.2', label: 'Expense Claims',navigate:'/approve/expenses'},{ id: '2.3', label: 'Leaves' ,navigate:'/approve/leave'}, { id: '2.4', label: 'Invoices' ,navigate:'/approve/invoices'},{ id: '2.5', label: 'Lost Clients' ,navigate:'/approve/lost'}]}
+  {id:'2',label:'Approve',details:[{ id: '2.1', label: 'Timesheets',navigate:'/approve?category=timesheet'},{ id: '2.2', label: 'Expense Claims',navigate:'/approve?category=expense'},{ id: '2.3', label: 'Leaves' ,navigate:'/approve?category=leave'}, { id: '2.4', label: 'Invoices' ,navigate:'/approve?category=invoice'},{ id: '2.5', label: 'Lost Clients' ,navigate:'/approve?category=lost'}]},
+  {id:'3',label:'HR',details:[{ id: '3.1', label: 'Key Information',navigate:'/hr?category=personal'},{ id: '3.2', label: 'Leaves',navigate:'/hr?category=leave'},{ id: '3.3', label: 'Claims Listing' ,navigate:'/hr?category=expense'},{ id: '3.4', label: 'Submit Claims' ,navigate:'/hr?category=submit-expense'}, { id: '3.5', label: 'Pay Slip' ,navigate:'/hr?category=payslip'}]}
+
+
 ]
+
+
 
 const MobileTabs = () => {
   

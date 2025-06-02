@@ -93,7 +93,8 @@ const FormDateInput = ({label = 'Date',def = new Date(),onChange = () => {},AddS
     const {Form} = useThemedStyles();
     
     const [showDate, setShowDate] = useState(false);
-    def.setHours(def.getHours() + 8)
+    const displayDate = new Date(def);
+    displayDate.setHours(displayDate.getHours() + 8);
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
             <TouchableOpacity style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setShowDate(true)} >

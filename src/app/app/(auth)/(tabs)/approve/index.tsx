@@ -37,7 +37,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
   const pageSize = 10; // Show 10 items at a time
   const isWeb = useWebCheck(); // Only "true web" if wide
   const backgroundColors = useRef<GenericObject>({}).current;
-  const {Form,Listing,ListHeader,Page} = useThemedStyles()
+  const {Form,Listing,ListHeader,Page,Header} = useThemedStyles()
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
   const COLUMN_CONFIG: Record<string, { web: string[]; mobile: string[] }> = {
@@ -239,57 +239,68 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     );
   }
 
-  if (list.length == 0) {
-    return (
-      <NoRecords />
-      
-    );
-  }
+ 
 
 
   return (
 
         <View style={[Page.container]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
-            
-            <TouchableOpacity onPress={handleApprove} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-              <Text style={{ color: 'white', fontWeight: 'bold' }}>Approve Selected</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleReject} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>Reject Selected</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={selectAll} style={{backgroundColor: '#004C6C',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>{massSelect? 'Select All' : 'Unselect All'}</Text>
-            </TouchableOpacity>
-          </View>
-        
-          {/* Timesheet List */}
-          <FlatList
-            style={[Form.container]}
-            data={displayList}
-            keyExtractor={(item) => item.internalid}
-            stickyHeaderIndices={[0]}
-            ListHeaderComponent={
-              <View style={[ListHeader.container]}>
-                  {columnTitles.map((title, index) => (
-                    <Text key={index} style={[ListHeader.text]}>
-                      {toProperCase(title)}
-                    </Text>
-                  ))}
+          {/*HEADER */}
+          {!isWeb && (
+            <View style={[Header.container]}><Text style={[Header.text]}>{category.toUpperCase()}</Text></View>
+          )}
+          {list.length > 0 ? (
+          
+            <View style={{flex:1}}>
+            {/*Button */}
+              <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10 }}>
+                
+                <TouchableOpacity onPress={handleApprove} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                  <Text style={{ color: 'white', fontWeight: 'bold' }}>Approve Selected</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleReject} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Reject Selected</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={selectAll} style={{backgroundColor: '#004C6C',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>{massSelect? 'Select All' : 'Unselect All'}</Text>
+                </TouchableOpacity>
               </View>
-            }
-            renderItem={({ item }) => {
-              return (
-                <AnimatedRow isWeb={isWeb} item={item} selected={selectedIds.includes(item.internalid)} toggleSelect={toggleSelect} colNames={columnTitles} backgroundColors={backgroundColors}/>
-              )
-            }}
-            onEndReached={() => {
-              if (displayList.length < list.length) {
-                loadMore();
-              }
-            }}
-            onEndReachedThreshold={0.5}
-          />
+            
+            {/* Timesheet List */}
+              <FlatList
+                style={[Form.container]}
+                data={displayList}
+                keyExtractor={(item) => item.internalid}
+                stickyHeaderIndices={[0]}
+                ListHeaderComponent={
+                  <View style={[ListHeader.container]}>
+                      {columnTitles.map((title, index) => (
+                        <Text key={index} style={[ListHeader.text]}>
+                          {toProperCase(title)}
+                        </Text>
+                      ))}
+                  </View>
+                }
+                renderItem={({ item }) => {
+                  return (
+                    <AnimatedRow isWeb={isWeb} item={item} selected={selectedIds.includes(item.internalid)} toggleSelect={toggleSelect} colNames={columnTitles} backgroundColors={backgroundColors}/>
+                  )
+                }}
+                onEndReached={() => {
+                  if (displayList.length < list.length) {
+                    loadMore();
+                  }
+                }}
+                onEndReachedThreshold={0.5}
+              />
+            </View>
+          ):(
+            <NoRecords/>
+
+          )}
+          
+
+          
 
         
         </View>

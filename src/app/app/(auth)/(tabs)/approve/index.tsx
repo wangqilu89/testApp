@@ -3,11 +3,11 @@ import { View, Text, TouchableOpacity, FlatList, Alert} from 'react-native';
 import { useEffect, useState, useRef} from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
-import { FetchData, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,LoadingScreen,MainPage,NoRecords} from '@/services'; // 👈 update path
+import { FetchData, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,LoadingScreen,MainPage,NoRecords,SearchField} from '@/services'; // 👈 update path
 import {useThemedStyles} from '@/styles';
 
 type GenericObject = Record<string, any>;
-type AnimatedRowProps = {isWeb:boolean,item: any,selected: boolean,colNames: string[],toggleSelect: (id: string) => void, backgroundColors: GenericObject}
+type AnimatedRowProps = {isWeb:boolean,item: any,selected: boolean,colNames: string[],toggleSelect: (id: string) => void}
 
 const approvals = [
   { id: 'timesheet', title: 'Timesheets',icon:'time-outline'},
@@ -33,11 +33,11 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [massSelect, setmassSelect] = useState(true);
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 10; // Show 10 items at a time
   const isWeb = useWebCheck(); // Only "true web" if wide
-  const backgroundColors = useRef<GenericObject>({}).current;
-  const {Form,Listing,ListHeader,Page,Header} = useThemedStyles()
+  const {Form,Listing,ListHeader,Page,Header,Theme} = useThemedStyles()
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
   const COLUMN_CONFIG: Record<string, { web: string[]; mobile: string[] }> = {
@@ -69,11 +69,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     try {
       let data = await FetchData({...BaseObj,command:`Approve : Get ${category} List`});
       data = data|| []
-      data.forEach((elem:GenericObject) => {
-        if (!backgroundColors[elem.internalid]) {
-          backgroundColors[elem.internalid] = useSharedValue('transparent');
-        }
-      });
+      
 
       setList(data);
       setDisplayList(data.slice(0, pageSize)); // Show only first 20 items initially
@@ -95,9 +91,19 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     setPage(nextPage);
   };
 
-  const AnimatedRow = ({isWeb,item,selected,colNames,toggleSelect,backgroundColors}:AnimatedRowProps) => {
-    const animatedStyle = useAnimatedStyle(() => ({backgroundColor: backgroundColors[item.internalid]?.value ?? 'transparent'}));
+  const AnimatedRow = ({isWeb,item,selected,colNames,toggleSelect}:AnimatedRowProps) => {
+    const animatedBg = useSharedValue('transparent'); // ✅ valid hook usage
+    
+    useEffect(() => {
+      animatedBg.value = withTiming(
+        selected ? '#e0f7fa' : 'transparent',
+        { duration: 300, easing: Easing.inOut(Easing.ease) }
+      );
+    }, [selected]);
   
+    const animatedStyle = useAnimatedStyle(() => ({
+      backgroundColor: animatedBg.value
+    }));
     return (
       <TouchableOpacity onPress={() => toggleSelect(item.internalid)}>
         <Animated.View style={[Listing.container,animatedStyle]}>
@@ -125,12 +131,6 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     setSelectedIds((prev) => {
         const isSelected = prev.includes(id);
         const newSelectedIds = isSelected ? prev.filter((i) => i !== id) : [...prev, id];
-        
-        backgroundColors[id].value = withTiming(
-          isSelected ? 'transparent' : '#e0f7fa',
-          { duration: 300, easing: Easing.inOut(Easing.ease) }
-        );
-      
         return newSelectedIds;
 
     });
@@ -219,7 +219,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     }).join(' ');
   }
 
-
+  
   useEffect(() => {
     if (category && category != 'index') {
       loadData();
@@ -247,28 +247,22 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
         <View style={[Page.container]}>
           {/*HEADER */}
           {!isWeb && (
-            <View style={[Header.container]}><Text style={[Header.text]}>{category.toUpperCase()}</Text></View>
+            <View style={[Header.container,{flexDirection:'row'}]}>
+              <View style={{justifyContent:'center',width:'100%'}} ><Text style={[Header.text]}>{category.toUpperCase()}</Text></View>
+            
+              <TouchableOpacity onPress={selectAll} style={{position:'absolute',top:6,right:5,backgroundColor: '#00709F',width:150,maxWidth:150,padding: 5,borderRadius: 5,justifyContent:'center',alignItems:'center'}}>
+                <Text style={{ color: Theme.textReverse, fontWeight: 'bold'}}>{massSelect? 'Select All' : 'Unselect All'}</Text>
+              </TouchableOpacity>
+            </View>
           )}
           {list.length > 0 ? (
           
-            <View style={{flex:1}}>
-            {/*Button */}
-              <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10 }}>
-                
-                <TouchableOpacity onPress={handleApprove} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-                  <Text style={{ color: 'white', fontWeight: 'bold' }}>Approve Selected</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleReject} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Reject Selected</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={selectAll} style={{backgroundColor: '#004C6C',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>{massSelect? 'Select All' : 'Unselect All'}</Text>
-                </TouchableOpacity>
-              </View>
-            
-            {/* Timesheet List */}
+            <View style={{flex:1,flexDirection:'column'}}>
+              {/* Timesheet List */}
+              {/*Search*/}
+              <View style={{marginLeft:50,marginRight:50}}><SearchField search={search} onChange={setSearch} /></View>
               <FlatList
-                style={[Form.container]}
+                style={[Form.container,{flex:1}]}
                 data={displayList}
                 keyExtractor={(item) => item.internalid}
                 stickyHeaderIndices={[0]}
@@ -283,7 +277,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
                 }
                 renderItem={({ item }) => {
                   return (
-                    <AnimatedRow isWeb={isWeb} item={item} selected={selectedIds.includes(item.internalid)} toggleSelect={toggleSelect} colNames={columnTitles} backgroundColors={backgroundColors}/>
+                    <AnimatedRow isWeb={isWeb} item={item} selected={selectedIds.includes(item.internalid)} toggleSelect={toggleSelect} colNames={columnTitles} />
                   )
                 }}
                 onEndReached={() => {
@@ -293,6 +287,20 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
                 }}
                 onEndReachedThreshold={0.5}
               />
+
+              {/*Button */}
+              {selectedIds.length > 0 && (
+                <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10,flex:-1}}>
+                  <TouchableOpacity onPress={handleApprove} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Approve Selected</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleReject} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                      <Text style={{ color: 'white', fontWeight: 'bold' }}>Reject Selected</Text>
+                  </TouchableOpacity>
+                  
+                </View>
+              )}
+
             </View>
           ):(
             <NoRecords/>

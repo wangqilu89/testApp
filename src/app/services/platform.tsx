@@ -107,7 +107,7 @@ const MainViewer = ({url,doc}:{url:string,doc:string}) => {
 }
 
 const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { defaultValue?: {uri: string,name: string,type: string} | { uri: string; name: string; type: string }[] | null,onChange?:(item: any) => void,multiple?:boolean,style?:TextStyle & ViewStyle})  => {
-  const {CategoryButton} = useThemedStyles()
+  const {Theme,CategoryButton} = useThemedStyles()
   const [prompt,setPrompt] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<{uri: string;name: string;type: string;}[]>([]);
   const pickFrom = async(place:string): Promise<{uri: string;name: string;type: string;} | undefined> => {
@@ -164,10 +164,12 @@ const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { 
     }
   } 
 
-  const AddFile = (newfile:{uri: string;name: string;type: string;}) => {
+  const AddFile = (newfile:{uri: string;name: string;type: string;}, notifyParent = true) => {
     setUploadedFile((prev) => {
       const next = multiple ? [...prev, newfile] : [newfile];
-      onChange?.(next); // notify parent of the updated list
+      if (notifyParent) {
+        onChange?.(next); // only notify if allowed
+      }
       return next;
       
     })
@@ -181,12 +183,11 @@ const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { 
     })
   }
   
-  const AddPick = async(place:string) => {
+  const AddPick = async(place:string, notify = true) => {
     const NewFile = await pickFrom(place);
     if (NewFile) {
-      AddFile(NewFile)
+      AddFile(NewFile, notify);
     }
-    
   }
   
 
@@ -196,13 +197,13 @@ const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { 
     };
     return (
         <View style={{flexDirection:'row',width:'100%'}}>
-          <TouchableOpacity style={[{flex:1},style]} onPress={openExternal}>
+          <TouchableOpacity style={[{flex:1,marginLeft:10},style]} onPress={openExternal}>
             {UploadFile.type?.startsWith('image/')?
               (<Image source={{ uri: UploadFile.uri }} style={{ width: 100, height: 100, marginTop: 8, borderRadius: 4 }}/>):
-              (<Text style={[style]}>📎 {UploadFile.name ?? 'Unnamed file'}</Text>)
+              (<View style={{flexDirection:'row'}}><Ionicons name='attach-outline' style={[CategoryButton.icon,{color:Theme.text,flex:0}]}/><Text style={[style,{marginTop:2,flex:1}]}>{UploadFile.name ?? 'Unnamed file'}</Text></View>)
             }  
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => RemoveFile(UploadFile,index)}>
+          <TouchableOpacity style={{marginRight:10}} onPress={() => RemoveFile(UploadFile,index)}>
             <Ionicons name='close' style={[CategoryButton.icon,{color:'red'}]}/>
           </TouchableOpacity>
         </View>
@@ -231,11 +232,8 @@ const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { 
   useEffect(() => {
     const autoPickOnWeb = async () => {
       if (Platform.OS === 'web' && prompt) {
-        const fileObj = await pickFrom('document');
-        if (fileObj) {
-          AddFile(fileObj);
-          setPrompt(false); // close modal after selection
-        }
+        await AddPick('document', false); 
+        setPrompt(false);
       }
     }
     autoPickOnWeb();
@@ -248,7 +246,7 @@ const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { 
         <View style={{flexDirection:'row',flex:1}}>
           
           <FlatList
-            style={{borderWidth:1,flex:1,marginLeft:10}}       
+            style={{borderWidth:1,flex:1,borderTopLeftRadius:5,borderTopRightRadius:5,borderBottomLeftRadius:5,borderBottomRightRadius:5}}       
             data={uploadedFile}
             keyExtractor={(item) => item.uri}
             stickyHeaderIndices={[0]}
@@ -262,8 +260,8 @@ const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { 
           <View style={{flex:1}} ></View>
         </View>
       )}
-      <TouchableOpacity style={[{flex:1,flexDirection:'row',paddingLeft:10,paddingTop:(uploadedFile.length > 0?0:15),paddingBottom:15},style]} onPress={() => setPrompt(true)} >
-        <Ionicons name='attach-outline' style={[CategoryButton.icon]}/><Text style={[style,{flex:1}]}>{uploadedFile ? 'Update Document or Image' : 'Upload Document or Image'}</Text>
+      <TouchableOpacity style={[{flex:1,flexDirection:'row',paddingTop:(uploadedFile.length > 0?0:15),paddingBottom:15},style]} onPress={() => setPrompt(true)} >
+        <Ionicons name='attach-outline' style={[CategoryButton.icon,style,{color:Theme.text}]}/><Text style={[style,{flex:1,marginTop:2}]}>{uploadedFile ? 'Update Document or Image' : 'Upload Document or Image'}</Text>
       </TouchableOpacity>
       
       {/*Open Modal to choose file selection */}
@@ -288,13 +286,12 @@ const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { 
 const SearchField = ({search,onChange,style}:{search?:string,onChange?:(item: any) => void,style?:TextStyle & ViewStyle}) => {
   const {Page,Theme} = useThemedStyles()
   return (
-  <View style={[Page.container,{height:'auto',justifyContent:'space-between',flexDirection:'row',paddingBottom:15}]}>
-    <View style={{flex:1}}></View>
-    <View style={{flex:1,borderWidth: 1, padding: 8, margin: 10,borderRadius: 20,flexDirection:'row',justifyContent:'space-between',backgroundColor:'transparent',borderColor:Theme.text}}>
+
+    <View style={{height:'auto',flex:1,borderWidth: 1, padding: 8, margin: 10,borderRadius: 20,flexDirection:'row',justifyContent:'space-between',backgroundColor:'transparent',borderColor:Theme.text}}>
       <View style={{width:30}}><Ionicons name="search" color={Theme.text} size={20} /></View>
       <TextInput value={search} onChangeText={onChange} placeholder="Search..." style={[{flex:1,color:Theme.text}]}/>
     </View>
-  </View>
+
   )
 }
 

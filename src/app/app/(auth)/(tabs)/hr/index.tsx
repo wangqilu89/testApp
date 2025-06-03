@@ -186,7 +186,8 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
             {list.length > 0 ? (
                 <View style={{flex:1,flexDirection:'column',width:'100%'}}>
                     {/*Search*/}
-                    <SearchField search={search} onChange={setSearch} />
+                    <View style={{marginLeft:50,marginRight:50}}><SearchField search={search} onChange={setSearch} /></View>
+                    
             
                     {/*LISTING*/}
                     

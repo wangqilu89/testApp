@@ -1,13 +1,13 @@
 
-import { View, Text, TouchableOpacity, FlatList, Alert} from 'react-native';
-import { useEffect, useState, useRef} from 'react';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing} from 'react-native-reanimated';
+import { View, Text, TouchableOpacity, FlatList, Alert,Linking} from 'react-native';
+import { useEffect, useState, useMemo} from 'react';
+import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
+import { Ionicons } from '@expo/vector-icons'; 
 import { FetchData, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,LoadingScreen,MainPage,NoRecords,SearchField} from '@/services'; // 👈 update path
 import {useThemedStyles} from '@/styles';
 
 type GenericObject = Record<string, any>;
-type AnimatedRowProps = {isWeb:boolean,item: any,selected: boolean,colNames: string[],toggleSelect: (id: string) => void}
+type AnimatedRowProps = {isCollapsed:boolean,item: any,selected: boolean,colNames: string[]}
 
 const approvals = [
   { id: 'timesheet', title: 'Timesheets',icon:'time-outline'},
@@ -18,6 +18,12 @@ const approvals = [
 ];
 
 
+const ProperCase = (str:string) => {
+  return str.toLowerCase().split(/_/g).map(function(word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+}
+
 function MainScreen() {
   return (
     <MainPage redirect="approve" pages={approvals} title="Approve"/>
@@ -26,41 +32,27 @@ function MainScreen() {
 
 
 function ApprovalCategoryScreen({ category,user}: { category: string,user:GenericObject|null}) {
-  
+  const pathname = usePathname();
   const router = useRouter();
   const [list, setList] = useState<GenericObject[]>([]);
   const [displayList, setDisplayList] = useState<GenericObject[]>([]); // ✅ Add this
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [massSelect, setmassSelect] = useState(true);
+  const [expandedKeys,setExpandedKeys] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 10; // Show 10 items at a time
   const isWeb = useWebCheck(); // Only "true web" if wide
-  const {Form,Listing,ListHeader,Page,Header,Theme} = useThemedStyles()
+  const {Form,Listing,ListHeader,Page,Header,Theme,CategoryButton} = useThemedStyles()
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
-  const COLUMN_CONFIG: Record<string, { web: string[]; mobile: string[] }> = {
-    timesheet: {
-      web: ["select", "employee", "weekdate", "customer", "memo", "total_hours", "total_timecosts", "approved_hours","approved_costs"],
-      mobile: ["employee", "weekdate", "customer","total_hours"],
-    },
-    expenseclaim: {
-      web: ["select", "employee_name", "Claim Date", "Amount", "Currency", "Status"],
-      mobile: ["employee_name", "Amount", "Claim Date"],
-    },
-    leave: {
-      web: ["select", "employee_name", "leave_type", "start_date", "end_date", "status"],
-      mobile: ["employee_name", "leave_type", "start_date", "end_date"],
-    },
-    invoice: {
-      web: ["select", "customer", "invoice", "amount", "due_date", "status"],
-      mobile: ["customer", "amount", "due_date"],
-    },
-    lost: {
-      web: ["select", "customer", "lost_reason", "amount", "lost_date", "owner"],
-      mobile: ["customer", "lost_reason",  "lost_date"],
-    },
+  const COLUMN_CONFIG: Record<string, string[]> = {
+    timesheet: ["employee", "weekdate", "project","task","memo","val_timecosts","val_hours"],
+    expense:['employee','project','category','expense_date','memo','val_amount'],
+    leave:['employee','leave_type','start_date','end_date','memo'],
+    lost:['customer','lost_reason','amount']
+    
   };
  
 
@@ -91,7 +83,8 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     setPage(nextPage);
   };
 
-  const AnimatedRow = ({isWeb,item,selected,colNames,toggleSelect}:AnimatedRowProps) => {
+  const AnimatedRow = ({isCollapsed,item,selected,colNames}:AnimatedRowProps) => {
+    /*
     const animatedBg = useSharedValue('transparent'); // ✅ valid hook usage
     
     useEffect(() => {
@@ -104,26 +97,35 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     const animatedStyle = useAnimatedStyle(() => ({
       backgroundColor: animatedBg.value
     }));
+    */
+    const newCol = useMemo(() => {
+      return isCollapsed ? colNames.slice() : (colNames.length > 3?[...colNames.slice(0, 3), ...colNames.slice(-1)]:colNames.slice());
+    }, [isCollapsed, colNames]);
+    
+    const WithFile = (item.hasOwnProperty('file')?(item.file?false:true):false)
+
+    
     return (
-      <TouchableOpacity onPress={() => toggleSelect(item.internalid)}>
-        <Animated.View style={[Listing.container,animatedStyle]}>
-          {isWeb ? (
-            <>
-            <Text style={[Listing.text]}>{selected ? '☑️' : '⬜'}</Text>
-            {colNames.slice(1).map((colName, index) => (
-              <Text key={index} style={[Listing.text]}>{item[colName] ?? ''}</Text>
-            ))} 
-            </>
-          ):(
-            <>
-            {colNames.map((colName, index) => (
-              <Text key={index} style={[Listing.text]}>{item[colName] ?? ''}</Text>
+      <View style={{backgroundColor:'white',flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+        <TouchableOpacity style={{flex:-1,alignItems:'flex-start',flexDirection:'column'}} onPress={() => toggleSelect(item.internalid)}>
+          <Text style={[Listing.text,{fontSize:15}]}>{selected ? '☑️' : '⬜'}</Text>
+          {item.file &&  (
+            <Ionicons name="attach" style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23}]} />
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity disabled={WithFile} style={{flexDirection:'column',flex:1}} onPress={() => {if (item.file) {Linking.openURL('https://6134818.app.netsuite.com' + item.file)} else {toggleSelect(item.internalid);}}}>
+            {newCol.map((colName, index) => (
+              <View key={index} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
+                <View style={{width:150}}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{ProperCase(colName.replace('val_',''))}</Text></View>
+                <View style={{flex:1}}><Text numberOfLines={isCollapsed?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{item[colName] ?? ''}</Text></View>
+              </View>
             ))}
-            </> 
-          )
-        }
-        </Animated.View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+        <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1}} onPress={() => toggleCollapse(item.internalid)}>
+          <Ionicons name={isCollapsed?"chevron-up":"chevron-down"} style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
+        </TouchableOpacity>
+      
+      </View>
     );
   };
   
@@ -136,6 +138,12 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     });
   };
 
+  const toggleCollapse = (key: string) => {
+    setExpandedKeys((prev) =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+ 
   const selectAll = () => {
     displayList.forEach((item) => {
         if (selectedIds.includes(item.internalid) != massSelect) {
@@ -201,24 +209,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     );
   };
 
-  const getColumnTitles = (category: string, isWeb: boolean) => {
-    const config = COLUMN_CONFIG[category];
-    if (config) {
-        return isWeb ? config.web : config.mobile;
-    }
-    // Default fallback if category not found
-    return isWeb
-        ? ["Select", "Record Name", "Field 1", "Field 2"]
-        : ["Record Name", "Field 1"];
-  };
-  const columnTitles = getColumnTitles(category as string, isWeb);
-
-  const toProperCase = (str:string) => {
-    return str.toLowerCase().split(/_/g).map(function(word) {
-        return word.charAt(0).toUpperCase() + word.slice(1);
-    }).join(' ');
-  }
-
+  
   
   useEffect(() => {
     if (category && category != 'index') {
@@ -226,6 +217,25 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     }
   }, [category]);
 
+  useEffect(() => {
+    const keyword = search.trim().toLowerCase();
+    if (keyword === '') {
+      const paginated = list.slice(0, page * pageSize);
+      setDisplayList(paginated);
+    } 
+    else {
+      const filtered = list.filter((item: GenericObject) =>
+        Object.values(item).some((val) =>
+          String(typeof val === 'object' ? val?.name ?? '' : val)
+            .toLowerCase()
+            .includes(keyword)
+        )
+      );
+      setDisplayList(filtered);  
+    }
+            
+  }, [search,page,list]);
+  
   if (loading) {
     return (
       <LoadingScreen txt="Loading List..."/>
@@ -239,45 +249,40 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     );
   }
 
- 
-
-
   return (
 
-        <View style={[Page.container]}>
+        <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
           {/*HEADER */}
           {!isWeb && (
             <View style={[Header.container,{flexDirection:'row'}]}>
-              <View style={{justifyContent:'center',width:'100%'}} ><Text style={[Header.text]}>{category.toUpperCase()}</Text></View>
+              <TouchableOpacity style={{alignItems:'center',justifyContent:'center',flex:-1,marginLeft:5}} onPress={() => router.replace({pathname:pathname as any})}>
+                  <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+              </TouchableOpacity>
+              
+              <Text style={[Header.text,{flex:1,width:'auto'}]}>{category.toUpperCase()}</Text>
+              
             
-              <TouchableOpacity onPress={selectAll} style={{position:'absolute',top:6,right:5,backgroundColor: '#00709F',width:150,maxWidth:150,padding: 5,borderRadius: 5,justifyContent:'center',alignItems:'center'}}>
-                <Text style={{ color: Theme.textReverse, fontWeight: 'bold'}}>{massSelect? 'Select All' : 'Unselect All'}</Text>
+              <TouchableOpacity onPress={selectAll} style={{alignItems:'center',justifyContent:'center',flex:-1,marginRight:10}}>
+                <Ionicons name={massSelect?"square-outline":"checkbox-outline"} style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+                
               </TouchableOpacity>
             </View>
           )}
           {list.length > 0 ? (
           
-            <View style={{flex:1,flexDirection:'column'}}>
+            <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1}}>
               {/* Timesheet List */}
               {/*Search*/}
               <View style={{marginLeft:50,marginRight:50}}><SearchField search={search} onChange={setSearch} /></View>
+              
               <FlatList
-                style={[Form.container,{flex:1}]}
+                style={[Form.container]}
                 data={displayList}
                 keyExtractor={(item) => item.internalid}
-                stickyHeaderIndices={[0]}
-                ListHeaderComponent={
-                  <View style={[ListHeader.container]}>
-                      {columnTitles.map((title, index) => (
-                        <Text key={index} style={[ListHeader.text]}>
-                          {toProperCase(title)}
-                        </Text>
-                      ))}
-                  </View>
-                }
+                
                 renderItem={({ item }) => {
                   return (
-                    <AnimatedRow isWeb={isWeb} item={item} selected={selectedIds.includes(item.internalid)} toggleSelect={toggleSelect} colNames={columnTitles} />
+                    <AnimatedRow isCollapsed={expandedKeys.includes(item.internalid)} item={item} selected={selectedIds.includes(item.internalid)} colNames={COLUMN_CONFIG[category]} />
                   )
                 }}
                 onEndReached={() => {
@@ -306,11 +311,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
             <NoRecords/>
 
           )}
-          
 
-          
-
-        
         </View>
     
   );

@@ -15,6 +15,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@expo-google-fonts/righteous": "^0.4.0",
     "@expo/vector-icons": "^14.0.2",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-cookies/cookies": "^6.2.1",
@@ -26,6 +27,7 @@
     "expo-blur": "~14.0.3",
     "expo-constants": "~17.0.8",
     "expo-document-picker": "~13.0.3",
+    "expo-file-system": "~18.0.12",
     "expo-font": "~13.0.4",
     "expo-haptics": "~14.0.1",
     "expo-image-picker": "~16.0.6",
@@ -49,8 +51,7 @@
     "react-native-screens": "~4.4.0",
     "react-native-ui-datepicker": "^3.1.2",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5",
-    "expo-file-system": "~18.0.12"
+    "react-native-webview": "13.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

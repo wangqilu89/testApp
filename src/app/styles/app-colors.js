@@ -7,6 +7,7 @@ const lightMoore = '#009FE3'
 export const Colors = {
   light: {
     pageBackground:'#ECEDEE',
+    containerBackground:'#FAFAFA',
     text: '#11181C',
     textReverse:'#ECEDEE',
     background: darkMoore,
@@ -20,12 +21,11 @@ export const Colors = {
   },
   dark: {
     pageBackground:'#11181C',
+    containerBackground:'#000000',
     text: '#ECEDEE',
     textReverse:'#11181C',
     background: lightMoore,
     backgroundReverse: darkMoore,
-
-
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',

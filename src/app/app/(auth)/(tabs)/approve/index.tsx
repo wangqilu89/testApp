@@ -30,7 +30,6 @@ function MainScreen() {
   );
 }
 
-
 function ApprovalCategoryScreen({ category,user}: { category: string,user:GenericObject|null}) {
   const pathname = usePathname();
   const router = useRouter();
@@ -50,7 +49,8 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
   const COLUMN_CONFIG: Record<string, string[]> = {
     timesheet: ["employee", "weekdate", "project","task","memo","val_timecosts","val_hours"],
     expense:['employee','project','category','expense_date','memo','val_amount'],
-    leave:['employee','leave_type','start_date','end_date','memo'],
+    leave:['employee','leave_type','leave_period','date_requested','leave_no','memo','val_days'],
+    invoice:['customer','date','document_number','email_addresses','project','currency','val_service','val_ope','val_total','val_sgd_total'],
     lost:['customer','lost_reason','amount']
     
   };
@@ -106,14 +106,14 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
 
     
     return (
-      <View style={{backgroundColor:'white',flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+      <View style={{backgroundColor:Theme.containerBackground,flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
         <TouchableOpacity style={{flex:-1,alignItems:'flex-start',flexDirection:'column'}} onPress={() => toggleSelect(item.internalid)}>
           <Text style={[Listing.text,{fontSize:15}]}>{selected ? '☑️' : '⬜'}</Text>
           {item.file &&  (
             <Ionicons name="attach" style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23}]} />
           )}
         </TouchableOpacity>
-        <TouchableOpacity disabled={WithFile} style={{flexDirection:'column',flex:1}} onPress={() => {if (item.file) {Linking.openURL('https://6134818.app.netsuite.com' + item.file)} else {toggleSelect(item.internalid);}}}>
+        <TouchableOpacity disabled={WithFile} style={{flexDirection:'column',flex:1}} onPress={() => {if (item.file) {Linking.openURL(item.file)} else {toggleSelect(item.internalid);}}}>
             {newCol.map((colName, index) => (
               <View key={index} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
                 <View style={{width:150}}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{ProperCase(colName.replace('val_',''))}</Text></View>

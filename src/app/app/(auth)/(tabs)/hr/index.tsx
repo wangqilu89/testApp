@@ -48,6 +48,8 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
     const {Page,Header,Listing,Form,ListHeader,CategoryButton,Theme} = useThemedStyles();
     const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
     
+    
+
     {/*Screens*/}
     const ExpenseMain = () => {
         const [list, setList] = useState<GenericObject[]>([]);
@@ -180,25 +182,22 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
             
         }, [search,page,list]);
         
-        if (loading) {
-            return (
-              <LoadingScreen txt="Loading..."/>
-              
-            );
-        }
+        
         return (
         <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
-            {/*HEADER */}
+            {loading ?
+              (<LoadingScreen txt="Loading..."/>)
+            :(<>
             {!isWeb && (
-            <View style={[Header.container,{flexDirection:'row'}]}>
-                <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any})}>
-                    <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
-                </TouchableOpacity>
-                <Text style={[Header.text,{flex:1,width:'auto'}]}>List of Claims</Text>
-                <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({ pathname:pathname as any,params: { category: 'submit-expense' } })}>
-                    <Ionicons name="add" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
-                </TouchableOpacity>
-            </View>
+              <View style={[Header.container,{flexDirection:'row'}]}>
+                  <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any})}>
+                      <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+                  </TouchableOpacity>
+                  <Text style={[Header.text,{flex:1,width:'auto'}]}>List of Claims</Text>
+                  <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({ pathname:pathname as any,params: { category: 'submit-expense' } })}>
+                      <Ionicons name="add" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+                  </TouchableOpacity>
+              </View>
             )}
             {list.length > 0 ? (
                 <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1}}>
@@ -229,53 +228,174 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
                 </View>
 
             )}
-             
+            </>)}
         </View>
         
         )
     }
     
     const ClaimForm = ({id}:{id:string}) => {
+        type LineItem = {number: string;date: Date;internalid: string;project: GenericObject;category: GenericObject;memo: string;val_amount: string;file: any};
+        
+        const today = new Date()
+        today.setHours(today.getHours() + 8)
         const isWeb = useWebCheck(); 
         const [loading, setLoading] = useState(false);
-        const [formData, setFormData] = useState({date: new Date(),id,project:{},category: {},value: '',file: null as any});
-        
-        const updateData = (key:keyof typeof formData,value: any) => {
-            setFormData(prev => ({ ...prev, [key]: value }));
+
+        const [currentLine, setCurrentLine] = useState(0);
+        const [showLine,setShowLine]= useState(false);
+        const [claim,setClaim] = useState<{internalid:string,date:Date,document_number:string,employee:GenericObject,line:GenericObject[]}>({internalid:'',date:today,document_number:'To Be Generated',employee:{},line:[]});
+        const [line,setLine] = useState({number:'0',date:today,internalid:id + '.0',project:{},category: {},memo:'','val_amount':'0',file: null as any});
+
+        const updateLine = (key:keyof typeof line,value: any) => {
+            setLine(prev => ({ ...prev, [key]: value }));
         }
         
-        if (loading) {
-            return (
-              <LoadingScreen txt="Loading..."/>
+        const updateMain = (key:keyof typeof claim,value: any) => {
+          setClaim(prev => ({ ...prev, [key]: value }));
+        }
+        const AnimatedRow = ({item,colNames}:{item:GenericObject,colNames:string[]}) => {
+          const RowInfo = ({colName,index,item}: {colName:string,index:number,item:GenericObject}) => {
+              return (
+                  <View key={index} style={{flex:1,flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
+                      <View style={{width:150}}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{toProperCase(colName.replace('val_',''))}</Text></View>
+                      {typeof item[colName] == 'object' 
+                      ? (<View style={{flex:1}}><Text numberOfLines={1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{(pattern.test(colName)?NumberComma(item[colName]['name']??0):(item[colName]['name'] ?? ''))}</Text></View>) 
+                      : (<View style={{flex:1}}><Text numberOfLines={1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{(pattern.test(colName)?NumberComma(item[colName]??0):(item[colName] ?? ''))}</Text></View>)
+                      }
+                      
+                  </View>
+              )
               
-            );
-        }
+          }
+          return (
+            <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+              <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:30,marginRight:30}} onPress={() => {setLine(item as LineItem);setShowLine(true)}}>
+                  {colNames.map((colName, index) => (
+                      <RowInfo colName={colName} index={index} item={item}/>
+                  ))}
+              </TouchableOpacity>
+            </View>
+          );
+        };
         
+        const loadData = async (id:string) => {
+          setLoading(true);
+          try {
+            let data = null
+            let lineNo = 0
+            if (id != '0') {
+              data = await FetchData({...BaseObj,command:`HR : Get Expense Report`,data:{internalid:id}})
+            }
+            if (data) {
+              
+              data = data[0]
+              let refDate = data.date.split('/')
+              data.date = new Date(refDate[2],parseInt(refDate[1]) - 1,refDate[0])
+              data.line.forEach(function (i:GenericObject) {
+                i.expense_date = i.date
+                refDate = i.date.split('/')
+                i.date = new Date(refDate[2],parseInt(refDate[1]) - 1,refDate[0])
+                lineNo = parseInt(i.number)
+              })
+              
+            }
+            else {
+              data = {internalid:'0',date:today,document_number:'To be Generated',employee:{id:BaseObj.user,name:user?.name},line:[]}
+              lineNo += 1
+            }
+            
+            setClaim(data)
+            setCurrentLine(lineNo)
+            
+          } 
+          catch (err) {
+            console.error(`Failed to fetch ${category} :`, err);
+          } 
+          finally {
+            setLoading(false);
+          }
+        };
+        
+        useEffect(() => {
+          
+            loadData(id);
+          
+        }, [id]);
+
         return (
             <View style={[Page.container]}>
-                {!isWeb && (
-                <View style={[Header.container,{flexDirection:'row'}]}>
-                    <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any})}>
-                        <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
-                    </TouchableOpacity>
-                    <Text style={[Header.text,{flex:1,width:'auto'}]}>Expense Claim</Text>
+                {loading && (<LoadingScreen txt="Loading..."/>)}
                 
-                </View>
-                )}
-                <FormContainer>
-                
-
-                    <FormTextInput label="ID " def={formData.id} onChange={(text) => updateData('id', text)} AddStyle={{StyleRow:{display:'none'}}}/>
-                    <FormDateInput label='Date ' def={formData.date} onChange={(selectedDate)=>{updateData('date',selectedDate.date)}}/>
-                    <FormAutoComplete label="Project " def={formData.project} onChange={(item)=>{updateData('project',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Project Listing",keyword:query})}/>
-                    <FormAutoComplete label="Category " def={formData.category} onChange={(item)=>{updateData('category',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Category Listing",keyword:query})}/>
+                {showLine ? (
                  
-                    <FormNumericInput label="Value " def={formData.value} onChange={debounce((text) => updateData('value', text),500)} />
-                    <FormAttachFile label="Attach File " def={formData.file} onChange={(file) => {updateData('file',file)}}/>
-                    
-                    <FormSubmit onPress={()=>{}}/>
-                    
-                </FormContainer>
+                  <>
+                   {/* Show Line Items*/}
+                  {!isWeb && (
+                    <View style={[Header.container,{flexDirection:'row'}]}>
+                        <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {setLine({number:'0',date:today,internalid:claim.internalid + '.0',project:{},category:{},memo:'',val_amount:'0',file:null});setShowLine(false)}}>
+                            <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+                        </TouchableOpacity>
+                        <Text style={[Header.text,{flex:1,width:'auto'}]}> {'Line : ' + line.number}</Text>
+                    </View>
+                  )}
+                  <FormContainer>
+                    <FormTextInput label="ID " def={line.internalid} onChange={(text) => updateLine('internalid', text)} AddStyle={{StyleRow:{display:'none'}}}/>
+                    <FormDateInput label='Date ' def={line.date} onChange={(selectedDate)=>{updateLine('date',selectedDate.date)}}/>
+                    <FormAutoComplete label="Project " def={line.project} onChange={(item)=>{updateLine('project',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Project Listing",keyword:query})}/>
+                    <FormAutoComplete label="Category " def={line.category} onChange={(item)=>{updateLine('category',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Category Listing",keyword:query})}/>
+                    <FormTextInput label="Memo " def={line.memo} onChange={(text) => updateLine('memo', text)}/>
+                    <FormNumericInput label="Value " def={line.val_amount} onChange={debounce((text) => updateLine('val_amount', text),500)} />
+                    <FormAttachFile label="Attach File " def={line.file} onChange={(file) => {updateLine('file',file)}} />
+                    <View style={{flex:1}} />
+                    <FormSubmit label={currentLine == parseInt(line.number)?'Submit':'Update'} onPress={()=>{}}/>
+                  </FormContainer>
+                  </>
+                ):(
+                  <>
+                  {/* Show Header*/}
+                  {!isWeb && (
+                    <View style={[Header.container,{flexDirection:'row'}]}>
+                        <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any})}>
+                            <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+                        </TouchableOpacity>
+                        <Text style={[Header.text,{flex:1,width:'auto'}]}>Expense Claim</Text>
+                    </View>
+                  )}
+                  
+                    <FormContainer>
+                      <FormTextInput label="ID " def={claim.internalid} onChange={(text) => {updateMain('internalid', text)}} AddStyle={{StyleRow:{display:'none'}}} />
+                      <FormDateInput disabled={true} label='Date ' def={claim.date} onChange={(selectedDate)=>{updateMain('date',selectedDate.date)}}/>
+                      <FormTextInput disabled={true} label="Document Number " key={claim.document_number} def={claim.document_number} onChange={(text) => {updateMain('document_number', text)}}/>
+                      <FormAutoComplete disabled={true} label="Employee " key={claim.employee.name} def={claim.employee} onChange={(item)=>{updateMain('employee', item)}} loadList={() => FetchData({ ...BaseObj, command: "HR : Get Employee Listing",keyword:BaseObj.user})}/>
+                      <FlatList
+                        style={[Form.container,{paddingHorizontal:0}]}
+                        data={claim.line}
+                        stickyHeaderIndices={[0]}
+                        ListHeaderComponent={
+                              <View style={[ListHeader.container,{marginTop:20,flexDirection:'row',backgroundColor:Theme.backgroundReverse}]}>
+                                  <Ionicons name="attach" style={[CategoryButton.icon,Listing.text,{flex:-1,fontSize:23,color:Theme.backgroundReverse}]} />
+                                  <Text style={[ListHeader.text,{fontSize:18,flex:1}]}>Line Items</Text>
+                                  <TouchableOpacity style={{flex:-1}}  onPress={() => {setLine({number:currentLine.toString(),date:today,internalid:claim.internalid + '.' + currentLine,project:{},category:{},memo:'',val_amount:'0',file:null});setShowLine(true)}}>
+                                    <Ionicons name="add" style={[CategoryButton.icon,Listing.text,{fontSize:23,color:Theme.textReverse}]} />     
+                                  </TouchableOpacity>                     
+                              </View>
+                          }
+                        keyExtractor={(item) => item.internalid}
+                        renderItem={({ item }) => {
+                          return (
+                            <AnimatedRow item={item} colNames={['number','expense_date','project','val_amount']} />
+
+                            
+                          )
+                        }}
+                        
+                      />
+                      {claim.line.length > 0 && (<FormSubmit onPress={()=>{}}/>)}
+                  </FormContainer>
+                
+                </>
+                )}
             </View>
         )
     }
@@ -288,10 +408,6 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
     }
 
 }
-
-
-
-
 
 function Leave({ category,id,user}: { category: string, id:string,user:GenericObject|null}) {
 
@@ -379,16 +495,12 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
             loadData();
         }, []);
 
-        if (loading || !fontsLoaded) {
-            return (
-              <LoadingScreen txt="Loading..."/>
-              
-            );
-        }
+        
         
         return (
         <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
             {/*HEADER */}
+            {loading || !fontsLoaded && (<LoadingScreen txt="Loading..."/>)}
             {!isWeb && (
             <View style={[Header.container,{flexDirection:'row'}]}>
                 <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any})}>
@@ -585,16 +697,11 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
             
   }, [search,page,list]);
   
-  if (loading) {
-    return (
-      <LoadingScreen txt="Loading List..."/>
-      
-    );
-  }
-
+  
   return (
 
         <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
+          {loading && (<LoadingScreen txt="Loading List..."/>)}
           {/*HEADER */}
           {!isWeb && (
             <View style={[Header.container,{flexDirection:'row'}]}>

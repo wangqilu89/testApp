@@ -7,16 +7,11 @@ export default function HomeScreen() {
   const { user, loading } = useUser(); // ✅ Pull from context
   const {Page,ReactTag,Header} = useThemedStyles()
   
-  if (loading) {
-    return (
-      <LoadingScreen txt="Checking authentication..."/>
-    );
-  }
-
   return (
 
     <View style={[Page.container]}>
-      <Text style={[ReactTag.text,Header.textReverse,{marginBottom: 20 }]}>Welcome {user ? `${user.name}` : 'Guest'}</Text>
+      {loading && (<LoadingScreen txt="Checking authentication..."/>)}
+      <Text style={[ReactTag.text,Header.textReverse,{marginBottom: 20 }]}> {user ? `Welcome ${user.name}` : ''}</Text>
       {/* Example logout button */}
       {/* <Button title="Logout" onPress={logout} /> */}
     </View>

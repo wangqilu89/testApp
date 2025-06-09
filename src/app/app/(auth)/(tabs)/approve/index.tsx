@@ -236,12 +236,6 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
             
   }, [search,page,list]);
   
-  if (loading) {
-    return (
-      <LoadingScreen txt="Loading List..."/>
-      
-    );
-  }
 
   if (!category || category == 'index') {
     return (
@@ -252,6 +246,8 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
   return (
 
         <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
+          {loading ? (<LoadingScreen txt="Loading List..."/>):(
+          <>
           {/*HEADER */}
           {!isWeb && (
             <View style={[Header.container,{flexDirection:'row'}]}>
@@ -311,7 +307,8 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
             <NoRecords/>
 
           )}
-
+          </>
+          )}
         </View>
     
   );

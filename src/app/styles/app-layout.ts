@@ -24,7 +24,8 @@ export const useThemedStyles = () => {
   })
   const Page = StyleSheet.create({
     container:{width:'100%',height:'100%',paddingBottom: 60,backgroundColor:Theme.pageBackground,...Align.horizontalCenter,...Align.verticalCenter},
-    listContainer:{width:'100%'}
+    listContainer:{width:'100%'},
+    loading:{...StyleSheet.absoluteFillObject,...Align.horizontalCenter,...Align.verticalCenter,zIndex: 9999,backgroundColor: 'rgba(255,255,255,0.3)'}
   })
   const Header = StyleSheet.create({
     container:{width:'100%',backgroundColor:Theme.background,padding:5,...Align.horizontalCenter},

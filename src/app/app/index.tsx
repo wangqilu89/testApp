@@ -1,13 +1,15 @@
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform,View} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import {SERVER_URL,LoadingScreen} from '@/services';
+import { useThemedStyles } from '@/styles';
+
 
 
 export default function IndexScreen() {
   
-
+  const {Page} = useThemedStyles()
   const router = useRouter();
 
   useEffect(() => {
@@ -36,6 +38,8 @@ export default function IndexScreen() {
   }, []);
 
   return (
-    <LoadingScreen txt="Authenticating with NetSuite..."/>
+    <View style={[Page.container]}>
+      <LoadingScreen txt="Authenticating with NetSuite..."/>
+    </View>
   );
 }

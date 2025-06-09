@@ -39,7 +39,7 @@ const useWebCheck = () => {
 const LoadingScreen = ({txt}:{txt:string}) => {
   const {Page,Header,ReactTag} = useThemedStyles();
   return (
-    <View style={[Page.container]}>
+    <View style={[Page.loading]}>
       <ActivityIndicator size="large" />
       <Text style={[Header.text,ReactTag.text]}>{txt}</Text>
     </View>
@@ -106,18 +106,20 @@ const MainViewer = ({url,doc}:{url:string,doc:string}) => {
 
 }
 
-const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { defaultValue?: {uri: string,name: string,type: string} | { uri: string; name: string; type: string }[] | null,onChange?:(item: any) => void,multiple?:boolean,style?:TextStyle & ViewStyle})  => {
+const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=false,style}: { defaultValue?: {uri: string,name: string,type: string} | { uri: string; name: string; type: string }[] | null,onChange?:(item: any) => void,disabled?:boolean,multiple?:boolean,style?:TextStyle & ViewStyle})  => {
   const {Theme,CategoryButton} = useThemedStyles()
   const [prompt,setPrompt] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<{uri: string;name: string;type: string;}[]>([]);
-  const pickFrom = async(place:string): Promise<{uri: string;name: string;type: string;} | undefined> => {
+  const pickFrom = async(place:string): Promise<{uri: string;name: string;type: string;} | undefined | null> => {
     try {
       setPrompt(false);
-      let newObj = {uri:'',name:'',type:''}
+      let newObj = null
       switch (place) {
           case 'document': {
             const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
+            
             if (result?.assets && result.assets.length > 0) {
+              console.log('In Positive Results')
               const file = result.assets[0];
               newObj = { uri: file.uri, name: file.name, type: file.mimeType ?? 'application/octet-stream' }
             }
@@ -197,7 +199,7 @@ const AttachmentField =({ defaultValue = null,onChange,multiple=false,style}: { 
     };
     return (
         <View style={{flexDirection:'row',width:'100%'}}>
-          <TouchableOpacity style={[{flex:1,marginLeft:10},style]} onPress={openExternal}>
+          <TouchableOpacity disabled={disabled} style={[{flex:1,marginLeft:10},style]} onPress={openExternal}>
             {UploadFile.type?.startsWith('image/')?
               (<Image source={{ uri: UploadFile.uri }} style={{ width: 100, height: 100, marginTop: 8, borderRadius: 4 }}/>):
               (<View style={{flexDirection:'row'}}><Ionicons name='attach-outline' style={[CategoryButton.icon,{color:Theme.text,flex:0}]}/><Text style={[style,{marginTop:2,flex:1}]}>{UploadFile.name ?? 'Unnamed file'}</Text></View>)

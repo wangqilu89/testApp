@@ -25,7 +25,7 @@ type GenericObject = Record<string, any>;
 const FormContainer = ({children,AddStyle}:{children: React.ReactNode,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     return (
-        <ScrollView style={[Form.container,AddStyle?.StyleContainer]} contentContainerStyle={{alignItems: 'flex-start'}}>{children}</ScrollView>
+        <ScrollView style={[Form.container,AddStyle?.StyleContainer]} contentContainerStyle={{flex:1,alignItems: 'flex-start'}}>{children}</ScrollView>
     )
 
 };
@@ -49,12 +49,13 @@ const FormCommon = ({label,children,AddStyle}:{label?:string,children?:React.Rea
         </FormRow>
     )
 }
-const FormTextInput = ({label,def,onChange = () => {},AddStyle}:{label?:string,def?:string,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
+const FormTextInput = ({label,def,disabled=false,onChange = () => {},AddStyle}:{label?:string,disabled?:boolean,def?:string,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
+    
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
             <View style={{height:'100%',flex:1}}>
-            <TextInput keyboardType="default" defaultValue={def} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
+            <TextInput editable={!disabled} selectTextOnFocus={!disabled} keyboardType="default" defaultValue={def} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
             </View>
         </FormCommon>
         
@@ -62,16 +63,16 @@ const FormTextInput = ({label,def,onChange = () => {},AddStyle}:{label?:string,d
     )
 }
 
-const FormAttachFile = ({label,def,onChange = () => {},AddStyle}:{label?:string,def?:{uri: string,name: string,type: string},onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
-    const {Form} = useThemedStyles();
+const FormAttachFile = ({label,def,disabled=false,onChange = () => {},AddStyle}:{label?:string,def?:{uri: string,name: string,type: string},disabled?:boolean,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
+    
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
-            <AttachmentField defaultValue={def} onChange={onChange} style={AddStyle?.StyleInput}/>
+            <AttachmentField disabled={disabled} defaultValue={def} onChange={onChange} style={AddStyle?.StyleInput}/>
         </FormCommon>
         
     )
 }
-const FormNumericInput = ({label,def,onChange = () => {},AddStyle}:{label?:string,def?:string,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
+const FormNumericInput = ({label,def,disabled = false,onChange = () => {},AddStyle}:{label?:string,def?:string,disabled?:boolean,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     const [temp,setTemp] = useState(def)
     const handleChange = (text:string) => {
@@ -83,13 +84,13 @@ const FormNumericInput = ({label,def,onChange = () => {},AddStyle}:{label?:strin
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
             <View style={{height:'100%',flex:1}}>
-            <TextInput inputMode="decimal" value={temp} onChangeText={handleChange} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
+            <TextInput editable={!disabled} selectTextOnFocus={!disabled} inputMode="decimal" value={temp} onChangeText={handleChange} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
             </View>
         </FormCommon>
     )
 }
 
-const FormDateInput = ({label = 'Date',def = new Date(),onChange = () => {},AddStyle}:{label?:string,def?:Date,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
+const FormDateInput = ({label = 'Date',def = new Date(),disabled = false,onChange = () => {},AddStyle}:{label?:string,def?:Date,disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     
     const [showDate, setShowDate] = useState(false);
@@ -97,7 +98,7 @@ const FormDateInput = ({label = 'Date',def = new Date(),onChange = () => {},AddS
     displayDate.setHours(displayDate.getHours() + 8);
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
-            <TouchableOpacity style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setShowDate(true)} >
+            <TouchableOpacity disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setShowDate(true)} >
                 
                 <Text style={[Form.input,AddStyle?.StyleInput]}>{def.toISOString().split('T')[0]}</Text>
                 
@@ -123,7 +124,7 @@ const FormSubmit = ({label = 'Submit',onPress = () => {},AddStyle}:{label?:strin
     )
 }
 
-const FormAutoComplete = ({label = 'Select',def={id:'',name:''},onChange = () => {},items = [],loadList,AddStyle}:{label?:string,def?:GenericObject,onChange?: (item: any) => void,items?:GenericObject[],loadList?: (item: any) => Promise<GenericObject[]>,AddStyle?:KeyStyles}) => {
+const FormAutoComplete = ({label = 'Select',def={id:'',name:''},disabled=false,onChange = () => {},items = [],loadList,AddStyle}:{label?:string,def?:GenericObject,disabled?:boolean,onChange?: (item: any) => void,items?:GenericObject[],loadList?: (item: any) => Promise<GenericObject[]>,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     const [modal, setModal] = useState(false);
     const [temp,setTemp] = useState(def);
@@ -151,7 +152,7 @@ const FormAutoComplete = ({label = 'Select',def={id:'',name:''},onChange = () =>
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
 
-            <TouchableOpacity style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setModal(true)} >
+            <TouchableOpacity disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setModal(true)} >
                 
                 <Text style={[Form.input,AddStyle?.StyleInput]}>{temp.name}</Text>
                 
@@ -165,6 +166,7 @@ const FormAutoComplete = ({label = 'Select',def={id:'',name:''},onChange = () =>
                         <FlatList
                         data={result}
                         keyExtractor={(item, index) => index.toString()}
+                        
                         renderItem={({ item }) => (
                             <TouchableOpacity style={{paddingLeft:10,borderBottomWidth:1}} onPress={() => {setTemp(item);onChange?.(item);setResult([]);setModal(false)}}>
                                 <Text style={{ padding: 8 }}>{item.name}</Text>

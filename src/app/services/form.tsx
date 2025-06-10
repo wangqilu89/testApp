@@ -6,7 +6,7 @@ import Modal from "react-native-modal";
 
 
 import { useRouter,Slot} from 'expo-router';
-import { useState} from 'react';
+import { useState,useMemo} from 'react';
 
 import { WebView } from 'react-native-webview';
 import Autocomplete from 'react-native-autocomplete-input';
@@ -25,7 +25,7 @@ type GenericObject = Record<string, any>;
 const FormContainer = ({children,AddStyle}:{children: React.ReactNode,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     return (
-        <ScrollView style={[Form.container,AddStyle?.StyleContainer]} contentContainerStyle={{flex:1,alignItems: 'flex-start'}}>{children}</ScrollView>
+        <ScrollView style={[Form.container,AddStyle?.StyleContainer]} contentContainerStyle={{flex:1,alignItems: 'flex-start',maxWidth:600}}>{children}</ScrollView>
     )
 
 };
@@ -51,19 +51,23 @@ const FormCommon = ({label,children,AddStyle}:{label?:string,children?:React.Rea
 }
 const FormTextInput = ({label,def,disabled=false,onChange = () => {},AddStyle}:{label?:string,disabled?:boolean,def?:string,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
+    const [temp,setTemp] = useState(def);
+    const debouncedOnChange = useMemo(() => debounce(onChange, 500), [onChange]);
+    const handleChange = (text:string) => {
+        setTemp(text);
+        debouncedOnChange(text)
+    };
     
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
             <View style={{height:'100%',flex:1}}>
-            <TextInput editable={!disabled} selectTextOnFocus={!disabled} keyboardType="default" defaultValue={def} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
+            <TextInput editable={!disabled}  keyboardType="default" onChangeText={handleChange} value={temp} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
             </View>
         </FormCommon>
-        
-        
     )
 }
 
-const FormAttachFile = ({label,def,disabled=false,onChange = () => {},AddStyle}:{label?:string,def?:{uri: string,name: string,type: string},disabled?:boolean,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
+const FormAttachFile = ({label,def,disabled=false,onChange = () => {},AddStyle}:{label?:string,def?:{uri: string,name: string,type: string},disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
     
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
@@ -75,11 +79,14 @@ const FormAttachFile = ({label,def,disabled=false,onChange = () => {},AddStyle}:
 const FormNumericInput = ({label,def,disabled = false,onChange = () => {},AddStyle}:{label?:string,def?:string,disabled?:boolean,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     const [temp,setTemp] = useState(def)
+    const debouncedOnChange = useMemo(() => debounce(onChange, 500), [onChange]);
+    
     const handleChange = (text:string) => {
         // Allow only numbers
         const numericValue = text.replace(/[^0-9.]/g, "");
         setTemp(numericValue);
-        onChange?.(numericValue)
+        debouncedOnChange(numericValue);
+        
     };
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
@@ -90,23 +97,20 @@ const FormNumericInput = ({label,def,disabled = false,onChange = () => {},AddSty
     )
 }
 
-const FormDateInput = ({label = 'Date',def = new Date(),disabled = false,onChange = () => {},AddStyle}:{label?:string,def?:Date,disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
+const FormDateInput = ({label = 'Date',def = new Date(),mode="single",disabled = false,onChange = () => {},AddStyle}:{label?:string,def?:Date,mode?:"single"|"range"|"multiple",disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
-    
     const [showDate, setShowDate] = useState(false);
-    const displayDate = new Date(def);
-    displayDate.setHours(displayDate.getHours() + 8);
+    
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
             <TouchableOpacity disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setShowDate(true)} >
-                
-                <Text style={[Form.input,AddStyle?.StyleInput]}>{def.toISOString().split('T')[0]}</Text>
-                
+                 <Text style={[Form.input,AddStyle?.StyleInput]}>{def.toISOString().split('T')[0]}</Text>
             </TouchableOpacity>
             <Modal isVisible={showDate} >
                 <View style={{backgroundColor:'white',flexDirection:'column'}}>
                     <TouchableOpacity onPress={() => setShowDate(false)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
-                    <DateTimePicker mode="single" date={def} onChange={(date) => {setShowDate(false);onChange?.(date)}} />
+                    {mode === "single" && (<DateTimePicker mode="single" date={def} onChange={(date) => {setShowDate(false);onChange?.(date)}} />)}
+                    {mode === "range" && (<DateTimePicker mode="range" date={def} onChange={(date) => {setShowDate(false);onChange?.(date)}} />)}
                 </View>
             </Modal>
         </FormCommon>
@@ -153,9 +157,7 @@ const FormAutoComplete = ({label = 'Select',def={id:'',name:''},disabled=false,o
         <FormCommon label={label} AddStyle={AddStyle}>
 
             <TouchableOpacity disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setModal(true)} >
-                
                 <Text style={[Form.input,AddStyle?.StyleInput]}>{temp.name}</Text>
-                
             </TouchableOpacity>
             <Modal isVisible={modal} >
                 <View style={{backgroundColor:'white',flexDirection:'column'}}>

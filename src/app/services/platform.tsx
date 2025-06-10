@@ -119,7 +119,7 @@ const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=f
             const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
             
             if (result?.assets && result.assets.length > 0) {
-              console.log('In Positive Results')
+              
               const file = result.assets[0];
               newObj = { uri: file.uri, name: file.name, type: file.mimeType ?? 'application/octet-stream' }
             }
@@ -169,9 +169,7 @@ const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=f
   const AddFile = (newfile:{uri: string;name: string;type: string;}, notifyParent = true) => {
     setUploadedFile((prev) => {
       const next = multiple ? [...prev, newfile] : [newfile];
-      if (notifyParent) {
-        onChange?.(next); // only notify if allowed
-      }
+      onChange?.(next); 
       return next;
       
     })
@@ -229,7 +227,7 @@ const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=f
     if (!isSame) {
       setUploadedFile(normalized);
     }
-  }, [defaultValue]);
+  }, []);
 
   useEffect(() => {
     const autoPickOnWeb = async () => {
@@ -259,7 +257,7 @@ const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=f
                 )
             }}
           />
-          <View style={{flex:1}} ></View>
+          
         </View>
       )}
       <TouchableOpacity style={[{flex:1,flexDirection:'row',paddingTop:(uploadedFile.length > 0?0:15),paddingBottom:15},style]} onPress={() => setPrompt(true)} >
@@ -272,9 +270,9 @@ const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=f
           <View style={{padding: 20}}>
             <Text style={{backgroundColor:'transparent',color:'white',fontSize: 18,fontWeight: 'bold',marginBottom: 12,textAlign: 'center'}}>Choose Upload Source</Text>
             <View style={{borderRadius:20,backgroundColor: 'white'}}>
-              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = AddPick('camera');}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📷 Take Photo</Text></TouchableOpacity>
-              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = AddPick('gallery');}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>🖼 Gallery</Text></TouchableOpacity>
-              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {const fileObj = AddPick('document');}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📄 Pick File</Text></TouchableOpacity>
+              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {await AddPick('camera');}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📷 Take Photo</Text></TouchableOpacity>
+              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {await AddPick('gallery');}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>🖼 Gallery</Text></TouchableOpacity>
+              <TouchableOpacity style={{paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',alignItems:'center'}} onPress={async () => {await AddPick('document');}}><Text style={{backgroundColor:'transparent',fontSize: 18,fontWeight: 'bold'}}>📄 Pick File</Text></TouchableOpacity>
             </View>
           </View>
         </TouchableOpacity>

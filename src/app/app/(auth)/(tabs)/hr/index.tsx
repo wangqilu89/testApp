@@ -235,25 +235,32 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
     }
     
     const ClaimForm = ({id}:{id:string}) => {
-        type LineItem = {number: string;date: Date;internalid: string;project: GenericObject;category: GenericObject;memo: string;val_amount: string;file: any};
+        type LineItem = {number: string;expense_date:string,date: Date;internalid: string;project: GenericObject;category: GenericObject;memo: string;val_amount: string;file: any};
         
         const today = new Date()
-        today.setHours(today.getHours() + 8)
+       
         const isWeb = useWebCheck(); 
         const [loading, setLoading] = useState(false);
 
         const [currentLine, setCurrentLine] = useState(0);
         const [showLine,setShowLine]= useState(false);
         const [claim,setClaim] = useState<{internalid:string,date:Date,document_number:string,employee:GenericObject,line:GenericObject[]}>({internalid:'',date:today,document_number:'To Be Generated',employee:{},line:[]});
-        const [line,setLine] = useState({number:'0',date:today,internalid:id + '.0',project:{},category: {},memo:'','val_amount':'0',file: null as any});
+        const [line,setLine] = useState({number:'0',expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),date:today,internalid:id + '.0',project:{},category: {},memo:'','val_amount':'0',file: null as any});
 
         const updateLine = (key:keyof typeof line,value: any) => {
-            setLine(prev => ({ ...prev, [key]: value }));
+            setLine((prev) => {
+              
+              return {...prev, [key]: value }
+            })
         }
         
         const updateMain = (key:keyof typeof claim,value: any) => {
-          setClaim(prev => ({ ...prev, [key]: value }));
+          setClaim((prev) => {
+            return {...prev, [key]: value }
+          })
+          
         }
+
         const AnimatedRow = ({item,colNames}:{item:GenericObject,colNames:string[]}) => {
           const RowInfo = ({colName,index,item}: {colName:string,index:number,item:GenericObject}) => {
               return (
@@ -317,85 +324,106 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
           }
         };
         
+        const submitLine = (item:LineItem) => {
+            const refDate = item.date;
+            item.expense_date = refDate.getDate() + '/' + (refDate.getMonth() + 1) + '/' + refDate.getFullYear();
+            setClaim((prev) => {
+              const existingIndex = prev.line.findIndex(i => i.number === item.number);
+              let updatedLine;
+              if (existingIndex === -1) {
+                 // Add new
+                 updatedLine = [...prev.line, item];
+                 setCurrentLine(currentLine + 1)
+              } 
+              else {
+                updatedLine = [...prev.line];
+                updatedLine[existingIndex] = { ...updatedLine[existingIndex], ...item };
+               
+              }
+          
+              return { ...prev, line: updatedLine };
+          
+            })
+            
+        }
+        
+        const ExpenseHeader = () => {
+          return (
+            <FormContainer>
+              <FormTextInput label="ID " def={claim.internalid} onChange={(text) => {updateMain('internalid', text)}} AddStyle={{StyleRow:{display:'none'}}} />
+              <FormDateInput disabled={true} label='Date ' def={{fieldDate:claim.date,startDate:claim.date,endDate:claim.date}} onChange={(selectedDate)=>{updateMain('date',selectedDate.date)}}/>
+              <FormTextInput disabled={true} label="Document Number " key={claim.document_number} def={claim.document_number} onChange={(text) => {updateMain('document_number', text)}}/>
+              <FormAutoComplete disabled={true} label="Employee " key={claim.employee.name} def={claim.employee} onChange={(item)=>{updateMain('employee', item)}} loadList={() => FetchData({ ...BaseObj, command: "HR : Get Employee Listing",keyword:BaseObj.user})}/>
+              <FlatList
+                style={[Form.container,{paddingHorizontal:0}]}
+                data={claim.line}
+                stickyHeaderIndices={[0]}
+                ListHeaderComponent={
+                      <View style={[ListHeader.container,{marginTop:20,flexDirection:'row',backgroundColor:Theme.backgroundReverse}]}>
+                          <Ionicons name="attach" style={[CategoryButton.icon,Listing.text,{flex:-1,fontSize:23,color:Theme.backgroundReverse}]} />
+                          <Text style={[ListHeader.text,{fontSize:18,flex:1}]}>Line Items</Text>
+                          <TouchableOpacity style={{flex:-1}}  onPress={() => {setLine({number:currentLine.toString(),expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),date:today,internalid:claim.internalid + '.' + currentLine,project:{},category:{},memo:'',val_amount:'0',file:null});setShowLine(true)}}>
+                            <Ionicons name="add" style={[CategoryButton.icon,Listing.text,{fontSize:23,color:Theme.textReverse}]} />     
+                          </TouchableOpacity>                     
+                      </View>
+                  }
+                keyExtractor={(item) => item.internalid}
+                renderItem={({ item }) => {
+                  return (
+                    <AnimatedRow item={item} colNames={['number','expense_date','project','val_amount']} />
+
+                    
+                  )
+                }}
+                
+              />
+              {claim.line.length > 0 && (<FormSubmit onPress={()=>{}}/>)}
+            </FormContainer>
+          )
+        }
+
+        const ExpenseLine = () => {
+          return (
+            <FormContainer>
+              <FormTextInput label="ID " def={line.internalid} onChange={(text) => updateLine('internalid', text)} AddStyle={{StyleRow:{display:'none'}}}/>
+              <FormDateInput label='Date ' def={{fieldDate:line.date,startDate:line.date,endDate:line.date}} onChange={(selectedDate)=>{updateLine('date',selectedDate.date)}}/>
+              <FormAutoComplete label="Project " def={line.project} onChange={(item)=>{updateLine('project',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Project Listing",keyword:query})}/>
+              <FormAutoComplete label="Category " def={line.category} onChange={(item)=>{updateLine('category',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Category Listing",keyword:query})}/>
+              <FormTextInput label="Memo " def={line.memo} onChange={(text) => updateLine('memo', text)}/>
+              <FormNumericInput label="Value " def={line.val_amount} onChange={(text) => updateLine('val_amount', text)} />
+              <FormAttachFile label="Attach File " def={line.file} onChange={(file) => {updateLine('file',file)}} />
+              <View style={{flex:1}} />
+              <FormSubmit label={currentLine == parseInt(line.number)?'Add':'Update'} onPress={()=>{submitLine(line);setShowLine(false);}}/>
+            </FormContainer>
+          )
+        }
+
         useEffect(() => {
-          
             loadData(id);
-          
         }, [id]);
 
         return (
             <View style={[Page.container]}>
                 {loading && (<LoadingScreen txt="Loading..."/>)}
-                
-                {showLine ? (
-                 
-                  <>
-                   {/* Show Line Items*/}
-                  {!isWeb && (
+                  {!isWeb ? (
+                    <>
                     <View style={[Header.container,{flexDirection:'row'}]}>
-                        <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {setLine({number:'0',date:today,internalid:claim.internalid + '.0',project:{},category:{},memo:'',val_amount:'0',file:null});setShowLine(false)}}>
+                        <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {if (showLine) {setLine({number:'0',date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:claim.internalid + '.0',project:{},category:{},memo:'',val_amount:'0',file:null});setShowLine(false);} else {router.replace({pathname:pathname as any})}}}>
                             <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
                         </TouchableOpacity>
-                        <Text style={[Header.text,{flex:1,width:'auto'}]}> {'Line : ' + line.number}</Text>
+                        <Text style={[Header.text,{flex:1,width:'auto'}]}> {showLine ? ('Line : ' + line.number) : 'Expense Claim'}</Text>
                     </View>
-                  )}
-                  <FormContainer>
-                    <FormTextInput label="ID " def={line.internalid} onChange={(text) => updateLine('internalid', text)} AddStyle={{StyleRow:{display:'none'}}}/>
-                    <FormDateInput label='Date ' def={line.date} onChange={(selectedDate)=>{updateLine('date',selectedDate.date)}}/>
-                    <FormAutoComplete label="Project " def={line.project} onChange={(item)=>{updateLine('project',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Project Listing",keyword:query})}/>
-                    <FormAutoComplete label="Category " def={line.category} onChange={(item)=>{updateLine('category',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Category Listing",keyword:query})}/>
-                    <FormTextInput label="Memo " def={line.memo} onChange={(text) => updateLine('memo', text)}/>
-                    <FormNumericInput label="Value " def={line.val_amount} onChange={debounce((text) => updateLine('val_amount', text),500)} />
-                    <FormAttachFile label="Attach File " def={line.file} onChange={(file) => {updateLine('file',file)}} />
-                    <View style={{flex:1}} />
-                    <FormSubmit label={currentLine == parseInt(line.number)?'Submit':'Update'} onPress={()=>{}}/>
-                  </FormContainer>
-                  </>
-                ):(
-                  <>
-                  {/* Show Header*/}
-                  {!isWeb && (
-                    <View style={[Header.container,{flexDirection:'row'}]}>
-                        <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any})}>
-                            <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
-                        </TouchableOpacity>
-                        <Text style={[Header.text,{flex:1,width:'auto'}]}>Expense Claim</Text>
+                    {showLine ? (<ExpenseLine />):(<ExpenseHeader />)}
+                    </>
+                  ) : (
+                    <View style={{flexDirection:'column'}}>
+                      <ExpenseHeader />
+                      {showLine && (<ExpenseLine />)}
                     </View>
-                  )}
+                  )
                   
-                    <FormContainer>
-                      <FormTextInput label="ID " def={claim.internalid} onChange={(text) => {updateMain('internalid', text)}} AddStyle={{StyleRow:{display:'none'}}} />
-                      <FormDateInput disabled={true} label='Date ' def={claim.date} onChange={(selectedDate)=>{updateMain('date',selectedDate.date)}}/>
-                      <FormTextInput disabled={true} label="Document Number " key={claim.document_number} def={claim.document_number} onChange={(text) => {updateMain('document_number', text)}}/>
-                      <FormAutoComplete disabled={true} label="Employee " key={claim.employee.name} def={claim.employee} onChange={(item)=>{updateMain('employee', item)}} loadList={() => FetchData({ ...BaseObj, command: "HR : Get Employee Listing",keyword:BaseObj.user})}/>
-                      <FlatList
-                        style={[Form.container,{paddingHorizontal:0}]}
-                        data={claim.line}
-                        stickyHeaderIndices={[0]}
-                        ListHeaderComponent={
-                              <View style={[ListHeader.container,{marginTop:20,flexDirection:'row',backgroundColor:Theme.backgroundReverse}]}>
-                                  <Ionicons name="attach" style={[CategoryButton.icon,Listing.text,{flex:-1,fontSize:23,color:Theme.backgroundReverse}]} />
-                                  <Text style={[ListHeader.text,{fontSize:18,flex:1}]}>Line Items</Text>
-                                  <TouchableOpacity style={{flex:-1}}  onPress={() => {setLine({number:currentLine.toString(),date:today,internalid:claim.internalid + '.' + currentLine,project:{},category:{},memo:'',val_amount:'0',file:null});setShowLine(true)}}>
-                                    <Ionicons name="add" style={[CategoryButton.icon,Listing.text,{fontSize:23,color:Theme.textReverse}]} />     
-                                  </TouchableOpacity>                     
-                              </View>
-                          }
-                        keyExtractor={(item) => item.internalid}
-                        renderItem={({ item }) => {
-                          return (
-                            <AnimatedRow item={item} colNames={['number','expense_date','project','val_amount']} />
-
-                            
-                          )
-                        }}
-                        
-                      />
-                      {claim.line.length > 0 && (<FormSubmit onPress={()=>{}}/>)}
-                  </FormContainer>
-                
-                </>
-                )}
+                  
+                  }
             </View>
         )
     }
@@ -420,17 +448,12 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
         const [fontsLoaded] = useFonts({Righteous_400Regular});
         const [leaveData, setLeaveData] = useState<{balance: GenericObject[],application: GenericObject[];}>({balance: [],application: []});
         const [loading, setLoading] = useState(true);
-        const [activeTab, setActiveTab] = useState('balance');
+        const [activeTab, setActiveTab] = useState<keyof typeof leaveData>('balance');
 
         const isWeb = useWebCheck(); // Only "true web" if wide
-        const tabs= ['balance','application']
-        const today = new Date()
-        today.setHours(today.getHours() + 8)
-        
-        
-        
-        const [selectedIds, setSelectedIds] = useState<string[]>([]);
-        const [massSelect, setmassSelect] = useState(true);
+        const tabs : (keyof typeof leaveData)[] = ['balance','application']
+        const today = new Date()      
+
         const [expandedKeys,setExpandedKeys] = useState<string[]>([]);
         const [search, setSearch] = useState('');
         const [page, setPage] = useState(1);
@@ -492,8 +515,8 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
         };
 
         useEffect(() => {
-            loadData();
-        }, []);
+            loadData(activeTab);
+        }, [activeTab]);
 
         
         
@@ -513,16 +536,17 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
             </View>
             )}
             {/*Tabs */}
-            <View style={[Header.container,{alignItems:'flex-start',backgroundColor:'transparent'}]}>
+            <View style={[Header.container,{justifyContent:'flex-start',backgroundColor:'transparent',flexDirection:'row',paddingTop:20}]}>
                 {tabs.map((tab) => (
-                    <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={{alignItems:'center',justifyContent:'center'}} >
-                        <Text style={[Header.text,{color:((activeTab === tab)?Theme.containerBackground:Theme.pageBackground)}]}>{tab}</Text>
+                    <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={{alignItems:'flex-start',marginHorizontal:20}} >
+                        <View style={{alignItems:'center',justifyContent:'center'}}><Text style={[Header.text,{color:((activeTab === tab)?Theme.mooreReverse:Theme.text)}]}>{toProperCase(tab)}</Text></View>
+                        {activeTab === tab && (<View style={{width: 70,height: 3,backgroundColor:Theme.mooreReverse,borderRadius: 2,alignItems:'flex-start',justifyContent:'flex-start'}}></View>)}
                     </TouchableOpacity>
                 ))}
             </View>
             {/*Balance */}
             {activeTab === 'balance'  && (
-                <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1}}>
+                <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1,marginTop:20}}>
                 {/*LISTING*/} 
                 <FlatList
                     style={[Form.container]}
@@ -530,12 +554,12 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
                     keyExtractor={(item) => item.internalid}
                     renderItem={({ item }) => {
                         return (
-                          <View style={{backgroundColor:Theme.containerBackground,flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+                          <View style={{backgroundColor:Theme.containerBackground,flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:8,marginBottom:8,padding:15}}>
                             <TouchableOpacity style={{flexDirection:'column',alignItems:'flex-start',flex:1,paddingLeft:30}} onPress={() => {}}>
-                            <Text style={[Listing.text,{fontSize: 32 }]}>{item.name}</Text>
+                              <Text style={[Listing.text,{fontSize: 20}]}>{item.name}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1}} onPress={() => {}}>
-                                <Text style={[Listing.text,{fontFamily: 'Righteous_400Regular', fontSize: 32 }]}>{item.balance}</Text>
+                                <Text style={[Listing.text,{fontFamily: 'Righteous_400Regular', fontSize: 20}]}>{item.balance}</Text>
                             </TouchableOpacity>
                                 
                           </View>
@@ -549,8 +573,7 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
             
             {/*Application */}
             {activeTab === 'application'  && (
-                <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1}}>
-
+                <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1,marginTop:20}}>
                     {/*LISTING*/} 
                     <FlatList
                         style={[Form.container]}
@@ -570,9 +593,22 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
         </View>
         )
     }
+
+    const ApplyLeave = () => {
+      return (
+        <FormContainer>
+          <FormDateInput disabled={true} label='Date ' def={{fieldDate:new Date(),startDate:new Date(),endDate:new Date()}} onChange={(selectedDate)=>{}}/>
+        </FormContainer>
+      )
+    }
+
     switch (category) {
-        case 'submit-expense':
-            return <></>
+        case 'submit-leave':
+            return (
+            <View style={[Page.container]}>
+              <ApplyLeave/>
+            </View>
+            )
         default :
             return <LeaveMain />
     }
@@ -777,9 +813,14 @@ export default function HRScreen() {
         case 'attachment':
             return <DocumentView url={url} doc={doc} />;
         
-        case 'submit-expense':
         case 'expense' :
+        case 'submit-expense':
             return <ExpenseClaim category={category} id={id} user={user}/>;
+        
+        case 'leave' :
+        case 'submit-leave':
+          return <Leave category={category} id={id} user={user}/>;
+
         case 'payslip'  :
             return <PaySlip category={category} user={user}/>;
 

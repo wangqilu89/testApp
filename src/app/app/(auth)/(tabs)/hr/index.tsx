@@ -1,5 +1,5 @@
 
-import { View, Text, TouchableOpacity, FlatList, Linking,Alert,ScrollView} from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Linking,Alert,ScrollView,StyleSheet} from 'react-native';
 import { useFonts, Righteous_400Regular } from '@expo-google-fonts/righteous';
 import Modal from "react-native-modal";
 import { useEffect, useState,useMemo} from 'react';
@@ -11,6 +11,7 @@ import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,Fo
 import debounce from 'lodash.debounce';
 import { Ionicons } from '@expo/vector-icons'; 
 import {useThemedStyles} from '@/styles';
+import DateTimePicker,{DateType} from 'react-native-ui-datepicker';
 
 const approvals = [
   { id: 'personal', title: 'Personal Information',icon:'person-outline'},
@@ -351,7 +352,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
           return (
             <FormContainer>
               <FormTextInput label="ID " def={claim.internalid} onChange={(text) => {updateMain('internalid', text)}} AddStyle={{StyleRow:{display:'none'}}} />
-              <FormDateInput disabled={true} label='Date ' def={{fieldDate:claim.date,startDate:claim.date,endDate:claim.date}} onChange={(selectedDate)=>{updateMain('date',selectedDate.date)}}/>
+              <FormDateInput disabled={true} label='Date ' def={{date:claim.date}} onChange={({date})=>{updateMain('date',date)}}/>
               <FormTextInput disabled={true} label="Document Number " key={claim.document_number} def={claim.document_number} onChange={(text) => {updateMain('document_number', text)}}/>
               <FormAutoComplete disabled={true} label="Employee " key={claim.employee.name} def={claim.employee} onChange={(item)=>{updateMain('employee', item)}} loadList={() => FetchData({ ...BaseObj, command: "HR : Get Employee Listing",keyword:BaseObj.user})}/>
               <FlatList
@@ -386,7 +387,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
           return (
             <FormContainer>
               <FormTextInput label="ID " def={line.internalid} onChange={(text) => updateLine('internalid', text)} AddStyle={{StyleRow:{display:'none'}}}/>
-              <FormDateInput label='Date ' def={{fieldDate:line.date,startDate:line.date,endDate:line.date}} onChange={(selectedDate)=>{updateLine('date',selectedDate.date)}}/>
+              <FormDateInput label='Date ' def={{date:line.date}} onChange={({date})=>{updateLine('date',date)}}/>
               <FormAutoComplete label="Project " def={line.project} onChange={(item)=>{updateLine('project',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Project Listing",keyword:query})}/>
               <FormAutoComplete label="Category " def={line.category} onChange={(item)=>{updateLine('category',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Category Listing",keyword:query})}/>
               <FormTextInput label="Memo " def={line.memo} onChange={(text) => updateLine('memo', text)}/>
@@ -594,10 +595,21 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
         )
     }
 
-    const ApplyLeave = () => {
+    const ApplyLeave = ({id}:{id:string}) => {
+      const today = new Date();
+      const [loading, setLoading] = useState(false);
+      const isWeb = useWebCheck(); 
+      const [apply,setApply] = useState<GenericObject>({startdate:new Date(),enddate:new Date()});
+      const updateApply = (key:keyof typeof apply,value: any) => {
+        setApply((prev) => {
+          return {...prev, [key]: value }
+        })
+        
+      }
       return (
         <FormContainer>
-          <FormDateInput disabled={true} label='Date ' def={{fieldDate:new Date(),startDate:new Date(),endDate:new Date()}} onChange={(selectedDate)=>{}}/>
+            <FormDateInput mode="range" label='Start Date ' def={{date:apply.startdate,startDate:apply.startdate,endDate:apply.enddate}} onChange={({startDate,endDate})=>{updateApply('startdate',startDate);updateApply('enddate',endDate);}}/>
+            <FormDateInput mode="range" label='End Date ' def={{date:apply.enddate,startDate:apply.startdate,endDate:apply.enddate}} onChange={({startDate,endDate})=>{updateApply('startdate',startDate);updateApply('enddate',endDate)}}/>
         </FormContainer>
       )
     }
@@ -606,7 +618,7 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
         case 'submit-leave':
             return (
             <View style={[Page.container]}>
-              <ApplyLeave/>
+              <ApplyLeave id={id}/>
             </View>
             )
         default :

@@ -6,13 +6,16 @@ import Modal from "react-native-modal";
 
 
 import { useRouter,Slot} from 'expo-router';
-import { useState,useMemo} from 'react';
+import { useState,useMemo,useEffect} from 'react';
 
 import { WebView } from 'react-native-webview';
 import Autocomplete from 'react-native-autocomplete-input';
 import { AttachmentField} from '@/services'; 
 import {useThemedStyles} from '@/styles';
 import debounce from 'lodash.debounce';
+import isEqual from 'lodash.isequal';
+
+import { GestureDetectorBridge } from 'react-native-screens';
 
 type KeyStyles = {
     StyleContainer?:TextStyle & ViewStyle,
@@ -28,6 +31,11 @@ const FormContainer = ({children,AddStyle}:{children: React.ReactNode,AddStyle?:
         <ScrollView style={[Form.container,AddStyle?.StyleContainer]} contentContainerStyle={{flex:1,alignItems: 'flex-start',maxWidth:600}}>{children}</ScrollView>
     )
 
+};
+
+const addOpacity = (hex: string, opacity: number) => {
+    const alpha = Math.round(opacity * 255).toString(16).padStart(2, '0');
+    return hex + alpha;
 };
 const FormRow = ({styles,children}:{styles?: ViewStyle,children: React.ReactNode }) => {
     const {Form} = useThemedStyles();
@@ -97,20 +105,76 @@ const FormNumericInput = ({label,def,disabled = false,onChange = () => {},AddSty
     )
 }
 
-const FormDateInput = ({label = 'Date',def = new Date(),mode="single",disabled = false,onChange = () => {},AddStyle}:{label?:string,def?:Date,mode?:"single"|"range"|"multiple",disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
+const FormDateInput = ({label = 'Date',def={date:new Date(),startDate:new Date(),endDate:new Date()},mode="single",disabled = false,onChange = () => {},AddStyle}:{label?:string,def?:GenericObject,mode?:"single"|"range"|"multiple",disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
+
     const {Form} = useThemedStyles();
     const [showDate, setShowDate] = useState(false);
+    const [temp,setTemp] = useState<GenericObject>({})
+    const {Theme} = useThemedStyles();
     
+    
+    const HandleChange = (selected:GenericObject) => {
+        setTemp((prev) => {
+            const updated = { ...prev, ...selected };
+            if (isEqual(prev, updated)) {
+                return prev;
+            }
+            onChange?.(updated);
+            setShowDate(false);
+            return updated;
+        });
+        
+    }
+
+    const Components = {
+        IconNext:<Ionicons name='chevron-forward' style={{fontSize:30,color:Theme.background}}/>,
+        IconPrev:<Ionicons name='chevron-back' style={{fontSize:30,color:Theme.background}}/>
+    }
+    const DateStyles = StyleSheet.create({
+        
+        selected: {backgroundColor:addOpacity(Theme.mooreReverse,0.5)},
+        range_start:{backgroundColor:addOpacity(Theme.mooreReverse,0.5)},
+        range_end:{backgroundColor:addOpacity(Theme.mooreReverse,0.5)},
+        range_middle:{backgroundColor:addOpacity(Theme.mooreReverse,0.2)},
+        
+        month_selector_label:{fontSize:20,color:Theme.background},
+        year_selector_label:{fontSize:20,color:Theme.background},
+        weekday:{borderBottomWidth:1,borderColor:Theme.mooreReverse},
+        weekday_label:{fontWeight:'bold',color:Theme.background}
+    })
+
+    useEffect(() => {
+        setTemp((prev) => {
+            
+            return {...prev,...def}
+        })
+    },[def])
+
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
             <TouchableOpacity disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setShowDate(true)} >
-                 <Text style={[Form.input,AddStyle?.StyleInput]}>{def.toISOString().split('T')[0]}</Text>
+                 <Text style={[Form.input,AddStyle?.StyleInput]}>{temp.date?.toISOString().split('T')[0]??''}</Text>
             </TouchableOpacity>
             <Modal isVisible={showDate} >
                 <View style={{backgroundColor:'white',flexDirection:'column'}}>
                     <TouchableOpacity onPress={() => setShowDate(false)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
-                    {mode === "single" && (<DateTimePicker mode="single" date={def} onChange={(date) => {setShowDate(false);onChange?.(date)}} />)}
-                    {mode === "range" && (<DateTimePicker mode="range" date={def} onChange={(date) => {setShowDate(false);onChange?.(date)}} />)}
+                    
+                    {mode === "single" ?
+                    (<View style={{borderRadius:10,borderWidth:1,borderColor:Theme.background,marginHorizontal:8,marginBottom:8}}>
+                        <DateTimePicker timeZone="UTC"  styles={DateStyles} components={Components} mode="single" date={def.date} onChange={(s) => {HandleChange(s)}}/>
+                     </View>):
+                    (<View style={{flexDirection:'column'}}>
+                        <View style={{borderRadius:10,borderWidth:1,borderColor:Theme.background,marginHorizontal:8,marginBottom:8}}>
+                          <DateTimePicker timeZone="UTC" styles={DateStyles} components={Components} mode="range" startDate={temp.startDate} endDate={temp.endDate} onChange={(s) => {setTemp((prev) => {return {...prev,...s}});}}/>
+                        </View>
+                        <View style={{flex:1,marginHorizontal:8,alignItems:'center'}}>
+                            <Text style={{}}>{(temp.startDate?.toISOString().split('T')[0]??'') + ' - ' + (temp.endDate?.toISOString().split('T')[0]??'')}</Text>
+                        </View>
+                        <FormSubmit onPress={() => {onChange?.(temp);setShowDate(false);}}/>
+                     </View>
+                    )
+                    }
+                    
                 </View>
             </Modal>
         </FormCommon>

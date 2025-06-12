@@ -1,11 +1,13 @@
-import { View, Text, ActivityIndicator,Platform, Dimensions, FlatList, TouchableOpacity,Alert,Modal,Linking,Image,TextStyle,ViewStyle,TextInput} from 'react-native';
+import { View, Text, ActivityIndicator,Platform, Dimensions, FlatList, TouchableOpacity,Alert,Linking,Image,TextStyle,ViewStyle,TextInput} from 'react-native';
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect,useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons'; 
 import { WebView } from 'react-native-webview';
 import {useThemedStyles} from '@/styles';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
+import Modal from "react-native-modal";
+
 
 
 type SubMenu = {
@@ -20,6 +22,16 @@ type Command = {
   middleware:string,
   [key: string]: any;
 }
+type GenericObject = Record<string, any>;
+
+type DropdownMenuProps = {
+  visible: boolean;
+  handleClose: () => void;
+  handleSelect: (item:any) => void;
+  items: GenericObject[];
+  dropdownWidth?: number;
+}
+
 const useWebCheck = () => {
   const getPlatformState = () => {return ((Platform.OS === 'web') &&  (Dimensions.get('window').width >= 768))}
   const [isWeb, setIsWeb] = useState(getPlatformState());
@@ -265,7 +277,7 @@ const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=f
       </TouchableOpacity>
       
       {/*Open Modal to choose file selection */}
-      <Modal visible={prompt && Platform.OS != 'web'} animationType="slide" transparent={true} onRequestClose={() => setPrompt(false)}>
+      <Modal isVisible={prompt && Platform.OS != 'web'} animationIn="fadeIn" animationOut="fadeOut" onBackdropPress={() => setPrompt(false)} onBackButtonPress={() => setPrompt(false)}>
         <TouchableOpacity style={{flex: 1,justifyContent: 'flex-end',backgroundColor:'#a7adb280'}} activeOpacity={1} onPressOut={() => setPrompt(false)}>
           <View style={{padding: 20}}>
             <Text style={{backgroundColor:'transparent',color:'white',fontSize: 18,fontWeight: 'bold',marginBottom: 12,textAlign: 'center'}}>Choose Upload Source</Text>
@@ -295,6 +307,48 @@ const SearchField = ({search,onChange,style}:{search?:string,onChange?:(item: an
   )
 }
 
+const MenuOption = ({onSelect,item}: {onSelect:() => void,item:GenericObject}) => {
+  return (
+    <TouchableOpacity onPress={onSelect} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
+      <Text>{item.name}</Text>
+    </TouchableOpacity>
+  );
+};
+
+const DropdownMenu:React.FC<DropdownMenuProps> =({visible,handleClose,handleSelect,items,dropdownWidth=150}) => {
+  const triggerRef = useRef<View>(null);
+  const [position, setPosition] = useState({x: 0, y: 0, width: 0});
+
+  useEffect(() => {
+    if (triggerRef.current && visible) {
+      triggerRef.current.measure((fx, fy, width, height, px, py) => {
+        setPosition({
+          x: px,
+          y: py + height,
+          width: width,
+        });
+      });
+    }
+  }, [visible]);
+  return (
+    <View style={{flex:1}}>
+      {visible && (
+        <Modal backdropOpacity={0} backdropColor="transparent" isVisible={visible}  onBackdropPress={handleClose} onBackButtonPress={handleClose}>
+          <View style={[{position: 'absolute',backgroundColor: 'white',borderRadius: 5,padding: 10,shadowColor: '#000',shadowOffset: {width: 0, height:2},shadowOpacity: 0.2,shadowRadius: 4,elevation: 4,top: position.y,left: position.x + position.width / 2 - dropdownWidth / 2,width: dropdownWidth}]}>
+              <FlatList 
+                data={items} 
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <MenuOption onSelect={() => {handleSelect(item)}} item={item} />      
+                )}
+              />
+            </View>
+        </Modal>
+      )}
+    </View>
+  )
+}
+
 export {
   useWebCheck,
   LoadingScreen,
@@ -302,5 +356,6 @@ export {
   NoRecords,
   MainViewer,
   AttachmentField,
-  SearchField
+  SearchField,
+  DropdownMenu
 };

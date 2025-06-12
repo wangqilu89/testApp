@@ -6,15 +6,14 @@ import Modal from "react-native-modal";
 
 
 import { useRouter,Slot} from 'expo-router';
-import { useState,useMemo,useEffect} from 'react';
+import { useState,useMemo,useEffect,useRef} from 'react';
 
 import { WebView } from 'react-native-webview';
-import Autocomplete from 'react-native-autocomplete-input';
+import { DropdownMenu } from '@/components/DropdownMenu';
 import { AttachmentField} from '@/services'; 
 import {useThemedStyles} from '@/styles';
 import debounce from 'lodash.debounce';
-import isEqual from 'lodash.isequal';
-
+import isEqual from 'lodash/isEqual';
 import { GestureDetectorBridge } from 'react-native-screens';
 
 type KeyStyles = {
@@ -113,19 +112,18 @@ const FormDateInput = ({label = 'Date',def={date:new Date(),startDate:new Date()
     const {Theme} = useThemedStyles();
     
     
-    const HandleChange = (selected:GenericObject) => {
-        setTemp((prev) => {
-            const updated = { ...prev, ...selected };
-            if (isEqual(prev, updated)) {
-                return prev;
-            }
-            onChange?.(updated);
-            setShowDate(false);
-            return updated;
-        });
-        
+    const HandleChange = (selected:GenericObject,addFunction?:(item: any) => void) => {
+        const updated = { ...temp, ...selected };
+        if (!isEqual(updated,temp)) {
+           addFunction?.(updated)
+        }
+        setTemp(updated)
     }
 
+    const CloseDate = (item:any) => {
+        onChange?.(item);
+        setShowDate(false);
+    }
     const Components = {
         IconNext:<Ionicons name='chevron-forward' style={{fontSize:30,color:Theme.background}}/>,
         IconPrev:<Ionicons name='chevron-back' style={{fontSize:30,color:Theme.background}}/>
@@ -161,16 +159,32 @@ const FormDateInput = ({label = 'Date',def={date:new Date(),startDate:new Date()
                     
                     {mode === "single" ?
                     (<View style={{borderRadius:10,borderWidth:1,borderColor:Theme.background,marginHorizontal:8,marginBottom:8}}>
-                        <DateTimePicker timeZone="UTC"  styles={DateStyles} components={Components} mode="single" date={def.date} onChange={(s) => {HandleChange(s)}}/>
+                        <DateTimePicker timeZone="UTC"  styles={DateStyles} components={Components} mode="single" date={def.date} onChange={(s) => {HandleChange(s,CloseDate)}}/>
                      </View>):
                     (<View style={{flexDirection:'column'}}>
                         <View style={{borderRadius:10,borderWidth:1,borderColor:Theme.background,marginHorizontal:8,marginBottom:8}}>
-                          <DateTimePicker timeZone="UTC" styles={DateStyles} components={Components} mode="range" startDate={temp.startDate} endDate={temp.endDate} onChange={(s) => {setTemp((prev) => {return {...prev,...s}});}}/>
+                          <DateTimePicker timeZone="UTC" styles={DateStyles} components={Components} mode="range" startDate={temp.startDate} endDate={temp.endDate} onChange={(s) => {HandleChange(s)}}/>
                         </View>
-                        <View style={{flex:1,marginHorizontal:8,alignItems:'center'}}>
-                            <Text style={{}}>{(temp.startDate?.toISOString().split('T')[0]??'') + ' - ' + (temp.endDate?.toISOString().split('T')[0]??'')}</Text>
+                        <View style={{flex:1,marginHorizontal:8,alignItems:'center',flexDirection:'row'}}>
+                            <View style={{flex:1,alignItems:'center',flexDirection:'column'}}>
+                                <View style={{marginHorizontal:15,borderBottomWidth:1,alignSelf:'stretch',alignItems:'center'}}>
+                                    <Text style={{fontWeight:'bold',fontSize:15}}>Start Date</Text>
+                                </View>
+                                <Text>{temp.startDate?.toISOString().split('T')[0]??''}</Text>
+                            </View>
+                            <View style={{flex:-1,alignItems:'center',flexDirection:'column'}}>
+                                <Text>&nbsp;</Text>
+                                <Text>-</Text>
+                            </View>
+                            <View style={{flex:1,alignItems:'center',flexDirection:'column'}}>
+                                <View style={{marginHorizontal:15,borderBottomWidth:1,alignSelf:'stretch',alignItems:'center'}}>
+                                    <Text style={{fontWeight:'bold',fontSize:15}}>End Date</Text>
+                                </View>
+                                <Text>{temp.endDate?.toISOString().split('T')[0]??''}</Text>
+                            </View>
+                            
                         </View>
-                        <FormSubmit onPress={() => {onChange?.(temp);setShowDate(false);}}/>
+                        <FormSubmit label="Ok" onPress={() => {CloseDate(temp)}}/>
                      </View>
                     )
                     }
@@ -195,6 +209,7 @@ const FormSubmit = ({label = 'Submit',onPress = () => {},AddStyle}:{label?:strin
 const FormAutoComplete = ({label = 'Select',def={id:'',name:''},disabled=false,onChange = () => {},items = [],loadList,AddStyle}:{label?:string,def?:GenericObject,disabled?:boolean,onChange?: (item: any) => void,items?:GenericObject[],loadList?: (item: any) => Promise<GenericObject[]>,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     const [modal, setModal] = useState(false);
+    
     const [temp,setTemp] = useState(def);
     const [result,setResult] = useState<GenericObject[]>([]);
     const loadDropdown = async (q: string) => {
@@ -216,33 +231,45 @@ const FormAutoComplete = ({label = 'Select',def={id:'',name:''},disabled=false,o
 
         }
     };
+    
+    const handleSelect = (item: any) => {
+        setTemp(item);
+        onChange?.(item);
+        setResult([]);
+        setModal(false);
+    };
+    const triggerRef = useRef<View>(null);
 
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
-
-            <TouchableOpacity disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setModal(true)} >
+            <View style={{flexDirection:'column',flex:1}}>
+            <TouchableOpacity ref={triggerRef} disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => {setModal(true)}} >
                 <Text style={[Form.input,AddStyle?.StyleInput]}>{temp.name}</Text>
             </TouchableOpacity>
-            <Modal isVisible={modal} >
-                <View style={{backgroundColor:'white',flexDirection:'column'}}>
-                    <TouchableOpacity onPress={() => setModal(false)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
-                    
-                    <TextInput placeholder={"Search " + label} defaultValue={temp.name} onChangeText={debounce(loadDropdown,500)}   style={{borderRadius:5,borderWidth:1,marginLeft:10,marginRight:10,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}}/>
-                    {result.length > 0 && (
-                        <FlatList
-                        data={result}
-                        keyExtractor={(item, index) => index.toString()}
+            <DropdownMenu visible={items.length > 0 && modal} handleClose={() => setModal(false)} handleSelect={(item) => {handleSelect(item)}} items={items}/>
+            
+            <Modal isVisible={modal && items.length === 0} >
+                    <View style={{backgroundColor:'white',flexDirection:'column'}}>
+                        <TouchableOpacity onPress={() => setModal(false)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
                         
-                        renderItem={({ item }) => (
-                            <TouchableOpacity style={{paddingLeft:10,borderBottomWidth:1}} onPress={() => {setTemp(item);onChange?.(item);setResult([]);setModal(false)}}>
-                                <Text style={{ padding: 8 }}>{item.name}</Text>
-                            </TouchableOpacity>
+                        <TextInput placeholder={"Search " + label} defaultValue={temp.name} onChangeText={debounce(loadDropdown,500)}   style={{borderRadius:5,borderWidth:1,marginLeft:10,marginRight:10,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}}/>
+                        {result.length > 0 && (
+                            <FlatList
+                            data={result}
+                            keyExtractor={(item, index) => index.toString()}
+                            
+                            renderItem={({ item }) => (
+                                <TouchableOpacity style={{paddingLeft:10,borderBottomWidth:1}} onPress={() => {setTemp(item);onChange?.(item);setResult([]);setModal(false)}}>
+                                    <Text style={{ padding: 8 }}>{item.name}</Text>
+                                </TouchableOpacity>
+                            )}
+                            />
                         )}
-                        />
-                    )}
 
-                </View>
+                    </View>
             </Modal>
+            </View>
+            
         </FormCommon>
     )
 }

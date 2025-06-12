@@ -6,18 +6,20 @@ import { useRouter } from 'expo-router';
 import { Platform, Dimensions } from 'react-native';
 
 type User = {
-  id: string;
-  name: string;
-  email: string;
+  id: string,
+  name: string,
+  email: string,
+  subsidiary:string,
+  shift:string,
   group: {
     id: string;
     name: string;
-  };
+  },
   department: {
     id: string;
     name: string;
-  };
-  role: string;
+  },
+  role: string
 };
 
 type UserContextType = {

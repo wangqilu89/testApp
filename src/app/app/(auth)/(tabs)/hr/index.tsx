@@ -8,10 +8,11 @@ import Animated from 'react-native-reanimated';
 import { useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField} from '@/services'; // 👈 functions
 import { LoadingScreen, NoRecords, MainPage,MainViewer} from '@/services'; // 👈 Common Screens
 import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete,FormAttachFile} from '@/services';
-import debounce from 'lodash.debounce';
+
 import { Ionicons } from '@expo/vector-icons'; 
 import {useThemedStyles} from '@/styles';
 import DateTimePicker,{DateType} from 'react-native-ui-datepicker';
+import { DatePickerMultipleProps } from 'react-native-ui-datepicker/lib/typescript/datetime-picker';
 
 const approvals = [
   { id: 'personal', title: 'Personal Information',icon:'person-outline'},
@@ -596,20 +597,111 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
     }
 
     const ApplyLeave = ({id}:{id:string}) => {
-      const today = new Date();
+      
       const [loading, setLoading] = useState(false);
       const isWeb = useWebCheck(); 
-      const [apply,setApply] = useState<GenericObject>({startdate:new Date(),enddate:new Date()});
+      const [apply,setApply] = useState<GenericObject>({startdate:new Date(),enddate:new Date(),startam:1,endam:1,day:0,leave:{}});
+      const [list,setList] = useState<{public:GenericObject[],balance:GenericObject[],working:number[]}>({public:[],balance:[],working:[]})
+      const memoApply = useMemo(() => apply, [apply.startdate, apply.enddate, apply.startam, apply.endam])
+      
+      
       const updateApply = (key:keyof typeof apply,value: any) => {
         setApply((prev) => {
           return {...prev, [key]: value }
         })
-        
       }
+
+      const CompareDates = (date1:Date,date2:Date) => {
+        if (date1 > date2) {
+          return 1
+        } 
+        else if (date1 < date2) {
+          return 2
+        } 
+        else {
+          return 0
+        }
+      }
+      
+      const GetLeavePeriod = () => {
+        const startdate = new Date(apply.startdate.getFullYear(),apply.startdate.getMonth(),apply.startdate.getDate())
+        const enddate = new Date(apply.enddate.getFullYear(),apply.enddate.getMonth(),apply.enddate.getDate())
+        let totalapplied = 0
+        let refdate = new Date(startdate)
+        refdate.setDate(refdate.getDate() - 1)
+
+        do {
+          let applied = 0
+          refdate.setDate(refdate.getDate() + 1)
+          const dayofweek = refdate.getDay()
+          if (CompareDates(refdate,startdate) === 0 ) {
+            //Start Date
+            applied = list.working[dayofweek] * (apply.startam === 1?1:0.5)
+          }
+          else if (CompareDates(refdate,enddate) === 0) {
+            //End Date
+            applied = list.working[dayofweek] *(apply.startpm === 1?1:0.5)
+          }
+          else {
+            applied = list.working[dayofweek] * 1
+          }
+          //PH Check
+          for (const hol of list.public) {
+            let phdate = hol.date.split('/')
+            phdate = new Date(hol[2],parseInt(hol[1]) - 1,hol[0])
+            if (CompareDates(phdate,refdate) === 0) {
+              applied = 0
+              break;
+            }
+          }
+          totalapplied += applied
+        } while (CompareDates(refdate,enddate) === 2)
+
+        updateApply('day',totalapplied)
+      }
+
+      useEffect(() => {
+        if (apply.startdate.getFullYear() != apply.enddate.getFullYear()) {
+          setList({public:[],balance:[],working:[]});
+          Alert.alert('The leaves selected cross calendar year. Please change your dates.');
+          return;
+        }
+        
+        const GetBalance = async () => {
+          for (const key of Object.keys(list)) {
+            let cmd = ''
+            switch (key) {
+              case 'balance':
+                cmd = "HR : Get Leave balance"
+              break;
+              
+              case 'public':
+                cmd = "HR : Get Public Holiday"
+              break;
+              case 'working':
+                cmd = "HR : Get Working day"
+              break;
+            }
+            let data = await FetchData({...BaseObj,data:{date:apply.startdate.getFullYear(),shift:user?.shift??0,subsidiary:user?.subsidiary??0},command:cmd});
+            setList((prev) => {
+              return {...prev,[key]:data}
+            });
+          }
+          GetLeavePeriod()
+        };
+        GetBalance()
+      },[memoApply]);
+
+
       return (
         <FormContainer>
             <FormDateInput mode="range" label='Start Date ' def={{date:apply.startdate,startDate:apply.startdate,endDate:apply.enddate}} onChange={({startDate,endDate})=>{updateApply('startdate',startDate);updateApply('enddate',endDate);}}/>
+            <FormAutoComplete label="AM/PM " def={apply.startam} onChange={(item)=>{updateApply('startam',item)}} items={[{name:'Full Day',id:1},{name:'AM',id:2},{name:'PM',id:3}]}/>
             <FormDateInput mode="range" label='End Date ' def={{date:apply.enddate,startDate:apply.startdate,endDate:apply.enddate}} onChange={({startDate,endDate})=>{updateApply('startdate',startDate);updateApply('enddate',endDate)}}/>
+            <FormAutoComplete label="AM/PM " def={apply.endam} onChange={(item)=>{updateApply('endam',item)}} items={[{name:'Full Day',id:1},{name:'AM',id:2},{name:'PM',id:3}]}/>
+            <FormTextInput disabled={true} label="Days Applied " key={apply.day} def={apply.day} onChange={(text) => {updateApply('day', text)}}/>
+            <FormAutoComplete label="Leave Type " def={apply.leave} onChange={(item)=>{updateApply('leave',item)}} items={list.balance}/>
+            <FormTextInput label="Reason " key={apply.reason} def={apply.reason} onChange={(text) => {updateApply('reason', text)}}/>
         </FormContainer>
       )
     }

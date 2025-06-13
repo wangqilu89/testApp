@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text} from 'react-native';
-import {  useUser} from '@/services'; // 👈 update path
+import { useUser } from '@/components/User';
 import { useThemedStyles } from '@/styles';
 
 export default function HomeScreen() {

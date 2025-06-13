@@ -1,13 +1,15 @@
 
-import { View, Text, TouchableOpacity, FlatList, Linking,Alert,ScrollView,StyleSheet} from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Linking,ScrollView,StyleSheet} from 'react-native';
 import { useFonts, Righteous_400Regular } from '@expo-google-fonts/righteous';
 import Modal from "react-native-modal";
 import { useEffect, useState,useMemo} from 'react';
 import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
 import Animated from 'react-native-reanimated';
-import { useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField} from '@/services'; // 👈 functions
-import { LoadingScreen, NoRecords, MainPage,MainViewer} from '@/services'; // 👈 Common Screens
+import { useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField} from '@/services'; // 👈 functions
+import { NoRecords, MainPage,MainViewer} from '@/services'; // 👈 Common Screens
 import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete,FormAttachFile} from '@/services';
+import { useAlert } from '@/components/AlertModal';
+import { useUser } from '@/components/User';
 
 import { Ionicons } from '@expo/vector-icons'; 
 import {useThemedStyles} from '@/styles';
@@ -44,7 +46,7 @@ function MainScreen() {
 }
 
 function ExpenseClaim({ category,id,user}: { category: string, id:string,user:GenericObject|null}) {
-    
+    const { ShowAlert,ShowLoading,HideLoading,loadingVisible} = useAlert();
     const pathname = usePathname();
     const router = useRouter();
     const {Page,Header,Listing,Form,ListHeader,CategoryButton,Theme} = useThemedStyles();
@@ -56,7 +58,6 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
     const ExpenseMain = () => {
         const [list, setList] = useState<GenericObject[]>([]);
         const [displayList, setDisplayList] = useState<GenericObject[]>([]); // ✅ Add this
-        const [loading, setLoading] = useState(true);
         const [expandedKeys,setExpandedKeys] = useState<string[]>([]);
         const [search, setSearch] = useState('');
         const [page, setPage] = useState(1);
@@ -70,7 +71,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
         
         /*Function */
         const loadData = async () => {
-            setLoading(true);
+            ShowLoading('Loading List...')
             try {
                 let data = await FetchData({...BaseObj,command:'HR : Get Expense List'});
                 data = data|| []
@@ -81,7 +82,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
                 console.error(`Failed to fetch ${category} :`, err);
             } 
             finally {
-                setLoading(false);
+                HideLoading();
             }
         }
         
@@ -187,9 +188,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
         
         return (
         <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
-            {loading ?
-              (<LoadingScreen txt="Loading..."/>)
-            :(<>
+            <>
             {!isWeb && (
               <View style={[Header.container,{flexDirection:'row'}]}>
                   <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any})}>
@@ -224,13 +223,13 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
                         onEndReachedThreshold={0.5}
                     />
                 </View>
-            ) : (
+            ) : (!loadingVisible && 
                 <View style={{flex:1,flexDirection:'column',width:'100%'}}>
                     <NoRecords />
                 </View>
 
             )}
-            </>)}
+            </>
         </View>
         
         )
@@ -238,12 +237,8 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
     
     const ClaimForm = ({id}:{id:string}) => {
         type LineItem = {number: string;expense_date:string,date: Date;internalid: string;project: GenericObject;category: GenericObject;memo: string;val_amount: string;file: any};
-        
         const today = new Date()
-       
         const isWeb = useWebCheck(); 
-        const [loading, setLoading] = useState(false);
-
         const [currentLine, setCurrentLine] = useState(0);
         const [showLine,setShowLine]= useState(false);
         const [claim,setClaim] = useState<{internalid:string,date:Date,document_number:string,employee:GenericObject,line:GenericObject[]}>({internalid:'',date:today,document_number:'To Be Generated',employee:{},line:[]});
@@ -289,7 +284,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
         };
         
         const loadData = async (id:string) => {
-          setLoading(true);
+          ShowLoading('Loading List...')
           try {
             let data = null
             let lineNo = 0
@@ -322,7 +317,7 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
             console.error(`Failed to fetch ${category} :`, err);
           } 
           finally {
-            setLoading(false);
+            HideLoading()
           }
         };
         
@@ -406,7 +401,6 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
 
         return (
             <View style={[Page.container]}>
-                {loading && (<LoadingScreen txt="Loading..."/>)}
                   {!isWeb ? (
                     <>
                     <View style={[Header.container,{flexDirection:'row'}]}>
@@ -440,16 +434,16 @@ function ExpenseClaim({ category,id,user}: { category: string, id:string,user:Ge
 }
 
 function Leave({ category,id,user}: { category: string, id:string,user:GenericObject|null}) {
-
+    const { ShowAlert,ShowLoading,HideLoading} = useAlert();
     const pathname = usePathname();
     const router = useRouter();
     const {Page,Header,Listing,Form,ListHeader,CategoryButton,Theme} = useThemedStyles();
     const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
+    
 
     const LeaveMain = () => {
         const [fontsLoaded] = useFonts({Righteous_400Regular});
         const [leaveData, setLeaveData] = useState<{balance: GenericObject[],application: GenericObject[];}>({balance: [],application: []});
-        const [loading, setLoading] = useState(true);
         const [activeTab, setActiveTab] = useState<keyof typeof leaveData>('balance');
 
         const isWeb = useWebCheck(); // Only "true web" if wide
@@ -467,18 +461,21 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
         }
 
         const loadData = async (cmd:keyof typeof leaveData ="balance") => {
-            setLoading(true);
-            try {
-                let data = await FetchData({...BaseObj,data:{date:today.getFullYear()},command:"HR : Get Leave " + cmd});
-                data = data|| []
-                updateData(cmd,data)
-            } 
-            catch (err) {
-                console.error(`Failed to fetch ${category} :`, err);
-            } 
-            finally {
-                setLoading(false); 
+            if (leaveData[cmd].length == 0) {
+              ShowLoading('Loading List...')
+              try {
+                  let data = await FetchData({...BaseObj,data:{date:today.getFullYear()},command:"HR : Get Leave " + cmd});
+                  data = data|| []
+                  updateData(cmd,data)
+              } 
+              catch (err) {
+                  console.error(`Failed to fetch ${category} :`, err);
+              } 
+              finally {
+                  HideLoading()
+              }
             }
+            
         }
         
         const AnimatedRow = ({isExpanded,item,colNames}:{isExpanded:boolean,item:GenericObject,colNames:string[]}) => {
@@ -525,7 +522,6 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
         return (
         <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
             {/*HEADER */}
-            {loading || !fontsLoaded && (<LoadingScreen txt="Loading..."/>)}
             {!isWeb && (
             <View style={[Header.container,{flexDirection:'row'}]}>
                 <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any})}>
@@ -598,10 +594,10 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
 
     const ApplyLeave = ({id}:{id:string}) => {
       
-      const [loading, setLoading] = useState(false);
       const isWeb = useWebCheck(); 
-      const [apply,setApply] = useState<GenericObject>({startdate:new Date(),enddate:new Date(),startam:1,endam:1,day:0,leave:{}});
-      const [list,setList] = useState<{public:GenericObject[],balance:GenericObject[],working:number[]}>({public:[],balance:[],working:[]})
+      const [year,setYear] = useState('')
+      const [apply,setApply] = useState<GenericObject>({startdate:new Date(),enddate:new Date(),startam:1,endam:1,day:1,leave:{}});
+      const [list,setList] = useState<{public:GenericObject[],balance:GenericObject[],working:GenericObject[]}>({public:[],balance:[],working:[]})
       const memoApply = useMemo(() => apply, [apply.startdate, apply.enddate, apply.startam, apply.endam])
       
       
@@ -609,7 +605,7 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
         setApply((prev) => {
           return {...prev, [key]: value }
         })
-      }
+      };
 
       const CompareDates = (date1:Date,date2:Date) => {
         if (date1 > date2) {
@@ -621,34 +617,38 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
         else {
           return 0
         }
-      }
+      };
       
-      const GetLeavePeriod = () => {
+      const GetLeavePeriod = (NewList:{public:GenericObject[],balance:GenericObject[],working:GenericObject[]}) => {
+        
         const startdate = new Date(apply.startdate.getFullYear(),apply.startdate.getMonth(),apply.startdate.getDate())
         const enddate = new Date(apply.enddate.getFullYear(),apply.enddate.getMonth(),apply.enddate.getDate())
         let totalapplied = 0
         let refdate = new Date(startdate)
         refdate.setDate(refdate.getDate() - 1)
-
+        
         do {
           let applied = 0
           refdate.setDate(refdate.getDate() + 1)
           const dayofweek = refdate.getDay()
           if (CompareDates(refdate,startdate) === 0 ) {
             //Start Date
-            applied = list.working[dayofweek] * (apply.startam === 1?1:0.5)
+            applied = NewList.working[dayofweek]?.day??0 * (apply.startam === 1?1:0.5)
           }
           else if (CompareDates(refdate,enddate) === 0) {
             //End Date
-            applied = list.working[dayofweek] *(apply.startpm === 1?1:0.5)
+            applied = NewList.working[dayofweek]?.day??0 *(apply.startpm === 1?1:0.5)
           }
           else {
-            applied = list.working[dayofweek] * 1
+            applied = NewList.working[dayofweek]?.day??0 * 1
           }
+          
+          
           //PH Check
-          for (const hol of list.public) {
+          
+          for (const hol of NewList.public) {
             let phdate = hol.date.split('/')
-            phdate = new Date(hol[2],parseInt(hol[1]) - 1,hol[0])
+            phdate = new Date(phdate[2],parseInt(phdate[1]) - 1,phdate[0])
             if (CompareDates(phdate,refdate) === 0) {
               applied = 0
               break;
@@ -656,18 +656,15 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
           }
           totalapplied += applied
         } while (CompareDates(refdate,enddate) === 2)
-
-        updateApply('day',totalapplied)
-      }
-
-      useEffect(() => {
-        if (apply.startdate.getFullYear() != apply.enddate.getFullYear()) {
-          setList({public:[],balance:[],working:[]});
-          Alert.alert('The leaves selected cross calendar year. Please change your dates.');
-          return;
-        }
         
-        const GetBalance = async () => {
+        updateApply('day',totalapplied && !isNaN(totalapplied) ? totalapplied : 0)
+      };
+
+      const GetBalance = async () => {
+        const updatedList:GenericObject = {}
+        const YearStr = apply.startdate.getFullYear().toString()
+        if (YearStr != year) {
+          setYear(YearStr)
           for (const key of Object.keys(list)) {
             let cmd = ''
             switch (key) {
@@ -683,15 +680,28 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
               break;
             }
             let data = await FetchData({...BaseObj,data:{date:apply.startdate.getFullYear(),shift:user?.shift??0,subsidiary:user?.subsidiary??0},command:cmd});
-            setList((prev) => {
-              return {...prev,[key]:data}
-            });
+            updatedList[key] = data
+            
           }
-          GetLeavePeriod()
-        };
-        GetBalance()
+          setList((prev) => {
+            const newList = { ...prev, ...updatedList };
+            return newList;
+          });
+          
+        }
+        GetLeavePeriod({...list,...updatedList})
+      };
+      
+      useEffect(() => {
+        if (apply.startdate.getFullYear() != apply.enddate.getFullYear()) {
+          setList({public:[],balance:[],working:[]});
+          ShowAlert("The leaves selected cross calendar year.Please change your dates.");
+          return
+        }
+        GetBalance();
       },[memoApply]);
 
+      
 
       return (
         <FormContainer>
@@ -706,6 +716,7 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
       )
     }
 
+
     switch (category) {
         case 'submit-leave':
             return (
@@ -719,12 +730,12 @@ function Leave({ category,id,user}: { category: string, id:string,user:GenericOb
 }
 
 function PaySlip({ category,user}: { category: string,user:GenericObject|null}) {
+  const { ShowAlert,ShowLoading,HideLoading,loadingVisible} = useAlert();
   const pathname = usePathname();
   const router = useRouter();
   const [list, setList] = useState<GenericObject[]>([]);
   const [displayList, setDisplayList] = useState<GenericObject[]>([]); 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const [massSelect, setmassSelect] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -736,7 +747,7 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
   const COLUMN_CONFIG: string[] = ['employee','period','val_salary']
 
   const loadData = async () => {
-    setLoading(true);
+    ShowLoading('Load List...')
     try {
       let data = await FetchData({...BaseObj,command:`HR : Get ${category} List`});
       data = data|| []
@@ -747,7 +758,7 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
       console.error(`Failed to fetch ${category} :`, err);
     } 
     finally {
-      setLoading(false);
+      HideLoading()
     }
   };
 
@@ -805,7 +816,7 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
   
   const handleDownload = async () => {
     if (selectedIds.length === 0) {
-        Alert.alert('Please select at least one record.');
+        ShowAlert('Please select at least one record.')
         return;
     }
     Linking.openURL(BaseURL + selectedIds.join('|'))
@@ -841,7 +852,6 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
   return (
 
         <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
-          {loading && (<LoadingScreen txt="Loading List..."/>)}
           {/*HEADER */}
           {!isWeb && (
             <View style={[Header.container,{flexDirection:'row'}]}>
@@ -891,7 +901,7 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
               )}
 
             </View>
-          ):(
+          ):(!loadingVisible && 
             <NoRecords/>
 
           )}

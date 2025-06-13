@@ -131,7 +131,6 @@ const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=f
             const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
             
             if (result?.assets && result.assets.length > 0) {
-              
               const file = result.assets[0];
               newObj = { uri: file.uri, name: file.name, type: file.mimeType ?? 'application/octet-stream' }
             }
@@ -307,47 +306,8 @@ const SearchField = ({search,onChange,style}:{search?:string,onChange?:(item: an
   )
 }
 
-const MenuOption = ({onSelect,item}: {onSelect:() => void,item:GenericObject}) => {
-  return (
-    <TouchableOpacity onPress={onSelect} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
-      <Text>{item.name}</Text>
-    </TouchableOpacity>
-  );
-};
 
-const DropdownMenu:React.FC<DropdownMenuProps> =({visible,handleClose,handleSelect,items,dropdownWidth=150}) => {
-  const triggerRef = useRef<View>(null);
-  const [position, setPosition] = useState({x: 0, y: 0, width: 0});
 
-  useEffect(() => {
-    if (triggerRef.current && visible) {
-      triggerRef.current.measure((fx, fy, width, height, px, py) => {
-        setPosition({
-          x: px,
-          y: py + height,
-          width: width,
-        });
-      });
-    }
-  }, [visible]);
-  return (
-    <View style={{flex:1}}>
-      {visible && (
-        <Modal backdropOpacity={0} backdropColor="transparent" isVisible={visible}  onBackdropPress={handleClose} onBackButtonPress={handleClose}>
-          <View style={[{position: 'absolute',backgroundColor: 'white',borderRadius: 5,padding: 10,shadowColor: '#000',shadowOffset: {width: 0, height:2},shadowOpacity: 0.2,shadowRadius: 4,elevation: 4,top: position.y,left: position.x + position.width / 2 - dropdownWidth / 2,width: dropdownWidth}]}>
-              <FlatList 
-                data={items} 
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                  <MenuOption onSelect={() => {handleSelect(item)}} item={item} />      
-                )}
-              />
-            </View>
-        </Modal>
-      )}
-    </View>
-  )
-}
 
 export {
   useWebCheck,
@@ -356,6 +316,5 @@ export {
   NoRecords,
   MainViewer,
   AttachmentField,
-  SearchField,
-  DropdownMenu
+  SearchField
 };

@@ -2,8 +2,9 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SERVER_URL,postFunc} from '@/services/common';
 import { useRouter } from 'expo-router';
+import { useAlert } from '@/components/AlertModal';
 
-import { Platform, Dimensions } from 'react-native';
+import { Platform } from 'react-native';
 
 type User = {
   id: string,
@@ -24,14 +25,11 @@ type User = {
 
 type UserContextType = {
   user: User | null;
-  loading: boolean;
   login: (userData: User) => Promise<void>;
   logout: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
-
-
 
 const getConnectSid = async (url: string) => {
     try {
@@ -51,8 +49,8 @@ const getConnectSid = async (url: string) => {
 };
   
 const UserProvider = ({ children }: { children: React.ReactNode }) => {
+  const { ShowLoading, HideLoading } = useAlert();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
 
@@ -61,21 +59,18 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     let refreshInterval: NodeJS.Timeout;
 
     const checkLoginStatus = async () => {
-      
+      ShowLoading("Checking authentication...");
       for (let attempt = 0; attempt < 5; attempt++) {
         try {
           const data = await postFunc(SERVER_URL + '/auth/status', {});
-          console.log('Auth check:', data);
-
           if (data?.id && data.id !== 0) {
-            
             setUser(data);
             await AsyncStorage.setItem('userSession', JSON.stringify(data));
             const sid = await getConnectSid(SERVER_URL);
             if (sid) {
                 await AsyncStorage.setItem('connect.sid', sid);
             }
-            setLoading(false);
+            HideLoading();
             return;
           } 
           else {
@@ -127,7 +122,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, loading, login, logout }}>
+    <UserContext.Provider value={{ user, login, logout }}>
       {children}
     </UserContext.Provider>
   );
@@ -141,7 +136,4 @@ const useUser = () => {
   return context;
 }
 
-export {
-    UserProvider,
-    useUser
-}
+export {UserProvider,useUser}

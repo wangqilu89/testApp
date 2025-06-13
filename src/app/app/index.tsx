@@ -4,7 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import {SERVER_URL,LoadingScreen} from '@/services';
 import { useThemedStyles } from '@/styles';
-
+import { AlertProvider } from '@/components/AlertModal';
 
 
 export default function IndexScreen() {

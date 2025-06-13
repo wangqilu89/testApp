@@ -5,10 +5,12 @@ const { SERVER_URL, RESTLET,REACT_ENV,USER_ID} = Constants.expoConfig?.extra || 
 
 const postFunc = async (URL:string,payload: object = {},method:string="POST") => {
     try {
+      
       method = method.toUpperCase()
       const options = await GetPostOptions(payload,method);
       const response = await fetch(URL,options);
       const data = await response.json();
+      console.log(data)
       return data.success.data;
     } catch (error) {
       console.error('Error calling API:', error);

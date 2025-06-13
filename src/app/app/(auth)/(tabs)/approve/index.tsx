@@ -3,9 +3,10 @@ import { View, Text, TouchableOpacity, FlatList, Alert,Linking} from 'react-nati
 import { useEffect, useState, useMemo} from 'react';
 import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; 
-import { FetchData, useUser,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,LoadingScreen,MainPage,NoRecords,SearchField} from '@/services'; // 👈 update path
+import { FetchData,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,MainPage,NoRecords,SearchField} from '@/services'; // 👈 update path
 import {useThemedStyles} from '@/styles';
-
+import { useAlert } from '@/components/AlertModal';
+import { useUser } from '@/components/User';
 type GenericObject = Record<string, any>;
 type AnimatedRowProps = {isCollapsed:boolean,item: any,selected: boolean,colNames: string[]}
 
@@ -31,12 +32,12 @@ function MainScreen() {
 }
 
 function ApprovalCategoryScreen({ category,user}: { category: string,user:GenericObject|null}) {
+  const {ShowAlert,ShowLoading,HideLoading,loadingVisible} = useAlert()
   const pathname = usePathname();
   const router = useRouter();
   const [list, setList] = useState<GenericObject[]>([]);
   const [displayList, setDisplayList] = useState<GenericObject[]>([]); // ✅ Add this
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const [massSelect, setmassSelect] = useState(true);
   const [expandedKeys,setExpandedKeys] = useState<string[]>([]);
   const [search, setSearch] = useState('');
@@ -57,7 +58,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
  
 
   const loadData = async () => {
-    setLoading(true);
+    ShowLoading('Loading List....')
     try {
       let data = await FetchData({...BaseObj,command:`Approve : Get ${category} List`});
       data = data|| []
@@ -72,7 +73,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
       console.error(`Failed to fetch ${category} :`, err);
     } 
     finally {
-      setLoading(false);
+      HideLoading();
     }
   };
 
@@ -246,7 +247,6 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
   return (
 
         <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
-          {loading ? (<LoadingScreen txt="Loading List..."/>):(
           <>
           {/*HEADER */}
           {!isWeb && (
@@ -265,7 +265,6 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
             </View>
           )}
           {list.length > 0 ? (
-          
             <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1}}>
               {/* Timesheet List */}
               {/*Search*/}
@@ -304,11 +303,10 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
 
             </View>
           ):(
-            <NoRecords/>
-
+            !loadingVisible && <NoRecords/>
           )}
           </>
-          )}
+          
         </View>
     
   );

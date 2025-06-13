@@ -240,15 +240,23 @@ const FormAutoComplete = ({label = 'Select',def={id:'',name:''},disabled=false,o
     };
     const triggerRef = useRef<View>(null);
 
-    return (
-        <FormCommon label={label} AddStyle={AddStyle}>
-            <View style={{flexDirection:'column',flex:1}}>
+    const TextField = () => {
+        return (
             <TouchableOpacity ref={triggerRef} disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => {setModal(true)}} >
                 <Text style={[Form.input,AddStyle?.StyleInput]}>{temp.name}</Text>
             </TouchableOpacity>
-            <DropdownMenu visible={items.length > 0 && modal} handleClose={() => setModal(false)} handleSelect={(item) => {handleSelect(item)}} items={items}/>
-            
-            <Modal isVisible={modal && items.length === 0} >
+        )
+
+    }
+
+    return (
+        <FormCommon label={label} AddStyle={AddStyle}>
+            <View style={{flexDirection:'column',flex:1}}>
+            {items.length > 0 ?
+                (<DropdownMenu trigger={<TextField />} visible={items.length > 0 && modal} handleClose={() => setModal(false)} handleSelect={(item) => {handleSelect(item)}} items={items}/>):
+                (<>
+                <TextField />
+                <Modal isVisible={modal} >
                     <View style={{backgroundColor:'white',flexDirection:'column'}}>
                         <TouchableOpacity onPress={() => setModal(false)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
                         
@@ -267,7 +275,13 @@ const FormAutoComplete = ({label = 'Select',def={id:'',name:''},disabled=false,o
                         )}
 
                     </View>
-            </Modal>
+                </Modal>
+                </>)
+            }
+            
+            
+            
+            
             </View>
             
         </FormCommon>

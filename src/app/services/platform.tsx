@@ -48,15 +48,7 @@ const useWebCheck = () => {
     
   
 }; 
-const LoadingScreen = ({txt}:{txt:string}) => {
-  const {Page,Header,ReactTag} = useThemedStyles();
-  return (
-    <View style={[Page.loading]}>
-      <ActivityIndicator size="large" />
-      <Text style={[Header.text,ReactTag.text]}>{txt}</Text>
-    </View>
-  )
-}
+
 
 
 const MainPage = ({redirect,title,pages}:{redirect:string;title:string,pages:SubMenu[];}) => {
@@ -311,7 +303,6 @@ const SearchField = ({search,onChange,style}:{search?:string,onChange?:(item: an
 
 export {
   useWebCheck,
-  LoadingScreen,
   MainPage,
   NoRecords,
   MainViewer,

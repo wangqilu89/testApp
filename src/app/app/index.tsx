@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import { Platform,View} from 'react-native';
+import { Platform,View,Text, ActivityIndicator} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
-import {SERVER_URL,LoadingScreen} from '@/services';
+import {SERVER_URL} from '@/services';
 import { useThemedStyles } from '@/styles';
-import { AlertProvider } from '@/components/AlertModal';
+
 
 
 export default function IndexScreen() {
@@ -36,6 +36,16 @@ export default function IndexScreen() {
 
     authenticate();
   }, []);
+  
+  const LoadingScreen = ({txt}:{txt:string}) => {
+    const {Page,Header,ReactTag} = useThemedStyles();
+    return (
+      <View style={[Page.loading]}>
+        <ActivityIndicator size="large" />
+        <Text style={[Header.text,ReactTag.text]}>{txt}</Text>
+      </View>
+    )
+  }
 
   return (
     <View style={[Page.container]}>

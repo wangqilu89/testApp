@@ -32,7 +32,7 @@ function MainScreen() {
 }
 
 function ApprovalCategoryScreen({ category,user}: { category: string,user:GenericObject|null}) {
-  const {ShowAlert,ShowLoading,HideLoading,loadingVisible} = useAlert()
+  const {ShowLoading,HideLoading,loadingVisible} = useAlert()
   const pathname = usePathname();
   const router = useRouter();
   const [list, setList] = useState<GenericObject[]>([]);

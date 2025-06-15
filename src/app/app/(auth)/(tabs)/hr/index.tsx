@@ -48,7 +48,7 @@ function MainScreen() {
 
 //Expense CLaims
 function ExpenseMain({category,user }: {category?:string,user: GenericObject | null }) {
-  const { loadingVisible } = useAlert();
+  const { visibility } = useAlert();
   const pathname = usePathname();
   const router = useRouter();
   const { Page, Header, Listing, Form, CategoryButton, Theme } = useThemedStyles();
@@ -167,7 +167,7 @@ function ExpenseMain({category,user }: {category?:string,user: GenericObject | n
                     onEndReachedThreshold={0.5}
                 />
             </View>
-      ) : (!loadingVisible && 
+      ) : (!visibility && 
           <View style={{flex:1,flexDirection:'column',width:'100%'}}>
               <NoRecords />
           </View>
@@ -233,7 +233,7 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
   };
   
   const loadData = async (id:string) => {
-    ShowLoading('Loading List...')
+    ShowLoading({msg:'Loading List...'})
     try {
       let data = null
       let lineNo = 0
@@ -266,7 +266,7 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
       console.error(`Failed to fetch ${category} :`, err);
     } 
     finally {
-      HideLoading()
+      HideLoading({confirmed: true, value: ''})
     }
   };
   
@@ -675,7 +675,7 @@ function Leave({ category, id, user }: { category: string; id: string; user: Gen
 //PaySlip
 
 function PaySlip({ category,user}: { category: string,user:GenericObject|null}) {
-  const { ShowPrompt,ShowLoading,HideLoading,loadingVisible} = useAlert();
+  const { ShowPrompt,ShowLoading,HideLoading,visibility} = useAlert();
   const pathname = usePathname();
   const router = useRouter();
   const [list, setList] = useState<GenericObject[]>([]);
@@ -692,7 +692,7 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
   const COLUMN_CONFIG: string[] = ['employee','period','val_salary']
 
   const loadData = async () => {
-    ShowLoading('Load List...')
+    ShowLoading({msg:'Load List...'})
     try {
       let data = await FetchData({...BaseObj,command:`HR : Get ${category} List`});
       data = data|| []
@@ -703,7 +703,7 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
       console.error(`Failed to fetch ${category} :`, err);
     } 
     finally {
-      HideLoading()
+      HideLoading({confirmed: true, value: ''})
     }
   };
 
@@ -846,7 +846,7 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
               )}
 
             </View>
-          ):(!loadingVisible && 
+          ):(!visibility && 
             <NoRecords/>
 
           )}

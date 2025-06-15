@@ -5,7 +5,7 @@ import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; 
 import { FetchData,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,MainPage,NoRecords,SearchField} from '@/services'; // 👈 update path
 import {useThemedStyles} from '@/styles';
-import { useAlert } from '@/components/AlertModal';
+import { usePrompt } from '@/components/AlertModal';
 import { useUser } from '@/components/User';
 type GenericObject = Record<string, any>;
 type AnimatedRowProps = {isCollapsed:boolean,item: any,selected: boolean,colNames: string[]}
@@ -32,7 +32,7 @@ function MainScreen() {
 }
 
 function ApprovalCategoryScreen({ category,user}: { category: string,user:GenericObject|null}) {
-  const {ShowLoading,HideLoading,loadingVisible} = useAlert()
+  const {ShowLoading,HideLoading,visibility} = usePrompt()
   const pathname = usePathname();
   const router = useRouter();
   const [list, setList] = useState<GenericObject[]>([]);
@@ -58,7 +58,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
  
 
   const loadData = async () => {
-    ShowLoading('Loading List....')
+    ShowLoading({msg:'Loading List....'})
     try {
       let data = await FetchData({...BaseObj,command:`Approve : Get ${category} List`});
       data = data|| []
@@ -73,7 +73,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
       console.error(`Failed to fetch ${category} :`, err);
     } 
     finally {
-      HideLoading();
+      HideLoading({confirmed: true, value: ''});
     }
   };
 
@@ -303,7 +303,7 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
 
             </View>
           ):(
-            !loadingVisible && <NoRecords/>
+            !visibility && <NoRecords/>
           )}
           </>
           

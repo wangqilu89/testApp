@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAlert } from '@/components/AlertModal';
+import { usePrompt } from '@/components/AlertModal';
 import { usePagedList } from '@/hooks/usePagedList'
 import {FetchData} from '@/services';
 
 type GenericObject = Record<string, any>;
 
 interface UseValidateListOptions {
-  loadData: GenericObject,
+  items?:GenericObject[],
+  loadObj?:GenericObject,
   postData: GenericObject,
   pageSize?: number;
   searchFields?: string[]; // optional: specify which fields to search
@@ -14,8 +15,8 @@ interface UseValidateListOptions {
 }
 
 const useValidateList = (options: UseValidateListOptions) => {
-    const { ShowPrompt } = useAlert();
-    const { list, displayList, search, setSearch, loadMore, reload, toggleCollapse, expandedKeys } = usePagedList(options);
+    const { ShowPrompt } = usePrompt();
+    const { list, displayList,  search, setSearch, loadMore, toggleCollapse,  expandedKeys} = usePagedList(options);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     
     const HandleSelect = (id: string) => {
@@ -36,7 +37,7 @@ const useValidateList = (options: UseValidateListOptions) => {
         await FetchData(NewObj);
     }
 
-    return {list,displayList,search,setSearch,loadMore,reload,toggleCollapse,expandedKeys,HandleSelect}
+    return {list,displayList,search,setSearch,loadMore,toggleCollapse,expandedKeys,HandleSelect}
 }
 
-export {usePagedList}
+export {useValidateList}

@@ -10,7 +10,7 @@ const postFunc = async (URL:string,payload: object = {},method:string="POST") =>
       const options = await GetPostOptions(payload,method);
       const response = await fetch(URL,options);
       const data = await response.json();
-      console.log(data)
+      //console.log(data)
       return data.success.data;
     } catch (error) {
       console.error('Error calling API:', error);

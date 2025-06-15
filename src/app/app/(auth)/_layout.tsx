@@ -1,14 +1,14 @@
 import { Slot } from 'expo-router';
-import { AlertProvider } from '@/components/AlertModal';
+import { PromptProvider } from '@/components/AlertModal';
 import { UserProvider } from '@/components/User';
 
 
 export default function AuthenticatedLayout() {
   return (
-    <AlertProvider>
+    <PromptProvider >
       <UserProvider>
         <Slot />
       </UserProvider>
-    </AlertProvider>
+    </PromptProvider >
   );
 }

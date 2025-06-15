@@ -8,7 +8,7 @@ import Animated from 'react-native-reanimated';
 import { useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField} from '@/services'; // 👈 functions
 import { NoRecords, MainPage,MainViewer} from '@/services'; // 👈 Common Screens
 import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete,FormAttachFile} from '@/services';
-import { useAlert } from '@/components/AlertModal';
+import { usePrompt } from '@/components/AlertModal';
 import { useUser } from '@/components/User';
 import { usePagedList } from '@/hooks/usePagedList'
 
@@ -48,16 +48,16 @@ function MainScreen() {
 
 //Expense CLaims
 function ExpenseMain({category,user }: {category?:string,user: GenericObject | null }) {
-  const { visibility } = useAlert();
+  const { visibility } = usePrompt();
   const pathname = usePathname();
   const router = useRouter();
   const { Page, Header, Listing, Form, CategoryButton, Theme } = useThemedStyles();
   const isWeb = useWebCheck();
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
-  const { list, displayList,expandedKeys, search, setSearch, loadMore,toggleCollapse} = usePagedList(
-    {loadData: {...BaseObj,command:'HR : Get Expense List' },
-      searchFunction: (i, keyword) => {
+  const { list, displayList,expandedKeys, search, setSearch, loadMore,toggleCollapse} = usePagedList({
+    loadObj:{...BaseObj,command:'HR : Get Expense List' },
+    searchFunction: (i, keyword) => {
       return i.flatMap((j) => {
         const CheckA = Object.values(j).some((val) => 
             String(typeof val === 'object' ? '' : val).toLowerCase().includes(keyword)
@@ -71,10 +71,8 @@ function ExpenseMain({category,user }: {category?:string,user: GenericObject | n
         ));
         return newArry.length > 0 ? [{...i,line:newArry}] : [];
       });
-      }
     }
-      
-  );
+  });
 
   const COLUMN_CONFIG: { header: string[]; line: string[] } = {
     header: ['employee', 'date', 'document_no', 'val_amount'],
@@ -190,7 +188,7 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
   const [showLine,setShowLine]= useState(false);
   const [claim,setClaim] = useState<{internalid:string,date:Date,document_number:string,employee:GenericObject,line:GenericObject[]}>({internalid:'',date:today,document_number:'To Be Generated',employee:{},line:[]});
   const [line,setLine] = useState({number:'0',expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),date:today,internalid:id + '.0',project:{},category: {},memo:'','val_amount':'0',file: null as any});
-  const { ShowLoading,HideLoading} = useAlert();
+  const { ShowLoading,HideLoading} = usePrompt();
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
   const updateLine = (key:keyof typeof line,value: any) => {
@@ -431,9 +429,11 @@ function LeaveMainBal ({user,today}: { user: GenericObject | null;today:Date}) {
   const { Listing, Form,Theme } = useThemedStyles();
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
   const [fontsLoaded] = useFonts({Righteous_400Regular});
-  const { list} = usePagedList(
-    {loadData: {...BaseObj,data:{date:today.getFullYear()},command:"HR : Get Leave balance"}}
-  );
+  const LoadObj = useMemo(() => {
+    return ;
+  }, [BaseObj, today]);
+  
+  const { list} = usePagedList({loadObj:{...BaseObj,data:{date:today.getFullYear()},command: "HR : Get Leave balance" }});
 
   return (
     <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1,marginTop:20}}>
@@ -467,9 +467,9 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
   const {Listing,Form,CategoryButton,Theme} = useThemedStyles();
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
-  const {list,displayList,expandedKeys, search, setSearch, loadMore,toggleCollapse} = usePagedList(
-    {loadData:{...BaseObj,data:{date:today.getFullYear()},command:'HR : Get Leave application' },
-     searchFunction: (i, keyword) => {
+  const {list,displayList,expandedKeys, search, setSearch, loadMore,toggleCollapse} = usePagedList({
+    loadObj:{...BaseObj,data:{date:today.getFullYear()},command:'HR : Get Leave application' },
+    searchFunction: (i, keyword) => {
       return i.filter((item: GenericObject) =>
         Object.values(item).some((val) =>
           String(typeof val === 'object' ? val?.name ?? '' : val)
@@ -477,9 +477,9 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
             .includes(keyword)
         )
       );
-      }
-    }  
-  );
+    }
+  });
+
   const AnimatedRow = ({isExpanded,item,colNames}:{isExpanded:boolean,item:GenericObject,colNames:string[]}) => {        
     const newCol = useMemo(() => {
       return isExpanded ? colNames.slice() : (colNames.length > 3?[...colNames.slice(0, 3), ...colNames.slice(-1)]:colNames.slice());
@@ -534,7 +534,7 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
 }
 
 function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
-  const { ShowPrompt, ShowLoading, HideLoading } = useAlert();
+  const { ShowPrompt, ShowLoading, HideLoading } = usePrompt();
   const isWeb = useWebCheck();
 
   const [year, setYear] = useState('');
@@ -675,7 +675,7 @@ function Leave({ category, id, user }: { category: string; id: string; user: Gen
 //PaySlip
 
 function PaySlip({ category,user}: { category: string,user:GenericObject|null}) {
-  const { ShowPrompt,ShowLoading,HideLoading,visibility} = useAlert();
+  const { ShowPrompt,ShowLoading,HideLoading,visibility} = usePrompt();
   const pathname = usePathname();
   const router = useRouter();
   const [list, setList] = useState<GenericObject[]>([]);

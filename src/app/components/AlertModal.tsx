@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState,ReactNode,useRef} from 'reac
 import { View, Text,  TouchableOpacity,ActivityIndicator,TextInput} from 'react-native';
 import Modal from "react-native-modal";    
 import { Ionicons } from '@expo/vector-icons'; 
-import {useThemedStyles} from '@/styles';
 
 type GenericObject = Record<string, any>;
 type PromptContext = {
@@ -35,9 +34,9 @@ type PromptProps = {
 }
 
 
-const AlertContext = createContext<PromptContext | undefined>(undefined);
+const PromptContext = createContext<PromptContext | undefined>(undefined);
 
-const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const PromptProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const resolverRef = useRef<(result: GenericObject) => void>();
     //New Prompt
     const [msg,setMsg] = useState<string | ReactNode>('');
@@ -101,22 +100,22 @@ const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }
 
     return (
-      <AlertContext.Provider value={{ShowPrompt,HidePrompt,visibility,ShowLoading,HideLoading}}>
+      <PromptContext.Provider value={{ShowPrompt,HidePrompt,visibility,ShowLoading,HideLoading}}>
         {children}
-        <NewPrompt message={msg} icon={icon} input={input} proceed={proceed} cancel={cancel} visible={visibility} onClose={HidePrompt} thematic={thematic}  />
-      </AlertContext.Provider>
+        <Prompt message={msg} icon={icon} input={input} proceed={proceed} cancel={cancel} visible={visibility} onClose={HidePrompt} thematic={thematic}  />
+      </PromptContext.Provider>
     );
 };
 
-const useAlert = () => {
-    const context = useContext(AlertContext);
+const usePrompt = () => {
+    const context = useContext(PromptContext);
     if (!context) {
-      throw new Error("useAlert must be used within an AlertProvider");
+      throw new Error("usePrompt must be used within an PromptProvider");
     }
     return context;
 };
 
-const NewPrompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:PromptProps) => {
+const Prompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:PromptProps) => {
   
   const [keyed,setKeyed] = useState('')
 
@@ -167,4 +166,4 @@ const NewPrompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:
 }
 
 
-export {AlertProvider,useAlert}
+export {PromptProvider,usePrompt}

@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SERVER_URL,postFunc} from '@/services/common';
 import { useRouter } from 'expo-router';
-import { useAlert } from '@/components/AlertModal';
+import { usePrompt } from '@/components/AlertModal';
 
 import { Platform } from 'react-native';
 
@@ -49,7 +49,7 @@ const getConnectSid = async (url: string) => {
 };
   
 const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const { ShowLoading, HideLoading } = useAlert();
+  const { ShowLoading, HideLoading } = usePrompt();
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
@@ -59,7 +59,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     let refreshInterval: NodeJS.Timeout;
 
     const checkLoginStatus = async () => {
-      ShowLoading("Checking authentication...");
+      ShowLoading({msg:"Checking authentication..."});
       for (let attempt = 0; attempt < 5; attempt++) {
         try {
           const data = await postFunc(SERVER_URL + '/auth/status', {});
@@ -70,7 +70,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
             if (sid) {
                 await AsyncStorage.setItem('connect.sid', sid);
             }
-            HideLoading();
+            HideLoading({confirmed: true, value: ''});
             return;
           } 
           else {

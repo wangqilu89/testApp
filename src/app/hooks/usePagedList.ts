@@ -1,72 +1,58 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAlert } from '@/components/AlertModal';
-import {FetchData} from '@/services';
+import { useGetList } from '@/hooks/useGetList'
 
 type GenericObject = Record<string, any>;
 
 interface UsePagedListOptions {
-  loadData: GenericObject,
-  pageSize?: number;
-  searchFields?: string[]; // optional: specify which fields to search
+  pageSize?: number,
+  withLoading?:boolean,
   searchFunction?: (items: GenericObject[], keyword: string) => GenericObject[]
+  items?:GenericObject[],
+  loadObj?:GenericObject
 }
+const defaultOptions = {withLoading:true,pageSize:1,items:[],loadObj:{}}
 
-const usePagedList = (options: UsePagedListOptions) => {
-    const { ShowLoading, HideLoading } = useAlert();
-    const [list, setList] = useState<GenericObject[]>([]);
-    const [displayList, setDisplayList] = useState<GenericObject[]>([]);
-    const [search, setSearch] = useState('');
-    const [page, setPage] = useState(1);
-    const pageSize = options?.pageSize ?? 10;
-    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
-    const LoadData = options.loadData
-    const load = useCallback(async () => {
-      ShowLoading('Loading...');
-      try {
-        const data = await FetchData(LoadData);
-        setList(data ?? []);
-        setPage(1);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        HideLoading();
-      }
-    }, [LoadData]);
-  
-    useEffect(() => { load(); }, [load]);
-  
-    useEffect(() => {
-      let filtered = list;
-      const keyword = search.trim().toLowerCase();
-      if (keyword && options?.searchFunction) {
-        const searchFn = options.searchFunction;
-        filtered = searchFn(list,keyword)
-      }
-  
-      setDisplayList(filtered.slice(0, page * pageSize));
-    }, [search, page, list, options]);
-    
-    useEffect(() => {
-      setExpandedKeys([]);
-    }, [search]);
-    const loadMore = () => setPage(prev => prev + 1);
-    
-    const toggleCollapse = (key: string) => {
-      setExpandedKeys((prev) =>
-        prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-      );
-    };
+const usePagedList = ( options: UsePagedListOptions) => {
+  const finalOptions = { ...defaultOptions, ...options };
+  const { list } = useGetList(finalOptions);
+  const [displayList, setDisplayList] = useState<GenericObject[]>([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = finalOptions.pageSize
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
-    return {
-      list,
-      displayList,
-      search,
-      setSearch,
-      loadMore,
-      reload: load,
-      toggleCollapse,
-      expandedKeys
-    };
+  useEffect(() => {
+    let filtered = list;
+    const keyword = search.trim().toLowerCase();
+    if (keyword && finalOptions?.searchFunction) {
+      const searchFn = finalOptions.searchFunction;
+      filtered = searchFn(list,keyword)
+    }
+
+    setDisplayList(filtered.slice(0, page * pageSize));
+  }, [search, page, list]);
+  
+  useEffect(() => {
+    setExpandedKeys([]);
+  }, [search]);
+  
+  const loadMore = () => setPage(prev => prev + 1);
+  
+  const toggleCollapse = (key: string) => {
+    setExpandedKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
+
+  return {
+    list,
+    displayList,
+    search,
+    setSearch,
+    loadMore,
+    toggleCollapse,
+    expandedKeys
+  };
 }
 
 export {usePagedList}

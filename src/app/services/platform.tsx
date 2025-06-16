@@ -22,15 +22,6 @@ type Command = {
   middleware:string,
   [key: string]: any;
 }
-type GenericObject = Record<string, any>;
-
-type DropdownMenuProps = {
-  visible: boolean;
-  handleClose: () => void;
-  handleSelect: (item:any) => void;
-  items: GenericObject[];
-  dropdownWidth?: number;
-}
 
 const useWebCheck = () => {
   const getPlatformState = () => {return ((Platform.OS === 'web') &&  (Dimensions.get('window').width >= 768))}
@@ -48,7 +39,15 @@ const useWebCheck = () => {
     
   
 }; 
-
+const LoadingScreen = ({txt}:{txt:string}) => {
+  const {Page,Header,ReactTag} = useThemedStyles();
+  return (
+    <View style={[Page.loading]}>
+      <ActivityIndicator size="large" />
+      <Text style={[Header.text,ReactTag.text]}>{txt}</Text>
+    </View>
+  )
+}
 
 
 const MainPage = ({redirect,title,pages}:{redirect:string;title:string,pages:SubMenu[];}) => {
@@ -123,6 +122,7 @@ const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=f
             const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
             
             if (result?.assets && result.assets.length > 0) {
+              
               const file = result.assets[0];
               newObj = { uri: file.uri, name: file.name, type: file.mimeType ?? 'application/octet-stream' }
             }
@@ -299,10 +299,9 @@ const SearchField = ({search,onChange,style}:{search?:string,onChange?:(item: an
 }
 
 
-
-
 export {
   useWebCheck,
+  LoadingScreen,
   MainPage,
   NoRecords,
   MainViewer,

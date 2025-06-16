@@ -6,10 +6,10 @@ import Modal from "react-native-modal";
 
 
 import { useRouter,Slot} from 'expo-router';
-import { useState,useMemo,useEffect,useRef} from 'react';
+import { useState,useMemo,useEffect,useCallback} from 'react';
 
 import { WebView } from 'react-native-webview';
-import { DropdownMenu } from '@/components/DropdownMenu';
+import {defaultDropProps,DropdownMenu } from '@/components/DropdownMenu';
 import { AttachmentField} from '@/services'; 
 import {useThemedStyles} from '@/styles';
 import debounce from 'lodash.debounce';
@@ -206,84 +206,27 @@ const FormSubmit = ({label = 'Submit',onPress = () => {},AddStyle}:{label?:strin
     )
 }
 
-const FormAutoComplete = ({label = 'Select',def={id:'',name:''},disabled=false,onChange = () => {},items = [],loadList,AddStyle}:{label?:string,def?:GenericObject,disabled?:boolean,onChange?: (item: any) => void,items?:GenericObject[],loadList?: (item: any) => Promise<GenericObject[]>,AddStyle?:KeyStyles}) => {
-    const {Form} = useThemedStyles();
-    const [modal, setModal] = useState(false);
-    
-    const [temp,setTemp] = useState(def);
-    const [result,setResult] = useState<GenericObject[]>([]);
-    const loadDropdown = async (q: string) => {
-        if (q.length < 2) {
-          setResult([]);
-          return;
-        }
-        if (items?.length) {
-            setResult(items.filter(items => items.name?.toLowerCase().includes(q.toLowerCase())));
-            return;
-        }
-        if (loadList) {
-            try {
-                const data = await loadList(q);
-                setResult(data);
-            } catch (err) {
-             console.error(err);
-            } 
-
-        }
-    };
-    
-    const handleSelect = (item: any) => {
-        setTemp(item);
-        onChange?.(item);
-        setResult([]);
-        setModal(false);
-    };
-    const triggerRef = useRef<View>(null);
-
-    const TextField = () => {
-        return (
-            <TouchableOpacity ref={triggerRef} disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => {setModal(true)}} >
-                <Text style={[Form.input,AddStyle?.StyleInput]}>{temp.name}</Text>
-            </TouchableOpacity>
-        )
-
-    }
+type FormAutoCompleteProps = {
+    label?: string,
+    def?: GenericObject,
+    searchable?:boolean,
+    disabled?: boolean,
+    onChange?: (item: GenericObject) => void,
+    AddStyle?: KeyStyles,
+  
+    LoadObj?:GenericObject|null,
+    Defined?: GenericObject[]
+    SearchObj?:GenericObject
+    SearchFunction?:((items: GenericObject[], keyword: string) => GenericObject[]) | null
+}
+const FormAutoComplete:React.FC<FormAutoCompleteProps> = (options = {}) => {
+    const finalOptions = useMemo(() => ({ ...defaultDropProps, ...options }), [options]);
+    const {label,def,disabled,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj} = finalOptions;
+    const onChange = useCallback((item:any) => finalOptions.onChange(item), [finalOptions.onChange]);
 
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
-            <View style={{flexDirection:'column',flex:1}}>
-            {items.length > 0 ?
-                (<DropdownMenu trigger={<TextField />} visible={items.length > 0 && modal} handleClose={() => setModal(false)} handleSelect={(item) => {handleSelect(item)}} items={items}/>):
-                (<>
-                <TextField />
-                <Modal isVisible={modal} >
-                    <View style={{backgroundColor:'white',flexDirection:'column'}}>
-                        <TouchableOpacity onPress={() => setModal(false)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
-                        
-                        <TextInput placeholder={"Search " + label} defaultValue={temp.name} onChangeText={debounce(loadDropdown,500)}   style={{borderRadius:5,borderWidth:1,marginLeft:10,marginRight:10,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}}/>
-                        {result.length > 0 && (
-                            <FlatList
-                            data={result}
-                            keyExtractor={(item, index) => index.toString()}
-                            
-                            renderItem={({ item }) => (
-                                <TouchableOpacity style={{paddingLeft:10,borderBottomWidth:1}} onPress={() => {setTemp(item);onChange?.(item);setResult([]);setModal(false)}}>
-                                    <Text style={{ padding: 8 }}>{item.name}</Text>
-                                </TouchableOpacity>
-                            )}
-                            />
-                        )}
-
-                    </View>
-                </Modal>
-                </>)
-            }
-            
-            
-            
-            
-            </View>
-            
+            <DropdownMenu label={label} def={def} searchable={searchable} disabled={disabled} onChange={onChange} AddStyle={AddStyle} LoadObj={LoadObj} Defined={Defined} SearchObj={SearchObj} SearchFunction={SearchFunction}/>
         </FormCommon>
     )
 }

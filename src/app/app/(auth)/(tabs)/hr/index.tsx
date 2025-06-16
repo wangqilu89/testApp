@@ -2,7 +2,7 @@
 import { View, Text, TouchableOpacity, FlatList, Linking,ScrollView,StyleSheet} from 'react-native';
 import { useFonts, Righteous_400Regular } from '@expo-google-fonts/righteous';
 import Modal from "react-native-modal";
-import { useEffect, useState,useMemo,useRef} from 'react';
+import { useEffect, useState,useMemo,useCallback} from 'react';
 import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
 import Animated from 'react-native-reanimated';
 import { useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField} from '@/services'; // 👈 functions
@@ -10,7 +10,7 @@ import { NoRecords, MainPage,MainViewer} from '@/services'; // 👈 Common Scree
 import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete,FormAttachFile} from '@/services';
 import { usePrompt } from '@/components/AlertModal';
 import { useUser } from '@/components/User';
-import { usePagedList } from '@/hooks/usePagedList'
+import { useListFilter } from '@/hooks/useListFilter'
 
 import { Ionicons } from '@expo/vector-icons'; 
 import {useThemedStyles} from '@/styles';
@@ -55,9 +55,9 @@ function ExpenseMain({category,user }: {category?:string,user: GenericObject | n
   const isWeb = useWebCheck();
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
-  const { list, displayList,expandedKeys, search, setSearch, loadMore,toggleCollapse} = usePagedList({
-    loadObj:{...BaseObj,command:'HR : Get Expense List' },
-    searchFunction: (i, keyword) => {
+  const { list, displayList,expandedKeys, search,setSearch, loadMore,HandleExpand} = useListFilter({
+    LoadObj:{...BaseObj,command:'HR : Get Expense List' },
+    SearchFunction: (i, keyword) => {
       return i.flatMap((j) => {
         const CheckA = Object.values(j).some((val) => 
             String(typeof val === 'object' ? '' : val).toLowerCase().includes(keyword)
@@ -91,14 +91,14 @@ function ExpenseMain({category,user }: {category?:string,user: GenericObject | n
     }
     return (
       <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
-        <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:30,marginRight:30}} onPress={() => toggleCollapse(item.internalid)}>
+        <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:30,marginRight:30}} onPress={() => HandleExpand(item.internalid)}>
             {colNames.map((colName, index) => (
                 <RowInfo colName={colName} index={index} item={item} isExpanded={isExpanded}/>
             ))}
         </TouchableOpacity>
         <Modal isVisible={isExpanded} >
             <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',maxHeight:"85%"}}>
-                <TouchableOpacity onPress={() => toggleCollapse(item.internalid)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
+                <TouchableOpacity onPress={() => HandleExpand(item.internalid)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
                 <ScrollView>
                 <FlatList style={[Form.container,{backgroundColor:Theme.containerBackground}]}
                         data={item.line}
@@ -292,12 +292,14 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
   }
   
   const ExpenseHeader = () => {
+    
     return (
       <FormContainer>
         <FormTextInput label="ID " def={claim.internalid} onChange={(text) => {updateMain('internalid', text)}} AddStyle={{StyleRow:{display:'none'}}} />
         <FormDateInput disabled={true} label='Date ' def={{date:claim.date}} onChange={({date})=>{updateMain('date',date)}}/>
         <FormTextInput disabled={true} label="Document Number " key={claim.document_number} def={claim.document_number} onChange={(text) => {updateMain('document_number', text)}}/>
-        <FormAutoComplete disabled={true} label="Employee " key={claim.employee.name} def={claim.employee} onChange={(item)=>{updateMain('employee', item)}} loadList={() => FetchData({ ...BaseObj, command: "HR : Get Employee Listing",keyword:BaseObj.user})}/>
+        <FormAutoComplete label="Employee "  def={claim.employee} searchable={false} disabled={true} onChange={(item)=>{updateMain('employee', item)}} LoadObj={{ ...BaseObj, command: "HR : Get Employee Listing",data:{keyword:BaseObj.user}}} />
+        
         <FlatList
           style={[Form.container,{paddingHorizontal:0}]}
           data={claim.line}
@@ -327,12 +329,13 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
   }
 
   const ExpenseLine = () => {
+    
     return (
       <FormContainer>
         <FormTextInput label="ID " def={line.internalid} onChange={(text) => updateLine('internalid', text)} AddStyle={{StyleRow:{display:'none'}}}/>
         <FormDateInput label='Date ' def={{date:line.date}} onChange={({date})=>{updateLine('date',date)}}/>
-        <FormAutoComplete label="Project " def={line.project} onChange={(item)=>{updateLine('project',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Project Listing",keyword:query})}/>
-        <FormAutoComplete label="Category " def={line.category} onChange={(item)=>{updateLine('category',item)}} loadList={(query: string) => FetchData({ ...BaseObj, command: "HR : Get Category Listing",keyword:query})}/>
+        <FormAutoComplete label="Project "  def={line.project} searchable={true} onChange={(item)=>{updateLine('project',item)}} LoadObj={{ ...BaseObj, command: "HR : Get Project Listing" }} SearchObj={{ ...BaseObj, command: "HR : Get Project Listing" }} />
+        <FormAutoComplete label="Category "  def={line.category} searchable={true} onChange={(item)=>{updateLine('category',item)}} LoadObj={{ ...BaseObj, command: "HR : Get Category Listing" }} SearchObj={{ ...BaseObj, command: "HR : Get Category Listing" }} />
         <FormTextInput label="Memo " def={line.memo} onChange={(text) => updateLine('memo', text)}/>
         <FormNumericInput label="Value " def={line.val_amount} onChange={(text) => updateLine('val_amount', text)} />
         <FormAttachFile label="Attach File " def={line.file} onChange={(file) => {updateLine('file',file)}} />
@@ -343,6 +346,7 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
   }
 
   useEffect(() => {
+
       loadData(id);
   }, [id]);
 
@@ -433,7 +437,7 @@ function LeaveMainBal ({user,today}: { user: GenericObject | null;today:Date}) {
     return ;
   }, [BaseObj, today]);
   
-  const { list} = usePagedList({loadObj:{...BaseObj,data:{date:today.getFullYear()},command: "HR : Get Leave balance" }});
+  const { list} = useListFilter({LoadObj:{...BaseObj,data:{date:today.getFullYear()},command: "HR : Get Leave balance" }});
 
   return (
     <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1,marginTop:20}}>
@@ -467,9 +471,9 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
   const {Listing,Form,CategoryButton,Theme} = useThemedStyles();
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
-  const {list,displayList,expandedKeys, search, setSearch, loadMore,toggleCollapse} = usePagedList({
-    loadObj:{...BaseObj,data:{date:today.getFullYear()},command:'HR : Get Leave application' },
-    searchFunction: (i, keyword) => {
+  const {list,displayList,expandedKeys, search, setSearch, loadMore,HandleExpand} = useListFilter({
+    LoadObj:{...BaseObj,data:{date:today.getFullYear()},command:'HR : Get Leave application' },
+    SearchFunction: (i, keyword) => {
       return i.filter((item: GenericObject) =>
         Object.values(item).some((val) =>
           String(typeof val === 'object' ? val?.name ?? '' : val)
@@ -499,7 +503,7 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
               </View>
             ))}
         </TouchableOpacity>
-        <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1}} onPress={() => toggleCollapse(item.internalid)}>
+        <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1}} onPress={() => HandleExpand(item.internalid)}>
           <Ionicons name={isExpanded?"chevron-up":"chevron-down"} style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
         </TouchableOpacity>
       
@@ -534,6 +538,7 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
 }
 
 function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
+
   const { ShowPrompt, ShowLoading, HideLoading } = usePrompt();
   const isWeb = useWebCheck();
 
@@ -609,7 +614,7 @@ function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
         switch (key) {
           case 'balance':
             cmd = 'HR : Get Leave balance';
-            break;
+          break;
           case 'public':
             cmd = 'HR : Get Public Holiday';
             break;
@@ -640,21 +645,24 @@ function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
     GetBalance();
   }, [memoApply]);
 
+  
+  
   return (
     <FormContainer>
       <FormDateInput mode="range" label="Start Date" def={{ date: apply.startdate, startDate: apply.startdate, endDate: apply.enddate }}
         onChange={({ startDate, endDate }) => { updateApply('startdate', startDate); updateApply('enddate', endDate); }} />
-      <FormAutoComplete label="AM/PM" def={apply.startam} onChange={(item) => updateApply('startam', item)}
-        items={[{ name: 'Full Day', id: 1 }, { name: 'AM', id: 2 }, { name: 'PM', id: 3 }]} />
+      <FormAutoComplete label="AM/PM "  def={apply.startam} searchable={false} onChange={(item) => updateApply('startam', item)} Defined={[{ name: 'Full Day', id: 1 }, { name: 'AM', id: 2 }, { name: 'PM', id: 3 }]} />
+      
       <FormDateInput mode="range" label="End Date" def={{ date: apply.enddate, startDate: apply.startdate, endDate: apply.enddate }}
         onChange={({ startDate, endDate }) => { updateApply('startdate', startDate); updateApply('enddate', endDate); }} />
-      <FormAutoComplete label="AM/PM" def={apply.endam} onChange={(item) => updateApply('endam', item)}
-        items={[{ name: 'Full Day', id: 1 }, { name: 'AM', id: 2 }, { name: 'PM', id: 3 }]} />
+      <FormAutoComplete label="AM/PM "  def={apply.startam} searchable={false} onChange={(item) => updateApply('startam', item)} Defined={[{ name: 'Full Day', id: 1 }, { name: 'AM', id: 2 }, { name: 'PM', id: 3 }]} />
       <FormTextInput disabled label="Days Applied" key={apply.day} def={apply.day} onChange={(text) => updateApply('day', text)} />
-      <FormAutoComplete label="Leave Type" def={apply.leave} onChange={(item) => updateApply('leave', item)} items={list.balance} />
+      <FormAutoComplete label="Leave Type "  def={apply.leave} searchable={false} onChange={(item) => updateApply('leave', item)} Defined={list.balance} />
+      
       <FormTextInput label="Reason" key={apply.reason} def={apply.reason} onChange={(text) => updateApply('reason', text)} />
     </FormContainer>
   );
+  
 }
 
 function Leave({ category, id, user }: { category: string; id: string; user: GenericObject | null }) {

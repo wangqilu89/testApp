@@ -541,7 +541,8 @@ function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
 
   const { ShowPrompt, ShowLoading, HideLoading } = usePrompt();
   const isWeb = useWebCheck();
-
+  const BaseObj = {user:(user?.id??'0'),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
+  
   const [year, setYear] = useState('');
   const [apply, setApply] = useState<GenericObject>({
     startdate: new Date(),
@@ -551,13 +552,12 @@ function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
     day: 1,
     leave: {}
   });
+  const [loadObj, setLoadObj] = useState({...BaseObj,...({data: { date: apply.startdate.getFullYear(), shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: 'HR : Get Leave balance'})});
 
-  const [list, setList] = useState<{ public: GenericObject[]; balance: GenericObject[]; working: GenericObject[] }>({
+  const [support, setSupport] = useState<{ public: GenericObject[] , working: GenericObject[] }>({
     public: [],
-    balance: [],
     working: []
   });
-
   const memoApply = useMemo(() => apply, [apply.startdate, apply.enddate, apply.startam, apply.endam]);
 
   const updateApply = (key: keyof typeof apply, value: any) => {
@@ -570,13 +570,18 @@ function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
     else return 0;
   };
 
-  const GetLeavePeriod = (NewList: { public: GenericObject[]; balance: GenericObject[]; working: GenericObject[] }) => {
-    const startdate = new Date(apply.startdate.getFullYear(), apply.startdate.getMonth(), apply.startdate.getDate());
-    const enddate = new Date(apply.enddate.getFullYear(), apply.enddate.getMonth(), apply.enddate.getDate());
+  const HandleDate = (ref:Date) => {
+    return new Date(ref.toISOString().split('T')[0] + 'T00:00:00.000Z')
+  }
+
+  const GetLeavePeriod = (NewList: { public: GenericObject[], working: GenericObject[] }) => {
+    
+    const startdate = new Date(apply.startdate);
+    const enddate = new Date(apply.enddate);
     let totalapplied = 0;
     let refdate = new Date(startdate);
     refdate.setDate(refdate.getDate() - 1);
-
+    
     do {
       let applied = 0;
       refdate.setDate(refdate.getDate() + 1);
@@ -584,12 +589,15 @@ function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
 
       if (CompareDates(refdate, startdate) === 0) {
         applied = NewList.working[dayofweek]?.day ?? 0 * (apply.startam === 1 ? 1 : 0.5);
-      } else if (CompareDates(refdate, enddate) === 0) {
+      } 
+      else if (CompareDates(refdate, enddate) === 0) {
         applied = NewList.working[dayofweek]?.day ?? 0 * (apply.startpm === 1 ? 1 : 0.5);
-      } else {
+      } 
+      else {
         applied = NewList.working[dayofweek]?.day ?? 0;
       }
-
+      
+      
       for (const hol of NewList.public) {
         let phdate = hol.date.split('/');
         phdate = new Date(phdate[2], parseInt(phdate[1]) - 1, phdate[0]);
@@ -598,66 +606,71 @@ function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
           break;
         }
       }
+      
       totalapplied += applied;
+      
     } while (CompareDates(refdate, enddate) === 2);
 
     updateApply('day', totalapplied && !isNaN(totalapplied) ? totalapplied : 0);
   };
 
-  const GetBalance = async () => {
+  const GetSupport = async () => {
     const updatedList: GenericObject = {};
     const YearStr = apply.startdate.getFullYear().toString();
-    if (YearStr !== year) {
-      setYear(YearStr);
-      for (const key of Object.keys(list)) {
-        let cmd = '';
-        switch (key) {
-          case 'balance':
-            cmd = 'HR : Get Leave balance';
+    for (const key of Object.keys(support)) {
+      let cmd = '';
+      switch (key) {
+        case 'balance':
+          cmd = 'HR : Get Leave balance';
+        break;
+        case 'public':
+          cmd = 'HR : Get Public Holiday';
           break;
-          case 'public':
-            cmd = 'HR : Get Public Holiday';
-            break;
-          case 'working':
-            cmd = 'HR : Get Working day';
-            break;
-        }
-        const data = await FetchData({
-          user: ((REACT_ENV != 'actual') ? USER_ID : (user?.id ?? '0')),
-          restlet: RESTLET,
-          middleware: SERVER_URL + '/netsuite/send?acc=1',
-          data: { date: apply.startdate.getFullYear(), shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },
-          command: cmd
-        });
-        updatedList[key] = data;
+        case 'working':
+          cmd = 'HR : Get Working day';
+          break;
       }
-      setList(prev => ({ ...prev, ...updatedList }));
+      const LoadObj = {...BaseObj,...({data: { date: YearStr, shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: cmd})}
+      const data = await FetchData(LoadObj);
+      updatedList[key] = data;
     }
-    GetLeavePeriod({ ...list, ...updatedList });
+    setLoadObj({...BaseObj,...({data: { date: YearStr, shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: 'HR : Get Leave balance'})});
+    
+    setSupport(prev => ({ ...prev, ...updatedList }));
+    GetLeavePeriod({ ...support, ...updatedList });
   };
 
   useEffect(() => {
     if (apply.startdate.getFullYear() !== apply.enddate.getFullYear()) {
-      setList({ public: [], balance: [], working: [] });
+      setSupport({ public: [], working: [] });
       ShowPrompt({msg:'The leaves selected cross calendar year. Please change your dates.'});
       return;
     }
-    GetBalance();
+    if (apply.startdate.getFullYear() != year) {
+      setYear(apply.startdate.getFullYear().toString())
+      return;
+    }
+    GetLeavePeriod(support);
+    
   }, [memoApply]);
+
+  useEffect(()=> {
+    GetSupport()
+  },[year])
 
   
   
   return (
     <FormContainer>
       <FormDateInput mode="range" label="Start Date" def={{ date: apply.startdate, startDate: apply.startdate, endDate: apply.enddate }}
-        onChange={({ startDate, endDate }) => { updateApply('startdate', startDate); updateApply('enddate', endDate); }} />
+        onChange={({ startDate, endDate }) => { updateApply('startdate', HandleDate(startDate)); updateApply('enddate', HandleDate(endDate)); }} />
       <FormAutoComplete label="AM/PM "  def={apply.startam} searchable={false} onChange={(item) => updateApply('startam', item)} Defined={[{ name: 'Full Day', id: 1 }, { name: 'AM', id: 2 }, { name: 'PM', id: 3 }]} />
       
       <FormDateInput mode="range" label="End Date" def={{ date: apply.enddate, startDate: apply.startdate, endDate: apply.enddate }}
-        onChange={({ startDate, endDate }) => { updateApply('startdate', startDate); updateApply('enddate', endDate); }} />
+        onChange={({ startDate, endDate }) => { updateApply('startdate', HandleDate(startDate)); updateApply('enddate', HandleDate(endDate)); }} />
       <FormAutoComplete label="AM/PM "  def={apply.startam} searchable={false} onChange={(item) => updateApply('startam', item)} Defined={[{ name: 'Full Day', id: 1 }, { name: 'AM', id: 2 }, { name: 'PM', id: 3 }]} />
       <FormTextInput disabled label="Days Applied" key={apply.day} def={apply.day} onChange={(text) => updateApply('day', text)} />
-      <FormAutoComplete label="Leave Type "  def={apply.leave} searchable={false} onChange={(item) => updateApply('leave', item)} Defined={list.balance} />
+      <FormAutoComplete label="Leave Type "  def={apply.leave} searchable={false} onChange={(item) => updateApply('leave', item)} LoadObj={loadObj} />
       
       <FormTextInput label="Reason" key={apply.reason} def={apply.reason} onChange={(text) => updateApply('reason', text)} />
     </FormContainer>

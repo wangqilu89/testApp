@@ -18,8 +18,9 @@ const defaultOptions = {LoadModal:true,LoadObj:null,Defined:[],SearchFunction:nu
 const useListPost = (options: UseListPostOptions) => {
   const finalOptions = { ...defaultOptions, ...options };
   const {PostObj} = finalOptions;
-  const {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys} = useListFilter(finalOptions);
+  const {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,UpdateLoad} = useListFilter(finalOptions);
   const { ShowPrompt } = usePrompt();
+  
   const HandleAction = async (action:string) => {
     if (selectedKeys.length === 0) {
         ShowPrompt({msg:"Please select at least one record."});
@@ -29,7 +30,7 @@ const useListPost = (options: UseListPostOptions) => {
     await FetchData(NewObj);
   }
 
-  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleAction}
+  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleAction,UpdateLoad}
 }
 
 export {useListPost}

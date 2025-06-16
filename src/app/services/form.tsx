@@ -221,12 +221,18 @@ type FormAutoCompleteProps = {
 }
 const FormAutoComplete:React.FC<FormAutoCompleteProps> = (options = {}) => {
     const finalOptions = useMemo(() => ({ ...defaultDropProps, ...options }), [options]);
+    
     const {label,def,disabled,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj} = finalOptions;
+    const [loadObj,setLoadObj] = useState(LoadObj)
     const onChange = useCallback((item:any) => finalOptions.onChange(item), [finalOptions.onChange]);
+
+    useEffect(() => {
+        setLoadObj(LoadObj)
+      },[LoadObj])
 
     return (
         <FormCommon label={label} AddStyle={AddStyle}>
-            <DropdownMenu label={label} def={def} searchable={searchable} disabled={disabled} onChange={onChange} AddStyle={AddStyle} LoadObj={LoadObj} Defined={Defined} SearchObj={SearchObj} SearchFunction={SearchFunction}/>
+            <DropdownMenu label={label} def={def} searchable={searchable} disabled={disabled} onChange={onChange} AddStyle={AddStyle} LoadObj={loadObj} Defined={Defined} SearchObj={SearchObj} SearchFunction={SearchFunction}/>
         </FormCommon>
     )
 }

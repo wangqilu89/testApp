@@ -43,8 +43,8 @@ const useListGet = (options: UseListGetOptions) => {
       const toLoad = override ?? loadObj;
       let data: GenericObject[] = []
       if (toLoad) {
-        console.log('Dummy Load')
-        //data = await FetchData(toLoad);
+        console.log('Dummy Load',toLoad)
+        data = await FetchData(toLoad);
       }
       setList(data ?? []);
     } 

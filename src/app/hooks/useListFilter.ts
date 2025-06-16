@@ -67,7 +67,7 @@ const useListFilter = ( options: UseListFilterOptions) => {
 };
   
 
-  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys};
+  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,UpdateLoad};
 }
 
 export {useListFilter}

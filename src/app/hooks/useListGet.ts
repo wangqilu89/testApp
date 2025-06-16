@@ -23,18 +23,27 @@ const useListGet = (options: UseListGetOptions) => {
   const [list, setList] = useState<GenericObject[]>([]);
   const [loadObj,setLoadObj] = useState(LoadObj)
   const [items,setItems] = useState(Defined)
-    
+  
+  const onLoading = () => {
+    setLoading(true);
+    if (LoadModal) {
+      ShowLoading({msg:'Loading...'});
+    }
+  }
+
+  const offLoading = () => {
+    setLoading(false);
+    if (LoadModal) {
+      HideLoading({});
+    }
+  }
   const load = useCallback(async (override?:GenericObject) => {
     try {
-      setLoading(true);
-      if (LoadModal) {
-        ShowLoading({msg:'Loading...'});
-      }
-      
+      onLoading()
       const toLoad = override ?? loadObj;
       let data: GenericObject[] = []
-      console.log('In Mount')
       if (toLoad) {
+        console.log('Dummy Load')
         //data = await FetchData(toLoad);
       }
       setList(data ?? []);
@@ -43,13 +52,10 @@ const useListGet = (options: UseListGetOptions) => {
       console.error(err);
     } 
     finally {
-      setLoading(false);
-      HideLoading({});
+      offLoading()
     }
   }, [loadObj]);
-  useEffect(() => {
-      console.log("Get Moutned",finalOptions);
-    }, []);  
+   
   useEffect(() => {
     if (items.length > 0) {
       setList(items)

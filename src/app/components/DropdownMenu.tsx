@@ -38,37 +38,36 @@ const MenuOption = ({onSelect,item}: {onSelect:() => void,item:GenericObject}) =
 };
 
 const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
-  const finalOptions = useMemo(() => ({ ...defaultDropProps, ...options }), [options]);
   
+  
+  //const finalOptions = useMemo(() => ({ ...defaultDropProps, ...options }), [options]);
+  const finalOptions = { ...defaultDropProps, ...options };
   const {label,def,disabled,onChange,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj} = finalOptions;
   const [temp, setTemp] = useState(def);
   const [enabled,setEnabled] = useState(false);
   const [modal, setModal] = useState(false);
   const [position, setPosition] = useState({x: 0, y: 0, width: 0});
-
+  
+  const triggerRef = useRef<View>(null)
+  
   useEffect(() => {
-   
-    setEnabled(modal)
+    console.log(triggerRef.current)
     if (triggerRef.current && modal) {
-      
       triggerRef.current.measure((fx, fy, width, height,px,py) => {
         setPosition({x: px,y: py+ height,width: width});
+        console.log(LoadObj)
+        UpdateLoad(LoadObj as GenericObject)
+        console.log('searchable',searchable)
       });
+
     }
   }, [modal]);
 
-  const triggerRef = useRef<View>(null)
+  
  
-  /*
-  const {list,search,setSearch,loading} = useListFilter({
-    LoadObj:LoadObj,
-    LoadModal:false,
-    Defined:Defined,
-    SearchFunction: SearchFunction,
-    SearchObj:SearchObj,
-    Enabled:enabled
-  })
-  */
+  
+  //const {list,search,setSearch,loading} = useListFilter({LoadObj:LoadObj,LoadModal:false,Defined:Defined, SearchFunction: SearchFunction,SearchObj:SearchObj,Enabled:enabled})
+  
   const [search,setSearch] = useState('')
   const {list,loading,UpdateLoad} = useListGet({LoadModal:false,Defined:Defined,LoadObj:LoadObj,Enabled:enabled})
 
@@ -76,13 +75,15 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
   const debouncedFetch = debounce(setSearch, 500);
   
   const handleOpen = () => {
-    
+    //setEnabled(true);
     setModal(true);
+    
   };
   
   const handleClose = () => {
+    //setEnabled(false);
+    setModal(false);
     
-    setModal(false)
   }
 
   const handleSelect = (item: GenericObject) => {

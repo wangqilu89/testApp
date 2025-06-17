@@ -37,6 +37,7 @@ const useListGet = (options: UseListGetOptions) => {
       HideLoading({});
     }
   }
+
   const load = useCallback(async (override?:GenericObject) => {
     try {
       onLoading()
@@ -69,11 +70,9 @@ const useListGet = (options: UseListGetOptions) => {
   }, [loadObj,items,Enabled]);
   
   const UpdateLoad = (newObj: GenericObject) => {
-    
     setLoadObj(newObj);
-    load(newObj);
   };
-  return {list,loading,UpdateLoad};
+  return {list,loading,UpdateLoad,loadObj};
 }
 
 export {useListGet}

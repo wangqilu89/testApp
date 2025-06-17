@@ -48,7 +48,7 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
   const [position, setPosition] = useState({x: 0, y: 0, width: 0});
   
   const triggerRef = useRef<View>(null)
-  
+  const inputRef = useRef<TextInput>(null);
   const {list,search,setSearch,loading,UpdateLoad} = useListFilter({LoadObj:LoadObj,LoadModal:false,Defined:Defined, SearchFunction: SearchFunction,SearchObj:SearchObj,Enabled:true})
   
   //const [search,setSearch] = useState('')
@@ -83,6 +83,12 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
         setPosition({x: px,y: py+ height,width: width});
         if (!SearchObj && LoadObj) {
           UpdateLoad(LoadObj as GenericObject)
+        };
+        if (searchable) {
+          const Focus = setTimeout(() => {  
+            inputRef.current?.focus();
+          }, 300);
+          return () => clearTimeout(Focus);
         }
       });
 
@@ -94,7 +100,7 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
       <ReferenceField />
       <Modal animationIn="fadeIn" animationOut="fadeOut" style={{margin:0,padding:0}} backdropOpacity={0} backdropColor="transparent" isVisible={modal}  onBackdropPress={handleClose} onBackButtonPress={handleClose}>
         <View style={[{position: 'absolute',backgroundColor: 'white',borderRadius: 5,padding: 10,elevation: 4,top: position.y,left: position.x ,width: position.width}]}>
-        {searchable && (<TextInput placeholder={"Search " + label} defaultValue={temp.name} onChangeText={debouncedFetch}  style={{borderRadius:5,borderWidth:1,marginLeft:10,marginRight:10,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}}/>)}
+        {searchable && (<TextInput ref={inputRef} placeholder={"Search " + label} defaultValue={temp.name} onChangeText={debouncedFetch}  style={{borderRadius:5,borderWidth:1,marginLeft:10,marginRight:10,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}}/>)}
         {loading ? (
           <ActivityIndicator size="small" style={{ margin: 10,justifyContent:'center'}} />
         ):(list.length === 0?

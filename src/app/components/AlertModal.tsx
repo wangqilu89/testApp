@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState,ReactNode,useRef} from 'react';
-import { View, Text,  TouchableOpacity,ActivityIndicator,TextInput} from 'react-native';
+import React, { createContext, useContext, useState,ReactNode,useRef,useEffect} from 'react';
+import {View, Text,  TouchableOpacity,ActivityIndicator,TextInput} from 'react-native';
 import Modal from "react-native-modal";    
 import { Ionicons } from '@expo/vector-icons'; 
 
@@ -119,6 +119,8 @@ const Prompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:Pro
   
   const [keyed,setKeyed] = useState('')
 
+  const inputRef = useRef<TextInput>(null);
+
   const handleConfirm = () => {  
     onClose({ confirmed: true, value: keyed });
   };
@@ -127,13 +129,26 @@ const Prompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:Pro
       onClose({ confirmed: false, value: keyed  })
     }
   };
+
+  useEffect(() => {
+    if (visible && input.visible) {
+      const Focus = setTimeout(() => {  
+        inputRef.current?.focus();
+      }, 300);
+      return () => clearTimeout(Focus);
+    }
+    if (!visible) {
+      setKeyed('')
+    }
+  }, [visible]);
+
   return (
-      <Modal backdropColor={thematic.backdropColor} backdropOpacity={thematic.backdropOpacity}isVisible={visible}  onBackdropPress={handleCancel} onBackButtonPress={handleCancel} >
+      <Modal backdropColor={thematic.backdropColor} backdropOpacity={thematic.backdropOpacity} isVisible={visible}  onBackdropPress={handleCancel} onBackButtonPress={handleCancel} >
           <View style={{backgroundColor:thematic.containerColor,flexDirection:'column'}}>
-            {cancel.visible && 
-               (<TouchableOpacity onPress={handleCancel} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>)
-            }
-            <View style={{flexDirection:'column',alignItems:'center'}}>
+            <TouchableOpacity disabled={!cancel.visible} onPress={handleCancel} style={{alignItems:'flex-end'}}>
+              <Ionicons name='close-outline' style={[{fontSize:30},{color:cancel.visible?'red':thematic.containerColor}]}/>
+            </TouchableOpacity>
+            <View style={{flexDirection:'column',alignItems:'center',flex:1}}>
                {icon.visible && (
                   typeof icon.label === 'string'?
                   (<Ionicons name={icon.label as any} style={{fontSize:50,color:'red'}}/>):
@@ -147,9 +162,11 @@ const Prompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:Pro
                   message
                 )}
                 {input.visible && (
-                  <TextInput keyboardType="default" placeholder={input.label} value={keyed} onChangeText={setKeyed} style={[{flex:1,color:'black',textAlign: 'left',fontSize: 16,padding:0,height:20,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
+                  <View style={{alignSelf:'stretch',flex:1,margin:10,borderRadius:5,borderWidth:1}}>
+                    <TextInput ref={inputRef} keyboardType="default" placeholder={input.label} value={keyed} onChangeText={setKeyed} style={[{color:'black',height:25,textAlign: 'left',paddingHorizontal:10,marginVertical:5,fontSize: 16}]}/>
+                  </View>
                 )}    
-                <View style={{flexDirection:'row',justifyContent:'space-around'}}>
+                <View style={{flexDirection:'row',justifyContent:'space-around',width:'100%'}}>
                   {proceed.visible && 
                     (<TouchableOpacity onPress={handleConfirm} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                        <Text style={{ color: 'white', fontWeight: 'bold' }}>{proceed.label}</Text>

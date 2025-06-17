@@ -15,12 +15,14 @@ const defaultOptions = {LoadModal:true,LoadObj:null,Defined:[],SearchFunction:nu
 
 const useListFilter = ( options: UseListFilterOptions) => {
   const finalOptions = { ...defaultOptions, ...options };
-  const {SearchFunction} = finalOptions
+  const {LoadObj,SearchFunction} = finalOptions
   const { list,loading,UpdateLoad} = useListGet(finalOptions);
-  const [displayList, setDisplayList] = useState<GenericObject[]>([]);
-  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 10
+  const [displayList, setDisplayList] = useState<GenericObject[]>([]);
+  const [search, setSearch] = useState('');
+  const [selectAll, setSelectAll] = useState(true);
+  
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
 
@@ -32,6 +34,45 @@ const useListFilter = ( options: UseListFilterOptions) => {
       return null
     }
   }, [search]);
+
+  
+  
+  const loadMore = () => setPage(prev => prev + 1);
+  
+  const HandleExpand = (key: string) => {
+    setExpandedKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
+
+  const HandleSelect = (key: string) => {
+    setSelectedKeys((prev) => {
+        const isSelected = prev.includes(key);
+        const newSelectedIds = isSelected ? prev.filter((i) => i !== key) : [...prev, key];
+        return newSelectedIds;
+    });
+  };
+  
+  const HandleSelectAll = () => {
+    /*
+    displayList.forEach((item) => {
+        if (selectedKeys.includes(item.internalid) != selectAll) {
+            HandleSelect(item['internalid'])
+        }
+    })
+    */
+    setSelectAll(!selectAll)
+  };
+
+  const ResetLoad = () => {
+    if (LoadObj) {
+      UpdateLoad(LoadObj)
+    }
+    setSearch('');
+    setExpandedKeys([]);
+    setSelectAll(true);
+    setSelectedKeys([]);
+  }
 
   useEffect(() => {
     let filtered = list;
@@ -49,25 +90,15 @@ const useListFilter = ( options: UseListFilterOptions) => {
       UpdateLoad(toLoad);
     }
   }, [search]);
-  
-  const loadMore = () => setPage(prev => prev + 1);
-  
-  const HandleExpand = (key: string) => {
-    setExpandedKeys((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
-  };
 
-  const HandleSelect = (key: string) => {
-    setSelectedKeys((prev) => {
-        const isSelected = prev.includes(key);
-        const newSelectedIds = isSelected ? prev.filter((i) => i !== key) : [...prev, key];
-        return newSelectedIds;
-    });
-};
-  
-
-  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,UpdateLoad};
+  useEffect(() => {
+    displayList.forEach((item) => {
+      if (selectedKeys.includes(item.internalid) === selectAll) {
+          HandleSelect(item['internalid'])
+      }
+    })
+  },[selectAll])
+  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad};
 }
 
 export {useListFilter}

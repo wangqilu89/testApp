@@ -8,30 +8,20 @@ import { HapticTab } from '@/components/HapticTab';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { GenericObject,MenuOption } from '@/types';
 
 
-type MenuItem = {
-  id: string;
-  label: string;
-  navigate?: string;
-  details?: MenuItem[];
-};
-type GenericObject = Record<string, any>;
-
-const WebData:MenuItem[] = [
-  {id:'1',label:'Home',navigate:'/home'},
-  {id:'2',label:'Approve',details:[{ id: '2.1', label: 'Timesheets',navigate:'/approve?category=timesheet'},{ id: '2.2', label: 'Expense Claims',navigate:'/approve?category=expense'},{ id: '2.3', label: 'Leaves' ,navigate:'/approve?category=leave'}, { id: '2.4', label: 'Invoices' ,navigate:'/approve?category=invoice'},{ id: '2.5', label: 'Lost Clients' ,navigate:'/approve?category=lost'}]},
-  {id:'3',label:'HR',details:[{ id: '3.1', label: 'Key Information',navigate:'/hr?category=personal'},{ id: '3.2', label: 'Leaves',navigate:'/hr?category=leave'},{ id: '3.3', label: 'Claims Listing' ,navigate:'/hr?category=expense'},{ id: '3.4', label: 'Submit Claims' ,navigate:'/hr?category=submit-expense'}, { id: '3.5', label: 'Pay Slip' ,navigate:'/hr?category=payslip'}]}
-
-
+const WebData:MenuOption[] = [
+  {internalid:'1',name:'Home',navigate:'/home'},
+  {internalid:'2',name:'Approve',details:[{ internalid: '2.1', name: 'Timesheets',navigate:'/approve?category=timesheet'},{ internalid: '2.2', name: 'Expense Claims',navigate:'/approve?category=expense'},{ internalid: '2.3', name: 'Leaves' ,navigate:'/approve?category=leave'}, { internalid: '2.4', name: 'Invoices' ,navigate:'/approve?category=invoice'},{ internalid: '2.5', name: 'Lost Clients' ,navigate:'/approve?category=lost'}]},
+  {internalid:'3',name:'HR',details:[{ internalid: '3.1', name: 'Key Information',navigate:'/hr?category=personal'},{ internalid: '3.2', name: 'Leaves',navigate:'/hr?category=leave'},{ internalid: '3.3', name: 'Claims Listing' ,navigate:'/hr?category=expense'},{ internalid: '3.4', name: 'Submit Claims' ,navigate:'/hr?category=submit-expense'}, { internalid: '3.5', name: 'Pay Slip' ,navigate:'/hr?category=payslip'}]}
 ]
 
 
 
+
 const MobileTabs = () => {
-  
   const colorScheme = useColorScheme();
-  
   return (
       <Tabs screenOptions={{tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint, headerShown: false,
           tabBarButton: HapticTab,
@@ -132,7 +122,7 @@ const WebTabs = () => {
       let hoveredItem = WebData
       for (var i=0; i < ids.length; i++) {
         refStr += ids[i]
-        hoveredItem = (hoveredItem.find((item) => item.id === refStr)?.details || [])
+        hoveredItem = (hoveredItem.find((item) => item.internalid === refStr)?.details || [])
         refStr += '.'
         if (hoveredItem.length == 0) {
           break;
@@ -142,9 +132,9 @@ const WebTabs = () => {
         <div style={menuStyle}>
           <ul style={{listStyleType: 'none', padding: 0, margin: 0 }}>
           {hoveredItem.map((sub) => (
-            <li key={sub.id}>
-              <HoverButton refkey={sub.id} label={sub.label} navigate={sub.navigate || null} >
-                {listItem(sub.id)}
+            <li key={sub.internalid}>
+              <HoverButton refkey={sub.internalid} label={sub.name} navigate={sub.navigate || null} >
+                {listItem(sub.internalid)}
               </HoverButton>
             </li>
             
@@ -167,8 +157,8 @@ const WebTabs = () => {
       {WebData.map((item) => {
         
         return (
-        <HoverButton refkey={item.id} label={item.label} navigate={item.navigate || null} >
-          {listItem(item.id)}
+        <HoverButton refkey={item.internalid} label={item.name} navigate={item.navigate || null} >
+          {listItem(item.internalid)}
         </HoverButton>
         )
       })}

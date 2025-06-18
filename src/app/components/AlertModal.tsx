@@ -2,36 +2,7 @@ import React, { createContext, useContext, useState,ReactNode,useRef,useEffect} 
 import {View, Text,  TouchableOpacity,ActivityIndicator,TextInput} from 'react-native';
 import Modal from "react-native-modal";    
 import { Ionicons } from '@expo/vector-icons'; 
-
-type GenericObject = Record<string, any>;
-type PromptContext = {
-    // Alert
-    ShowPrompt: ({msg,icon,input,ok,cancel}: PromptConfig) => Promise<GenericObject>,
-    HidePrompt: (item:GenericObject) => void,
-    ShowLoading: ({msg,icon,input,ok,cancel}: PromptConfig) => Promise<GenericObject>,
-    HideLoading: (item:GenericObject) => void,
-    visibility:boolean
-}
-
-type PromptConfig = {
-  msg: string | React.ReactNode,
-  icon?:GenericObject,
-  input?:GenericObject,
-  ok?:GenericObject,
-  cancel?:GenericObject,
-  container?:GenericObject
-}
-
-type PromptProps = {
-  message:string| ReactNode,
-  icon:GenericObject,
-  input:GenericObject,
-  proceed:GenericObject,
-  cancel:GenericObject,
-  visible:boolean,
-  onClose: (item: GenericObject) => void,
-  thematic:GenericObject
-}
+import { GenericObject,PromptContext,PromptProps,PromptConfig } from '@/types';
 
 
 const PromptContext = createContext<PromptContext | undefined>(undefined);
@@ -102,7 +73,7 @@ const PromptProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return (
       <PromptContext.Provider value={{ShowPrompt,HidePrompt,visibility,ShowLoading,HideLoading}}>
         {children}
-        <Prompt message={msg} icon={icon} input={input} proceed={proceed} cancel={cancel} visible={visibility} onClose={HidePrompt} thematic={thematic}  />
+        <Prompt msg={msg} icon={icon} input={input} ok={proceed} cancel={cancel} visible={visibility} onClose={HidePrompt} container={thematic}  />
       </PromptContext.Provider>
     );
 };
@@ -115,7 +86,7 @@ const usePrompt = () => {
     return context;
 };
 
-const Prompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:PromptProps) => {
+const Prompt = ({msg,icon,input,ok,cancel,visible,onClose,container}:PromptProps) => {
   
   const [keyed,setKeyed] = useState('')
 
@@ -143,10 +114,10 @@ const Prompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:Pro
   }, [visible]);
 
   return (
-      <Modal backdropColor={thematic.backdropColor} backdropOpacity={thematic.backdropOpacity} isVisible={visible}  onBackdropPress={handleCancel} onBackButtonPress={handleCancel} >
-          <View style={{backgroundColor:thematic.containerColor,flexDirection:'column'}}>
+      <Modal backdropColor={container.backdropColor} backdropOpacity={container.backdropOpacity} isVisible={visible}  onBackdropPress={handleCancel} onBackButtonPress={handleCancel} >
+          <View style={{backgroundColor:container.containerColor,flexDirection:'column'}}>
             <TouchableOpacity disabled={!cancel.visible} onPress={handleCancel} style={{alignItems:'flex-end'}}>
-              <Ionicons name='close-outline' style={[{fontSize:30},{color:cancel.visible?'red':thematic.containerColor}]}/>
+              <Ionicons name='close-outline' style={[{fontSize:30},{color:cancel.visible?'red':container.containerColor}]}/>
             </TouchableOpacity>
             <View style={{flexDirection:'column',alignItems:'center',flex:1}}>
                {icon.visible && (
@@ -154,12 +125,12 @@ const Prompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:Pro
                   (<Ionicons name={icon.label as any} style={{fontSize:50,color:'red'}}/>):
                   (icon.label)
                 )}
-                {typeof message === 'string' ? (
+                {typeof msg === 'string' ? (
                   <View style={{marginVertical:20,paddingHorizontal:10}}>
-                     <Text style={{ fontSize: 20,textAlign:'center'}}>{message}</Text>
+                     <Text style={{ fontSize: 20,textAlign:'center'}}>{msg}</Text>
                   </View>
                 ):(
-                  message
+                  msg
                 )}
                 {input.visible && (
                   <View style={{alignSelf:'stretch',flex:1,margin:10,borderRadius:5,borderWidth:1}}>
@@ -167,9 +138,9 @@ const Prompt = ({message,icon,input,proceed,cancel,visible,onClose,thematic}:Pro
                   </View>
                 )}    
                 <View style={{flexDirection:'row',justifyContent:'space-around',width:'100%'}}>
-                  {proceed.visible && 
+                  {ok.visible && 
                     (<TouchableOpacity onPress={handleConfirm} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-                       <Text style={{ color: 'white', fontWeight: 'bold' }}>{proceed.label}</Text>
+                       <Text style={{ color: 'white', fontWeight: 'bold' }}>{ok.label}</Text>
                      </TouchableOpacity>)}
                   {cancel.visible && 
                     (<TouchableOpacity onPress={handleCancel} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>

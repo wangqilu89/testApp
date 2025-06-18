@@ -5,31 +5,9 @@ import { useRouter } from 'expo-router';
 import { usePrompt } from '@/components/AlertModal';
 
 import { Platform } from 'react-native';
+import { UserContext,User } from '@/types';
 
-type User = {
-  id: string,
-  name: string,
-  email: string,
-  subsidiary:string,
-  shift:string,
-  group: {
-    id: string;
-    name: string;
-  },
-  department: {
-    id: string;
-    name: string;
-  },
-  role: string
-};
-
-type UserContextType = {
-  user: User | null;
-  login: (userData: User) => Promise<void>;
-  logout: () => Promise<void>;
-};
-
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContext | undefined>(undefined);
 
 const getConnectSid = async (url: string) => {
     try {

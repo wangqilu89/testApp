@@ -1,36 +1,13 @@
 import React, { useState, useRef, useEffect,useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, FlatList,ViewStyle,TextStyle,StyleSheet,ActivityIndicator} from 'react-native';
 import Modal from 'react-native-modal';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import debounce from 'lodash.debounce';
 import { useListFilter } from '@/hooks/useListFilter'
-import {NoRecords} from '@/services'
-import { useListGet } from '@/hooks/useListGet'
+import { GenericObject,KeyStyles,DropdownMenuProps,SelectOptions } from '@/types';
 
-type GenericObject = Record<string, any>;
-type KeyStyles = {
-  StyleContainer?:TextStyle & ViewStyle,
-  StyleRow?:ViewStyle,
-  StyleLabel?:TextStyle,
-  StyleInput?:TextStyle & ViewStyle
-}
-
-type DropdownMenuProps = {
-  label?: string,
-  def?: GenericObject,
-  searchable?:boolean,
-  disabled?: boolean,
-  onChange?: (item: GenericObject) => void,
-  AddStyle?: KeyStyles,
-
-  LoadObj?:GenericObject|null,
-  Defined?: GenericObject[]
-  SearchObj?:GenericObject|null
-  SearchFunction?:((items: GenericObject[], keyword: string) => GenericObject[]) | null
-}
 
 const defaultDropProps = {label:'Select',def:{id:'',name:''},searchable:false,disabled:false,onChange:()=>{},LoadObj:null,Defined:[],SearchObj:null,SearchFunction:null}
-const MenuOption = ({onSelect,item}: {onSelect:() => void,item:GenericObject}) => {
+const MenuOption = ({onSelect,item}:SelectOptions) => {
   return (
     <TouchableOpacity onPress={onSelect} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
       <Text>{item.name}</Text>

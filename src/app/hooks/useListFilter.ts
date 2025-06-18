@@ -1,16 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useListGet } from '@/hooks/useListGet'
+import { GenericObject,UseListFilterOptions } from '@/types';
 
-type GenericObject = Record<string, any>;
-
-interface UseListFilterOptions {
-  LoadModal?:boolean,
-  LoadObj?:GenericObject|null,
-  Defined?:GenericObject[]
-  SearchFunction?: ((items: GenericObject[], keyword: string) => GenericObject[]) | null,
-  SearchObj?:GenericObject|null,
-  Enabled?:boolean
-}
 const defaultOptions = {LoadModal:true,LoadObj:null,Defined:[],SearchFunction:null,SearchObj:null,Enabled:true}
 
 const useListFilter = ( options: UseListFilterOptions) => {

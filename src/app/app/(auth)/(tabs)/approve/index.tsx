@@ -1,30 +1,24 @@
 
 import { View, Text, TouchableOpacity, FlatList, Alert,Linking} from 'react-native';
-import { useEffect, useState, useMemo} from 'react';
+import { useMemo} from 'react';
 import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; 
-import { FetchData,useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,MainPage,NoRecords,SearchField} from '@/services'; // 👈 update path
+import { useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,MainPage,NoRecords,SearchField,ProperCase,NumberComma} from '@/services'; // 👈 update path
 import {useThemedStyles} from '@/styles';
 import { useUser } from '@/components/User';
 import { useListPost } from '@/hooks/useListPost'
+import { GenericObject,PageProps,User,PageInfoColConfig,PageInfoRowProps,MenuOption} from '@/types';
 
-type GenericObject = Record<string, any>;
-type AnimatedRowProps = {isCollapsed:boolean,item: any,selected: boolean,colNames: string[]}
 
-const approvals = [
-  { id: 'timesheet', title: 'Timesheets',icon:'time-outline'},
-  { id: 'expense', title: 'Expense Claims',icon:'card-outline'},
-  { id: 'leave', title: 'Leaves',icon:'calendar-outline'},
-  { id: 'invoice', title: 'Invoices',icon:'file-tray-full-outline'},
-  { id: 'lost', title: 'Lost Clients',icon:'reader-outline'},
+const approvals:MenuOption[] = [
+  { internalid: 'timesheet', name: 'Timesheets',icon:'time-outline'},
+  { internalid: 'expense', name: 'Expense Claims',icon:'card-outline'},
+  { internalid: 'leave', name: 'Leaves',icon:'calendar-outline'},
+  { internalid: 'invoice', name: 'Invoices',icon:'file-tray-full-outline'},
+  { internalid: 'lost', name: 'Lost Clients',icon:'reader-outline'},
 ];
 
 
-const ProperCase = (str:string) => {
-  return str.toLowerCase().split(/_/g).map(function(word) {
-      return word.charAt(0).toUpperCase() + word.slice(1);
-  }).join(' ');
-}
 
 function MainScreen() {
   return (
@@ -32,7 +26,7 @@ function MainScreen() {
   );
 }
 
-function ApprovalCategoryScreen({ category,user}: { category: string,user:GenericObject|null}) {
+function ApprovalCategoryScreen({ category,user}:PageProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isWeb = useWebCheck(); // Only "true web" if wide
@@ -54,18 +48,22 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
     }
   );
 
-  const COLUMN_CONFIG: Record<string, string[]> = {
-    timesheet: ["employee", "weekdate", "project","task","memo","val_timecosts","val_hours"],
-    expense:['employee','project','category','expense_date','memo','val_amount'],
-    leave:['employee','leave_type','leave_period','date_requested','leave_no','memo','val_days'],
-    invoice:['customer','date','document_number','email_addresses','project','currency','val_service','val_ope','val_total','val_sgd_total'],
-    lost:['customer','lost_reason','amount']
+  const COLUMN_CONFIG: PageInfoColConfig = {
+    timesheet: [{internalid:"employee"},{internalid:"weekdate"} ,{internalid:"project"},{internalid:"task"},{internalid:"memo"},{internalid:"val_timecosts",value:{handle:NumberComma}},{internalid:"val_hours",value:{handle:NumberComma}}],
+    expense:[{internalid:"employee"},{internalid:"project"},{internalid:"category"},{internalid:"expense_date"},{internalid:"memo"},{internalid:'val_amount',value:{handle:NumberComma}}],
+    leave:[{internalid:"employee"},{internalid:"leave_type"},{internalid:"leave_period"},{internalid:"date_requested"},{internalid:"leave_no"},{internalid:"memo"},{internalid:"val_days",value:{handle:NumberComma}}],
+    invoice:[{internalid:"customer"},{internalid:"date"},{internalid:"document_number"},{internalid:"email_addresses"},{internalid:'project'},{internalid:'currency'},{internalid:'val_service',value:{handle:NumberComma}},{internalid:'val_ope',value:{handle:NumberComma}},{internalid:'val_total',value:{handle:NumberComma}},{internalid:'val_sgd_total',name: 'SGD Total',value:{handle:NumberComma}}],
+    lost:[{internalid:"customer"},{internalid:'lost_reason'},{internalid:'amount',value:{handle:NumberComma}}]
   };
 
-  const AnimatedRow = ({isCollapsed,item,selected,colNames}:AnimatedRowProps) => {
+  const InfoRow = ({expanded,item,selected,columns}:PageInfoRowProps) => {
     const newCol = useMemo(() => {
-      return isCollapsed ? colNames.slice() : (colNames.length > 3?[...colNames.slice(0, 3), ...colNames.slice(-1)]:colNames.slice());
-    }, [isCollapsed, colNames]);
+      return Array.isArray(columns)?
+         ((columns.length > 3 && !expanded)?
+          [...columns.slice(0, 3), ...columns.slice(-1)]:
+          columns.slice())
+         :[];
+    }, [expanded, columns]);
     
     const WithFile = (item.hasOwnProperty('file')?(item.file?false:true):false)
 
@@ -80,13 +78,13 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
         <TouchableOpacity disabled={WithFile} style={{flexDirection:'column',flex:1}} onPress={() => {if (item.file) {Linking.openURL(item.file)} else {HandleSelect(item.internalid);}}}>
             {newCol.map((colName, index) => (
               <View key={index} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
-                <View style={{width:150}}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{ProperCase(colName.replace('val_',''))}</Text></View>
-                <View style={{flex:1}}><Text numberOfLines={isCollapsed?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{item[colName] ?? ''}</Text></View>
+                <View style={[{width:150},colName?.format?.StyleContainer]}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'},colName?.format?.StyleLabel]}>{colName?.name??ProperCase(colName.internalid.replace('val_',''))}</Text></View>
+                <View style={[{flex:1},colName?.value?.format?.StyleContainer]}><Text numberOfLines={expanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14},colName?.value?.format?.StyleLabel]}>{colName?.value?.handle?.(item[colName.internalid] ?? '')}</Text></View>
               </View>
             ))}
         </TouchableOpacity>
         <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1}} onPress={() => HandleExpand(item.internalid)}>
-          <Ionicons name={isCollapsed?"chevron-up":"chevron-down"} style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
+          <Ionicons name={expanded?"chevron-up":"chevron-down"} style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
         </TouchableOpacity>
       
       </View>
@@ -111,7 +109,6 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
   }
 
   return (
-
         <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
           <>
           {/*HEADER */}
@@ -139,10 +136,9 @@ function ApprovalCategoryScreen({ category,user}: { category: string,user:Generi
                 style={[Form.container]}
                 data={displayList}
                 keyExtractor={(item) => item.internalid}
-                
                 renderItem={({ item }) => {
                   return (
-                    <AnimatedRow isCollapsed={expandedKeys.includes(item.internalid)} item={item} selected={selectedKeys.includes(item.internalid)} colNames={COLUMN_CONFIG[category]} />
+                    <InfoRow expanded={expandedKeys.includes(item.internalid)} item={item} selected={selectedKeys.includes(item.internalid)} columns={COLUMN_CONFIG[category]} />
                   )
                 }}
                 onEndReached={() => {
@@ -184,6 +180,6 @@ export default function ApproveTransactionsScreen() {
   if (!category) {
     return <MainScreen />;
   }
-  return <ApprovalCategoryScreen category={category as string} user={user} />;
+  return <ApprovalCategoryScreen category={category as string} user={user as User} />;
 }
  

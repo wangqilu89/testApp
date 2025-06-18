@@ -1,27 +1,14 @@
 import { View, Text, ActivityIndicator,Platform, Dimensions, FlatList, TouchableOpacity,Alert,Linking,Image,TextStyle,ViewStyle,TextInput} from 'react-native';
 import { useRouter } from 'expo-router';
-import { useState, useEffect,useRef } from 'react';
+import { useState, useEffect} from 'react';
 import { Ionicons } from '@expo/vector-icons'; 
 import { WebView } from 'react-native-webview';
 import {useThemedStyles} from '@/styles';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import Modal from "react-native-modal";
+import { MenuOption } from '@/types';
 
-
-
-type SubMenu = {
-  id:string,
-  title:string,
-  icon:string
-}
-type Command = {
-  command:string,
-  user:string,
-  restlet:string,
-  middleware:string,
-  [key: string]: any;
-}
 
 const useWebCheck = () => {
   const getPlatformState = () => {return ((Platform.OS === 'web') &&  (Dimensions.get('window').width >= 768))}
@@ -50,7 +37,7 @@ const LoadingScreen = ({txt}:{txt:string}) => {
 }
 
 
-const MainPage = ({redirect,title,pages}:{redirect:string;title:string,pages:SubMenu[];}) => {
+const MainPage = ({redirect,title,pages}:{redirect:string;title:string,pages:MenuOption[];}) => {
   const router = useRouter();
   const {Page,Header,ReactTag,CategoryButton} = useThemedStyles()
   const handlePress = (id: string) => {
@@ -60,11 +47,11 @@ const MainPage = ({redirect,title,pages}:{redirect:string;title:string,pages:Sub
   return (
     <View style={[Page.container]}>
       <View style={[Header.container]}><Text style={[Header.text]}>{title}</Text></View>
-      <FlatList style={[Page.listContainer]} data={pages} keyExtractor={(item) => item.id} 
+      <FlatList style={[Page.listContainer]} data={pages} keyExtractor={(item) => item.internalid} 
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handlePress(item.id)} style={[CategoryButton.container]}>
+            <TouchableOpacity onPress={() => handlePress(item.internalid)} style={[CategoryButton.container]}>
               <View style={[{flex:-1,width:50,justifyContent:'flex-start'}]}><Ionicons name={item.icon as any} style={[CategoryButton.icon]}/></View>
-              <View style={[{flex:1,justifyContent:'center'}]}><Text style={[CategoryButton.text]}>{item.title}</Text></View>
+              <View style={[{flex:1,justifyContent:'center'}]}><Text style={[CategoryButton.text]}>{item.name}</Text></View>
               <View style={[{flex:-1,width: 10,justifyContent:'flex-end'}]}><Ionicons name='chevron-forward-outline' style={[CategoryButton.icon]} /></View>
             </TouchableOpacity>
           )}

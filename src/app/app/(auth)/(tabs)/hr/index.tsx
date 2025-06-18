@@ -1,11 +1,9 @@
 
-import { View, Text, TouchableOpacity, FlatList, Linking,ScrollView,StyleSheet} from 'react-native';
-import { useFonts, Righteous_400Regular } from '@expo-google-fonts/righteous';
+import { View, Text, TouchableOpacity, FlatList, Linking,ScrollView} from 'react-native';
 import Modal from "react-native-modal";
-import { useEffect, useState,useMemo,useCallback} from 'react';
+import { useEffect, useState,useMemo} from 'react';
 import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
-import Animated from 'react-native-reanimated';
-import { useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField} from '@/services'; // 👈 functions
+import { useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField,ProperCase,NumberComma} from '@/services'; // 👈 functions
 import { NoRecords, MainPage,MainViewer} from '@/services'; // 👈 Common Screens
 import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete,FormAttachFile} from '@/services';
 import { usePrompt } from '@/components/AlertModal';
@@ -14,31 +12,16 @@ import { useListFilter } from '@/hooks/useListFilter'
 
 import { Ionicons } from '@expo/vector-icons'; 
 import {useThemedStyles} from '@/styles';
+import { GenericObject,MenuOption,PageProps, User,PageInfoColConfig,PageInfoRowProps,PageInfoColProps} from '@/types';
 
 
-
-const approvals = [
-  { id: 'personal', title: 'Personal Information',icon:'person-outline'},
-  { id: 'leave', title: 'Leaves',icon:'calendar-outline'},
-  { id: 'expense', title: 'Claims',icon:'card-outline'},
-  { id: 'payslip', title: 'Download Pay Slip',icon:'document-text-outline'}
+const approvals:MenuOption[] = [
+  { internalid: 'personal', name: 'Personal Information',icon:'person-outline'},
+  { internalid: 'leave', name: 'Leaves',icon:'calendar-outline'},
+  { internalid: 'expense', name: 'Claims',icon:'card-outline'},
+  { internalid: 'payslip', name: 'Download Pay Slip',icon:'document-text-outline'}
 ];
 
-const toProperCase = (str:string) => {
-    return str.toLowerCase().split(/_/g).map(function(word) {
-        return word.charAt(0).toUpperCase() + word.slice(1);
-    }).join(' ');
-} 
-const pattern  = new RegExp('val')
-
-const NumberComma = (str:string|number) => {
-    if (typeof str == 'string') {
-        return parseFloat(str).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    }
-    return str.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-}
-
-type GenericObject = Record<string, any>;
 
 function MainScreen() {
   return (
@@ -47,7 +30,12 @@ function MainScreen() {
 }
 
 //Expense CLaims
-function ExpenseMain({category,user }: {category?:string,user: GenericObject | null }) {
+function ExpenseMain({user}: PageProps) {
+
+  interface RowProps extends Omit<PageInfoRowProps,'columns'> {
+    'columns': PageInfoColProps
+  }
+
   const { visibility } = usePrompt();
   const pathname = usePathname();
   const router = useRouter();
@@ -74,29 +62,41 @@ function ExpenseMain({category,user }: {category?:string,user: GenericObject | n
     }
   });
 
-  const COLUMN_CONFIG: { header: string[]; line: string[] } = {
-    header: ['employee', 'date', 'document_no', 'val_amount'],
-    line: ['category', 'date', 'project', 'memo', 'status', 'val_amount']
+  const COLUMN_CONFIG: PageInfoColConfig= {
+    header: [{internalid:'employee'},{internalid:'date'},{internalid:'document_no'},{internalid:'val_amount',value:{handle:NumberComma}}],
+    line: [{internalid:'category'},{internalid:'date'},{internalid:'project'},{internalid:'memo'},{internalid:'status'},{internalid:'val_amount'}]
   };
 
-  const AnimatedRow = ({isExpanded,item,colNames}:{isExpanded:boolean,item:GenericObject,colNames:string[]}) => {
-    const RowInfo = ({colName,index,item,isExpanded}: {colName:string,index:number,item:GenericObject,isExpanded:boolean}) => {
-        return (
-            <View key={index} style={{flex:1,flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
-                <View style={{width:150}}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{toProperCase(colName.replace('val_',''))}</Text></View>
-                <View style={{flex:1}}><Text numberOfLines={isExpanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{(pattern.test(colName)?NumberComma(item[colName]??0):(item[colName] ?? ''))}</Text></View>
+  
+  const ColumnInfo = ({columns,index,item,expanded}: RowProps) => {
+    return (
+        <View key={index} style={{flex:1,flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index == '0'?1:0}}>
+            <View style={{width:150}}>
+              <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>
+                {columns?.name??ProperCase(columns.internalid.replace('val_',''))}
+              </Text>
             </View>
-        )
-        
-    }
+            <View style={{flex:1}}>
+              <Text numberOfLines={expanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>
+                {columns?.value?.handle?.(item[columns.internalid] ?? '')}
+              </Text>
+            </View>
+        </View>
+    )
+  }
+
+  const RowInfo = ({expanded,item,columns}:PageInfoRowProps) => {
     return (
       <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
         <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:30,marginRight:30}} onPress={() => HandleExpand(item.internalid)}>
-            {colNames.map((colName, index) => (
-                <RowInfo colName={colName} index={index} item={item} isExpanded={isExpanded}/>
-            ))}
+            {Array.isArray(columns) ?
+              columns.map((colName, index) => (
+                <ColumnInfo columns={colName} index={index} item={item} expanded={expanded}/>
+              ))
+              :<></>
+            }
         </TouchableOpacity>
-        <Modal isVisible={isExpanded} >
+        <Modal isVisible={expanded} >
             <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',maxHeight:"85%"}}>
                 <TouchableOpacity onPress={() => HandleExpand(item.internalid)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
                 <ScrollView>
@@ -114,7 +114,7 @@ function ExpenseMain({category,user }: {category?:string,user: GenericObject | n
                                     </TouchableOpacity>
                                     <TouchableOpacity disabled={WithFile} style={{flexDirection:'column',flex:1}}  onPress={() => Linking.openURL(item.file)}>
                                         {COLUMN_CONFIG.line.map((colName, index) => (
-                                            <RowInfo colName={colName} index={index} item={item} isExpanded={true} />
+                                            <ColumnInfo columns={colName} index={index} item={item} expanded={true} />
                                         ))}
                                     </TouchableOpacity>
                                 </View>
@@ -154,7 +154,7 @@ function ExpenseMain({category,user }: {category?:string,user: GenericObject | n
                     keyExtractor={(item) => item.internalid}
                     renderItem={({ item }) => {
                         return (
-                          <AnimatedRow isExpanded={expandedKeys.includes(item.internalid)} item={item} colNames={COLUMN_CONFIG['header']} />
+                          <RowInfo key={item.internalid} expanded={expandedKeys.includes(item.internalid)} item={item} columns={COLUMN_CONFIG['header']} selected={false} />
                         )
                     }}
                     onEndReached={() => {
@@ -177,8 +177,19 @@ function ExpenseMain({category,user }: {category?:string,user: GenericObject | n
   )
 }
 
-function ApplyClaim({ category,id, user }: { category:string,id: string; user: GenericObject | null }) {
-  type LineItem = {number: string;expense_date:string,date: Date;internalid: string;project: GenericObject;category: GenericObject;memo: string;val_amount: string;file: any};
+function ApplyClaim({ category,id, user }: PageProps) {
+  type LineItem = {
+    number: string,
+    expense_date:string,
+    date: Date,
+    internalid: string,
+    project: GenericObject,
+    category: GenericObject,
+    memo: string,
+    val_amount: string,
+    file: any
+  };
+
   const { Page, Header, Listing, Form, ListHeader, CategoryButton, Theme } = useThemedStyles();
   const router = useRouter();
   const pathname = usePathname();
@@ -190,10 +201,16 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
   const [line,setLine] = useState({number:'0',expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),date:today,internalid:id + '.0',project:{},category: {},memo:'','val_amount':'0',file: null as any});
   const { ShowLoading,HideLoading} = usePrompt();
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
+  
+  const COLUMN_CONFIG: PageInfoColConfig=[
+    {internalid:'number'},
+    {internalid:'expense_date'},
+    {internalid:'project'},
+    {internalid:'val_amount',value:{handle:NumberComma}}
+  ]
 
   const updateLine = (key:keyof typeof line,value: any) => {
       setLine((prev) => {
-        
         return {...prev, [key]: value }
       })
   }
@@ -204,33 +221,41 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
     })
     
   }
+  
+  interface RowProps extends Omit<PageInfoRowProps,'columns'> {
+    'columns': PageInfoColProps
+  }
 
-  const AnimatedRow = ({item,colNames}:{item:GenericObject,colNames:string[]}) => {
-    const RowInfo = ({colName,index,item}: {colName:string,index:number,item:GenericObject}) => {
-        return (
-            <View key={index} style={{flex:1,flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
-                <View style={{width:150}}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{toProperCase(colName.replace('val_',''))}</Text></View>
-                {typeof item[colName] == 'object' 
-                ? (<View style={{flex:1}}><Text numberOfLines={1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{(pattern.test(colName)?NumberComma(item[colName]['name']??0):(item[colName]['name'] ?? ''))}</Text></View>) 
-                : (<View style={{flex:1}}><Text numberOfLines={1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{(pattern.test(colName)?NumberComma(item[colName]??0):(item[colName] ?? ''))}</Text></View>)
-                }
-                
+  const RowInfo = ({columns,index,item}: RowProps) => {
+    return (
+        <View key={index} style={{flex:1,flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
+            <View style={{width:150}}>
+              <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>
+                {columns?.name??ProperCase(columns.internalid.replace('val_',''))}
+              </Text>
             </View>
-        )
-        
-    }
+            {typeof item[columns.internalid] == 'object' 
+            ? (<View style={{flex:1}}><Text numberOfLines={1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{columns?.value?.handle?.(item[columns.internalid]['name']??'')}</Text></View>) 
+            : (<View style={{flex:1}}><Text numberOfLines={1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{columns?.value?.handle?.(item[columns.internalid]??'')}</Text></View>)
+            }
+        </View>
+    )
+  }
+  const AnimatedRow = ({item,columns}:PageInfoRowProps) => {
     return (
       <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
         <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:30,marginRight:30}} onPress={() => {setLine(item as LineItem);setShowLine(true)}}>
-            {colNames.map((colName, index) => (
-                <RowInfo colName={colName} index={index} item={item}/>
-            ))}
+            {Array.isArray(columns)?
+              columns.map((colName, index) => (
+                <RowInfo columns={colName} index={index} item={item}/>
+              )):<></>
+          }
         </TouchableOpacity>
       </View>
     );
   };
   
-  const loadData = async (id:string) => {
+  const loadData = async (id:string|undefined) => {
     ShowLoading({msg:'Loading List...'})
     try {
       let data = null
@@ -282,7 +307,6 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
         else {
           updatedLine = [...prev.line];
           updatedLine[existingIndex] = { ...updatedLine[existingIndex], ...item };
-         
         }
     
         return { ...prev, line: updatedLine };
@@ -316,9 +340,7 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
           keyExtractor={(item) => item.internalid}
           renderItem={({ item }) => {
             return (
-              <AnimatedRow item={item} colNames={['number','expense_date','project','val_amount']} />
-
-              
+              <AnimatedRow item={item} columns={COLUMN_CONFIG} />
             )
           }}
           
@@ -346,7 +368,6 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
   }
 
   useEffect(() => {
-
       loadData(id);
   }, [id]);
 
@@ -375,7 +396,7 @@ function ApplyClaim({ category,id, user }: { category:string,id: string; user: G
   )
 }
 
-function ExpenseClaim({ category, id, user }: { category: string; id: string; user: GenericObject | null }) {
+function ExpenseClaim({ category, id, user }: PageProps) {
 
   switch (category) {
     case 'submit-expense':
@@ -414,7 +435,7 @@ function LeaveMain({user}: { user: GenericObject | null;}) {
         <View style={[Header.container,{justifyContent:'flex-start',backgroundColor:'transparent',flexDirection:'row',paddingTop:20}]}>
             {tabs.map((tab) => (
                 <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={{alignItems:'flex-start',marginHorizontal:20}} >
-                    <View style={{alignItems:'center',justifyContent:'center'}}><Text style={[Header.text,{color:((activeTab === tab)?Theme.mooreReverse:Theme.text)}]}>{toProperCase(tab)}</Text></View>
+                    <View style={{alignItems:'center',justifyContent:'center'}}><Text style={[Header.text,{color:((activeTab === tab)?Theme.mooreReverse:Theme.text)}]}>{ProperCase(tab)}</Text></View>
                     {activeTab === tab && (<View style={{width: 70,height: 3,backgroundColor:Theme.mooreReverse,borderRadius: 2,alignItems:'flex-start',justifyContent:'flex-start'}}></View>)}
                 </TouchableOpacity>
             ))}
@@ -432,11 +453,7 @@ function LeaveMain({user}: { user: GenericObject | null;}) {
 function LeaveMainBal ({user,today}: { user: GenericObject | null;today:Date}) {
   const { Listing, Form,Theme } = useThemedStyles();
   const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
-  const [fontsLoaded] = useFonts({Righteous_400Regular});
-  const LoadObj = useMemo(() => {
-    return ;
-  }, [BaseObj, today]);
-  
+    
   const { list} = useListFilter({LoadObj:{...BaseObj,data:{date:today.getFullYear()},command: "HR : Get Leave balance" }});
 
   return (
@@ -484,10 +501,25 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
     }
   });
 
-  const AnimatedRow = ({isExpanded,item,colNames}:{isExpanded:boolean,item:GenericObject,colNames:string[]}) => {        
+  const COLUMN_CONFIG: PageInfoColConfig=[
+    {internalid:'employee'},
+    {internalid:'leave_type'},
+    {internalid:'leave_period'},
+    {internalid:'date_requested'},
+    {internalid:'leave_no'},
+    {internalid:'memo'},
+    {internalid:'val_days',value:{handle:NumberComma}}
+  ]
+  
+
+  const RowInfo = ({expanded,item,columns}:PageInfoRowProps) => {    
     const newCol = useMemo(() => {
-      return isExpanded ? colNames.slice() : (colNames.length > 3?[...colNames.slice(0, 3), ...colNames.slice(-1)]:colNames.slice());
-    }, [isExpanded, colNames]);
+      return Array.isArray(columns)?
+         ((columns.length > 3 && !expanded)?
+          [...columns.slice(0, 3), ...columns.slice(-1)]:
+          columns.slice())
+         :[];
+    }, [expanded, columns]);
     const WithFile = (item.hasOwnProperty('file')?(item.file?false:true):false)
 
     return (
@@ -498,13 +530,21 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
         <TouchableOpacity disabled={WithFile} style={{flexDirection:'column',flex:1}} onPress={() => {}}>
             {newCol.map((colName, index) => (
               <View key={index} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
-                <View style={{width:150}}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{toProperCase(colName.replace('val_',''))}</Text></View>
-                <View style={{flex:1}}><Text numberOfLines={isExpanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{item[colName] ?? ''}</Text></View>
+                <View style={{width:150}}>
+                  <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>
+                    {colName?.name??ProperCase(colName.internalid.replace('val_',''))}
+                  </Text>
+                </View>
+                <View style={{flex:1}}>
+                  <Text numberOfLines={expanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>
+                    {colName?.value?.handle?.(item[colName.internalid] ?? '')}
+                  </Text>
+                </View>
               </View>
             ))}
         </TouchableOpacity>
         <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1}} onPress={() => HandleExpand(item.internalid)}>
-          <Ionicons name={isExpanded?"chevron-up":"chevron-down"} style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
+          <Ionicons name={expanded?"chevron-up":"chevron-down"} style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
         </TouchableOpacity>
       
       </View>
@@ -522,7 +562,7 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
             keyExtractor={(item) => item.internalid}
             renderItem={({ item }) => {
                 return (
-                  <AnimatedRow isExpanded={expandedKeys.includes(item.internalid)} item={item} colNames={['employee','leave_type','leave_period','date_requested','leave_no','memo','val_days']} />
+                  <RowInfo expanded={expandedKeys.includes(item.internalid)} item={item} columns={COLUMN_CONFIG} />
                 )
             }}
             onEndReached={() => {
@@ -539,8 +579,8 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
 
 function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
 
-  const { ShowPrompt, ShowLoading, HideLoading } = usePrompt();
-  const isWeb = useWebCheck();
+  const { ShowPrompt } = usePrompt();
+
   const BaseObj = {user:(user?.id??'0'),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
   
   const [year, setYear] = useState('');
@@ -553,7 +593,6 @@ function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
     leave: {}
   });
   const [loadObj, setLoadObj] = useState({...BaseObj,...({data: { date: apply.startdate.getFullYear(), shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: 'HR : Get Leave balance'})});
-
   const [support, setSupport] = useState<{ public: GenericObject[] , working: GenericObject[] }>({
     public: [],
     working: []
@@ -696,62 +735,67 @@ function Leave({ category, id, user }: { category: string; id: string; user: Gen
 //PaySlip
 
 function PaySlip({ category,user}: { category: string,user:GenericObject|null}) {
-  const { ShowPrompt,ShowLoading,HideLoading,visibility} = usePrompt();
+  const { ShowPrompt} = usePrompt();
   const pathname = usePathname();
   const router = useRouter();
-  const [list, setList] = useState<GenericObject[]>([]);
-  const [displayList, setDisplayList] = useState<GenericObject[]>([]); 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [massSelect, setmassSelect] = useState(true);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const pageSize = 10; // Show 10 items at a time
   const isWeb = useWebCheck(); // Only "true web" if wide
   const {Form,Listing,ListHeader,Page,Header,Theme,CategoryButton} = useThemedStyles()
   const BaseObj = {user:(user?.id??'0'),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
   const BaseURL = 'https://6134818.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=1325&deploy=2&compid=6134818&ns-at=AAEJ7tMQJ3SMaw4sy0kmPgB70YakOyRxtZWjGXjhVrFJF6GqVtI&recordType=payslip&recordId='
-  const COLUMN_CONFIG: string[] = ['employee','period','val_salary']
+  
+  const COLUMN_CONFIG: PageInfoColConfig=[
+    {internalid:'employee'},
+    {internalid:'period'},
+    {internalid:'val_summary',value:{handle:NumberComma}}
+  ]
 
-  const loadData = async () => {
-    ShowLoading({msg:'Load List...'})
-    try {
-      let data = await FetchData({...BaseObj,command:`HR : Get ${category} List`});
-      data = data|| []
-      setList(data);
-      setDisplayList(data.slice(0, pageSize)); // Show only first 20 items initially
-    } 
-    catch (err) {
-      console.error(`Failed to fetch ${category} :`, err);
-    } 
-    finally {
-      HideLoading({confirmed: true, value: ''})
+  const {list,displayList,setSearch,search,loading,loadMore,HandleSelect,selectedKeys,HandleSelectAll,selectAll} = useListFilter({
+    LoadObj:{...BaseObj,command:'HR : Get payslip List'},
+    SearchFunction: (i, keyword) => {
+      return i.flatMap((j) => {
+        const CheckA = Object.values(j).some((val) => 
+            String(typeof val === 'object' ? '' : val).toLowerCase().includes(keyword)
+        )
+        const newArry = (CheckA)?(j.line):(j.line?.filter((item: GenericObject) =>
+          Object.values(item).some((val) =>
+            String(typeof val === 'object' ? val?.name ?? '' : val)
+              .toLowerCase()
+              .includes(keyword)
+          )
+        ));
+        return newArry.length > 0 ? [{...i,line:newArry}] : [];
+      });
     }
-  };
+  });
 
-  const loadMore = () => {
-    const nextPage = page + 1;
-    const nextItems = list.slice(0, nextPage * pageSize); // Expand by another 20 items
-    setDisplayList(nextItems);
-    setPage(nextPage);
-  };
-
-  const AnimatedRow = ({item,selected,colNames}:{item:GenericObject,selected:boolean,colNames:string[]}) => {
+  const RowInfo = ({item,selected,columns}:PageInfoRowProps) => {
    
     return (
       <View style={{backgroundColor:'white',flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
-        <TouchableOpacity style={{flex:-1,alignItems:'flex-start',flexDirection:'column'}} onPress={() => toggleSelect(item.internalid)}>
+        <TouchableOpacity style={{flex:-1,alignItems:'flex-start',flexDirection:'column'}} onPress={() => HandleSelect(item.internalid)}>
           <Text style={[Listing.text,{fontSize:15}]}>{selected ? '☑️' : '⬜'}</Text>
           {item.file &&  (
             <Ionicons name="attach" style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23}]} />
           )}
         </TouchableOpacity>
         <TouchableOpacity style={{flexDirection:'column',flex:1}} onPress={() => {Linking.openURL(BaseURL + item.internalid)}}>
-            {colNames.map((colName, index) => (
-              <View key={index} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
-                <View style={{width:150}}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{toProperCase(colName.replace('val_',''))}</Text></View>
-                <View style={{flex:1}}><Text numberOfLines={1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{item[colName] ?? ''}</Text></View>
-              </View>
-            ))}
+            {Array.isArray(columns)?
+              columns.map((colName, index) => (
+                <View key={index} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
+                  <View style={{width:150}}>
+                    <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>
+                      {colName?.name??ProperCase(colName.internalid.replace('val_',''))}
+                    </Text>
+                  </View>
+                  <View style={{flex:1}}>
+                    <Text numberOfLines={1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>
+                      {colName?.value?.handle?.(item[colName.internalid] ?? '')}
+                    </Text>
+                  </View>
+                </View>
+              )):
+              <></>
+            }
         </TouchableOpacity>
         <TouchableOpacity style={{flexDirection:'row',justifyContent:'center',alignItems:'center',flex:-1,height:'100%'}} onPress={() => Linking.openURL(BaseURL + item.internalid)}>
           <Ionicons name="chevron-forward" style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
@@ -761,59 +805,14 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
     );
   };
   
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-        const isSelected = prev.includes(id);
-        const newSelectedIds = isSelected ? prev.filter((i) => i !== id) : [...prev, id];
-        return newSelectedIds;
-
-    });
-  };
-
-  const selectAll = () => {
-    displayList.forEach((item) => {
-        if (selectedIds.includes(item.internalid) != massSelect) {
-            toggleSelect(item['internalid'])
-        }
-    })
-    setmassSelect(!massSelect)
-    
-  };
   
-  const handleDownload = async () => {
-    if (selectedIds.length === 0) {
+  const HandleDownload = async () => {
+    if (selectedKeys.length === 0) {
         ShowPrompt({msg:'Please select at least one record.'})
         return;
     }
-    Linking.openURL(BaseURL + selectedIds.join('|'))
+    Linking.openURL(BaseURL + selectedKeys.join('|'))
   };
-  
-  
-  useEffect(() => {
-    if (category && category != 'index') {
-      loadData();
-    }
-  }, [category]);
-
-  useEffect(() => {
-    const keyword = search.trim().toLowerCase();
-    if (keyword === '') {
-      const paginated = list.slice(0, page * pageSize);
-      setDisplayList(paginated);
-    } 
-    else {
-      const filtered = list.filter((item: GenericObject) =>
-        Object.values(item).some((val) =>
-          String(typeof val === 'object' ? val?.name ?? '' : val)
-            .toLowerCase()
-            .includes(keyword)
-        )
-      );
-      setDisplayList(filtered);  
-    }
-            
-  }, [search,page,list]);
-  
   
   return (
 
@@ -825,8 +824,8 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
                   <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
               </TouchableOpacity>
               <Text style={[Header.text,{flex:1,width:'auto'}]}>{category.toUpperCase()}</Text>
-              <TouchableOpacity onPress={selectAll} style={{alignItems:'center',justifyContent:'center',flex:-1,marginRight:10}}>
-                <Ionicons name={massSelect?"square-outline":"checkbox-outline"} style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+              <TouchableOpacity onPress={HandleSelectAll} style={{alignItems:'center',justifyContent:'center',flex:-1,marginRight:10}}>
+                <Ionicons name={selectAll?"square-outline":"checkbox-outline"} style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
                 
               </TouchableOpacity>
             </View>
@@ -845,7 +844,7 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
                 
                 renderItem={({ item }) => {
                   return (
-                    <AnimatedRow item={item} selected={selectedIds.includes(item.internalid)} colNames={COLUMN_CONFIG} />
+                    <RowInfo item={item} selected={selectedKeys.includes(item.internalid)} columns={COLUMN_CONFIG} />
                   )
                 }}
                 onEndReached={() => {
@@ -857,9 +856,9 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
               />
 
               {/*Button */}
-              {selectedIds.length > 0 && (
+              {selectedKeys.length > 0 && (
                 <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'center', marginTop:10,flex:-1}}>
-                  <TouchableOpacity onPress={handleDownload} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                  <TouchableOpacity onPress={HandleDownload} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Download</Text>
                   </TouchableOpacity>
                   
@@ -867,7 +866,7 @@ function PaySlip({ category,user}: { category: string,user:GenericObject|null}) 
               )}
 
             </View>
-          ):(!visibility && 
+          ):(!loading && 
             <NoRecords/>
 
           )}
@@ -895,7 +894,7 @@ export default function HRScreen() {
         
         case 'expense' :
         case 'submit-expense':
-            return <ExpenseClaim category={category} id={id} user={user}/>;
+            return <ExpenseClaim category={category} id={id} user={user as User}/>;
         
         case 'leave' :
         case 'submit-leave':

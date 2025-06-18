@@ -1,41 +1,29 @@
-import { ScrollView,View, Text, TextInput,ActivityIndicator,Platform, Dimensions, FlatList,Button, TouchableOpacity,ViewStyle,TextStyle,StyleSheet} from 'react-native';
-
+import { ScrollView,View, Text, TextInput,TouchableOpacity,ViewStyle,TextStyle,StyleSheet} from 'react-native';
 import DateTimePicker from 'react-native-ui-datepicker';
 import { Ionicons } from '@expo/vector-icons'; 
 import Modal from "react-native-modal";
-
-
-import { useRouter,Slot} from 'expo-router';
 import { useState,useMemo,useEffect,useCallback} from 'react';
-
-import { WebView } from 'react-native-webview';
 import {defaultDropProps,DropdownMenu } from '@/components/DropdownMenu';
 import { AttachmentField} from '@/services'; 
 import {useThemedStyles} from '@/styles';
 import debounce from 'lodash.debounce';
 import isEqual from 'lodash/isEqual';
-import { GestureDetectorBridge } from 'react-native-screens';
 
-type KeyStyles = {
-    StyleContainer?:TextStyle & ViewStyle,
-    StyleRow?:ViewStyle,
-    StyleLabel?:TextStyle,
-    StyleInput?:TextStyle & ViewStyle
-}
-type GenericObject = Record<string, any>;
+import { KeyStyles,GenericObject,DropdownMenuProps} from '@/types';
+
+const addOpacity = (hex: string, opacity: number) => {
+    const alpha = Math.round(opacity * 255).toString(16).padStart(2, '0');
+    return hex + alpha;
+};
+
 
 const FormContainer = ({children,AddStyle}:{children: React.ReactNode,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     return (
         <ScrollView style={[Form.container,AddStyle?.StyleContainer]} contentContainerStyle={{flex:1,alignItems: 'flex-start',maxWidth:600}}>{children}</ScrollView>
     )
-
 };
 
-const addOpacity = (hex: string, opacity: number) => {
-    const alpha = Math.round(opacity * 255).toString(16).padStart(2, '0');
-    return hex + alpha;
-};
 const FormRow = ({styles,children}:{styles?: ViewStyle,children: React.ReactNode }) => {
     const {Form} = useThemedStyles();
     return (
@@ -206,20 +194,7 @@ const FormSubmit = ({label = 'Submit',onPress = () => {},AddStyle}:{label?:strin
     )
 }
 
-type FormAutoCompleteProps = {
-    label?: string,
-    def?: GenericObject,
-    searchable?:boolean,
-    disabled?: boolean,
-    onChange?: (item: GenericObject) => void,
-    AddStyle?: KeyStyles,
-  
-    LoadObj?:GenericObject|null,
-    Defined?: GenericObject[]
-    SearchObj?:GenericObject
-    SearchFunction?:((items: GenericObject[], keyword: string) => GenericObject[]) | null
-}
-const FormAutoComplete:React.FC<FormAutoCompleteProps> = (options = {}) => {
+const FormAutoComplete:React.FC<DropdownMenuProps> = (options = {}) => {
     const finalOptions = useMemo(() => ({ ...defaultDropProps, ...options }), [options]);
     
     const {label,def,disabled,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj} = finalOptions;

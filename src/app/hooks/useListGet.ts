@@ -1,18 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePrompt } from '@/components/AlertModal';
 import {FetchData} from '@/services';
+import { GenericObject,UseListOptions } from '@/types';
 
-type GenericObject = Record<string, any>;
-
-interface UseListGetOptions {
-  LoadModal?:boolean,
-  LoadObj?:GenericObject|null,
-  Defined?:GenericObject[],
-  Enabled?:boolean
-}
 const defaultOptions = {LoadModal:true,Defined:[],LoadObj:null,Enabled:true}
 
-const useListGet = (options: UseListGetOptions) => {
+const useListGet = (options: UseListOptions) => {
  
   const finalOptions = { ...defaultOptions, ...options };
 
@@ -72,7 +65,7 @@ const useListGet = (options: UseListGetOptions) => {
   const UpdateLoad = (newObj: GenericObject) => {
     setLoadObj(newObj);
   };
-  return {list,loading,UpdateLoad,loadObj};
+  return {list,loading,UpdateLoad};
 }
 
 export {useListGet}

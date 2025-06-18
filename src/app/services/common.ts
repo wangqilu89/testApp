@@ -32,7 +32,6 @@ const FetchData = async (o:Record<string, any>) => {
   
 };
   
-
 const GetPostOptions = async (payload:object,method:string) => {
     const sid = await AsyncStorage.getItem('connect.sid');
     const headers: Record<string, string> = {
@@ -53,6 +52,18 @@ const GetPostOptions = async (payload:object,method:string) => {
     return options;
 }
 
+const ProperCase = (str:string) => {
+  return str.toLowerCase().split(/_/g).map(function(word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+} 
+
+const NumberComma = (str:string|number) => {
+  if (typeof str == 'string') {
+      return parseFloat(str).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+  }
+  return str.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+}
 
 
 export {
@@ -61,5 +72,7 @@ export {
     SERVER_URL,
     REACT_ENV,
     USER_ID,
-    FetchData
+    FetchData,
+    ProperCase,
+    NumberComma
 };

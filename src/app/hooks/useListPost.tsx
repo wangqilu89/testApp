@@ -1,19 +1,7 @@
 import { usePrompt } from '@/components/AlertModal';
 import { useListFilter } from '@/hooks/useListFilter'
-import { Ionicons } from '@expo/vector-icons'; 
-
-type GenericObject = Record<string, any>;
-
-interface UseListPostOptions {
-  LoadModal?:boolean,
-  LoadObj?:GenericObject|null,
-  Defined?:GenericObject[]
-  SearchFunction?: ((items: GenericObject[], keyword: string) => GenericObject[]) | null,
-  SearchObj?:GenericObject|null,
-  Enabled?:boolean
-
-  PostObj?:GenericObject|null
-}
+import { Ionicons } from '@expo/vector-icons';
+import { GenericObject,UseListPostOptions } from '@/types';
 
 
 const defaultOptions = {LoadModal:true,LoadObj:null,Defined:[],SearchFunction:null,SearchObj:null,PostObj:null}

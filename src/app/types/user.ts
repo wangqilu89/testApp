@@ -1,4 +1,4 @@
-export interface UserContext {
+export interface UserContextType {
     user: User | null;
     login: (userData: User) => Promise<void>;
     logout: () => Promise<void>;

@@ -1,6 +1,6 @@
 import { GenericObject } from "./common"
 
-export interface PromptContext {
+export interface PromptContextType {
     ShowPrompt: ({msg,icon,input,ok,cancel}: PromptConfig) => Promise<GenericObject>,
     HidePrompt: (item:GenericObject) => void,
     ShowLoading: ({msg,icon,input,ok,cancel}: PromptConfig) => Promise<GenericObject>,

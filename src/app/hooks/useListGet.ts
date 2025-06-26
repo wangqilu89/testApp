@@ -15,7 +15,7 @@ const useListGet = (options: UseListOptions) => {
   const [loading, setLoading] = useState(false);
   const [list, setList] = useState<GenericObject[]>([]);
   const [loadObj,setLoadObj] = useState(LoadObj)
-  const [items,setItems] = useState(Defined)
+  const [items,setItems] = useState<GenericObject[]>([])
   
   const onLoading = () => {
     setLoading(true);
@@ -62,6 +62,11 @@ const useListGet = (options: UseListOptions) => {
     }
   }, [loadObj,items,Enabled]);
   
+  useEffect(() => {
+    if (Defined.length > 0) {
+      setItems(Defined)
+    }
+  },[Defined])
   const UpdateLoad = (newObj: GenericObject) => {
     setLoadObj(newObj);
   };

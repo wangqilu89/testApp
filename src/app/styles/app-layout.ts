@@ -1,5 +1,6 @@
 import { useColorScheme,StyleSheet,ViewStyle,TextStyle } from 'react-native';
 import {Colors} from './app-colors';
+import { GenericObject } from '@/types';
 
 
 
@@ -7,7 +8,21 @@ export const useThemedStyles = () => {
   
   const colorScheme = useColorScheme();
   const Theme = Colors[colorScheme ?? 'light']
- 
+  
+
+  const StatusColors:GenericObject = {
+      /* 
+    0 -> Open
+    1 -> Pending Approval
+    2 -> Approved
+    3 -> Rejected
+    */
+    0:Theme.mooreReverse,
+    1:'#F2AC42',
+    2:'#00B38A',
+    3:'#EA324C'
+  }
+
   const Align = StyleSheet.create({
     horizontalCenter:{justifyContent: 'center'},
     verticalCenter:{alignItems: 'center'},
@@ -59,7 +74,8 @@ export const useThemedStyles = () => {
     button:{backgroundColor:Theme.backgroundReverse,fontSize:16,paddingTop:7,paddingBottom:7,paddingLeft:20,paddingRight:20,fontWeight:'bold',borderRadius:10,color:Theme.textReverse}
   })
 
-  return {Theme,ReactTag,Page, Header,CategoryButton,Listing,Form,ListHeader}
+
+  return {Theme,ReactTag,Page, Header,CategoryButton,Listing,Form,ListHeader,StatusColors}
 }
 
 

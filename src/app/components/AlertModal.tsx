@@ -2,10 +2,9 @@ import React, { createContext, useContext, useState,ReactNode,useRef,useEffect} 
 import {View, Text,  TouchableOpacity,ActivityIndicator,TextInput} from 'react-native';
 import Modal from "react-native-modal";    
 import { Ionicons } from '@expo/vector-icons'; 
-import { GenericObject,PromptContext,PromptProps,PromptConfig } from '@/types';
+import { GenericObject,PromptContextType,PromptProps,PromptConfig } from '@/types';
 
-
-const PromptContext = createContext<PromptContext | undefined>(undefined);
+const PromptContext = createContext<PromptContextType | undefined>(undefined);
 
 const PromptProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const resolverRef = useRef<(result: GenericObject) => void>();
@@ -115,7 +114,7 @@ const Prompt = ({msg,icon,input,ok,cancel,visible,onClose,container}:PromptProps
 
   return (
       <Modal backdropColor={container.backdropColor} backdropOpacity={container.backdropOpacity} isVisible={visible}  onBackdropPress={handleCancel} onBackButtonPress={handleCancel} >
-          <View style={{backgroundColor:container.containerColor,flexDirection:'column'}}>
+          <View style={{backgroundColor:container.containerColor,flexDirection:'column',maxHeight:"85%"}}>
             <TouchableOpacity disabled={!cancel.visible} onPress={handleCancel} style={{alignItems:'flex-end'}}>
               <Ionicons name='close-outline' style={[{fontSize:30},{color:cancel.visible?'red':container.containerColor}]}/>
             </TouchableOpacity>
@@ -151,7 +150,7 @@ const Prompt = ({msg,icon,input,ok,cancel,visible,onClose,container}:PromptProps
           </View>
       </Modal>
   )
-}
+};
 
 
 export {PromptProvider,usePrompt}

@@ -26,13 +26,13 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
   
   const triggerRef = useRef<View>(null)
   const inputRef = useRef<TextInput>(null);
-  const {list,search,setSearch,loading,UpdateLoad} = useListFilter({LoadObj:LoadObj,LoadModal:false,Defined:Defined, SearchFunction: SearchFunction,SearchObj:SearchObj,Enabled:true})
+  const {list,displayList,search,setSearch,loading,UpdateLoad} = useListFilter({LoadObj:LoadObj,LoadModal:false,Defined:Defined, SearchFunction: SearchFunction,SearchObj:SearchObj,Enabled:true})
   
   //const [search,setSearch] = useState('')
   //const {list,loading,UpdateLoad} = useListGet({LoadModal:false,Defined:Defined,LoadObj:LoadObj,Enabled:enabled})
 
   //Key Functions
-  const debouncedFetch = debounce((keyword:string) => {if (keyword.length > 2) {setSearch(keyword)}}, 500);
+  const debouncedFetch = debounce((keyword:string) => {if (!SearchObj || keyword.length > 2) {setSearch(keyword)}}, 500);
   
   const handleOpen = () => {
     setModal(true);
@@ -85,7 +85,7 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
               <Text style={{textAlign: 'center',color:'black',fontSize: 14, fontWeight: 'bold'}}>No records found.</Text>
               </View>):
             (<FlatList 
-                data={list} 
+                data={search?displayList:list} 
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
                   <MenuOption onSelect={() => {handleSelect(item)}} item={item} />      
@@ -97,6 +97,6 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
       
     </>
   )
-})
+});
 
 export {defaultDropProps,DropdownMenu}

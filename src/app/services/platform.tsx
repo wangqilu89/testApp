@@ -1,13 +1,17 @@
 import { View, Text, ActivityIndicator,Platform, Dimensions, FlatList, TouchableOpacity,Alert,Linking,Image,TextStyle,ViewStyle,TextInput} from 'react-native';
 import { useRouter } from 'expo-router';
-import { useState, useEffect} from 'react';
+import { useState, useEffect,useMemo,useRef} from 'react';
 import { Ionicons } from '@expo/vector-icons'; 
 import { WebView } from 'react-native-webview';
 import {useThemedStyles} from '@/styles';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import Modal from "react-native-modal";
-import { MenuOption } from '@/types';
+import { GenericObject, MenuOption,PageInfoColConfig,PageInfoRowProps } from '@/types';
+import debounce from 'lodash.debounce';
+import { useListFilter } from '@/hooks/useListFilter';
+import { ProperCase } from '@/services';
+
 
 
 const useWebCheck = () => {
@@ -57,6 +61,84 @@ const MainPage = ({redirect,title,pages}:{redirect:string;title:string,pages:Men
           )}
         />
     </View>
+  );
+}
+
+const ProjectSearchPage = ({SearchObj,HandleClose=null}:{SearchObj:GenericObject,HandleClose?:(()=> void)|null}) => {
+  const router = useRouter();
+  const {Listing,Form} = useThemedStyles()
+  const HandleSelect = (id: string) => {
+    router.push(`/project?id=${id}` as any); // 👈 Route to dynamic approval page
+    HandleClose?.()
+  };
+  const COLUMN_CONFIG: PageInfoColConfig= [{internalid:'id',name:'Project Code'},{internalid:'name',name:'Project Name'},{internalid:'customer'}];
+  const {list,displayList,search,setSearch,loading,UpdateLoad,loadMore} = useListFilter({LoadModal:false,SearchObj:SearchObj,Enabled:true})
+  
+  
+  const InfoRow = ({item,columns}:PageInfoRowProps) => {
+    const newCol = useMemo(() => {
+      return Array.isArray(columns)?columns:[];
+    }, [columns]);
+    
+
+    return (
+        <TouchableOpacity style={{backgroundColor:'transparent',flexDirection:'column',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8,flex:1,borderBottomWidth:1,borderBottomColor:'#cbcfd2'}} onPress={() => {HandleSelect(item.internalid);}}>
+            {newCol.map((colName, index) => (
+              <View key={index} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,marginVertical:3}}>
+                <View style={[{width:150},colName?.format?.StyleContainer]}>
+                  <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'},colName?.format?.StyleLabel]}>{colName?.name??ProperCase(colName.internalid.replace('val_',''))}</Text>
+                </View>
+                <View style={[{flex:1},colName?.value?.format?.StyleContainer]}>
+                  <Text numberOfLines={-1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14},colName?.value?.format?.StyleLabel]}>{colName?.value?.handle?(colName.value.handle(item[colName.internalid] ?? '')):(item[colName.internalid] ?? '')}</Text></View>
+              </View>
+            ))}
+        </TouchableOpacity>
+    );
+  };
+
+  return (
+    <>
+        {/*Search*/}
+        <View style={{marginLeft:50,marginRight:50,width:'100%',flexDirection:'row'}}>
+          <SearchField def={search} onChange={setSearch} onFocus={true} />
+          {HandleClose && (
+            <TouchableOpacity onPress={HandleClose} style={{ backgroundColor: '#dc3545',width:75,maxWidth:75,padding: 12,borderRadius: 8,marginVertical:10,alignItems: 'center'}}>
+              <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        <View style={[{flex:1,flexDirection:'column',alignItems:'center',justifyContent:'center',marginTop:40,marginVertical:5}]}>
+          {loading ? (
+            <ActivityIndicator size="large" style={{ margin: 10,justifyContent:'center'}} />
+          ):
+          (list.length === 0?(
+              <View style={{width:'100%',paddingBottom: 0,backgroundColor:'transparent',flex:1,height:'auto'}}>
+                <Text style={{textAlign: 'center',color:'black',fontSize: 14, fontWeight: 'bold'}}>No records found.</Text>
+              </View>
+            ):(
+              <FlatList
+                      style={[Form.container]}
+                      data={displayList}
+                      keyExtractor={(item) => item.internalid}
+                      renderItem={({ item }) => {
+                        return (
+                          <InfoRow item={item} columns={COLUMN_CONFIG} />
+                        )
+                      }}
+                      onEndReached={() => {
+                        if (displayList.length < list.length) {
+                          loadMore();
+                        }
+                      }}
+                      onEndReachedThreshold={0.5}
+                    />
+              )
+          )}
+                  
+        
+        </View>
+  </>
   );
 }
 
@@ -273,15 +355,29 @@ const AttachmentField =({ defaultValue = null,onChange,disabled=false,multiple=f
 
 }
 
-const SearchField = ({search,onChange,style}:{search?:string,onChange?:(item: any) => void,style?:TextStyle & ViewStyle}) => {
+const SearchField = ({def,onChange=()=>{},style,onFocus=false}:{def?:string,onChange?:(item: string) => void,style?:TextStyle & ViewStyle,onFocus?:boolean}) => {
   const {Page,Theme} = useThemedStyles()
-  return (
+  const [temp,setTemp] = useState(def);
+  const inputRef = useRef<TextInput>(null);
+  const DebouncedOnChange = useMemo(() => debounce(onChange, 500), [onChange]);
+  const HandleChange = (text:string) => {
+      setTemp(text);
+      DebouncedOnChange(text)
+  };
+  useEffect(() => {
+      if (onFocus) {
+        const Focus = setTimeout(() => {  
+          inputRef.current?.focus();
+        }, 300);
+        return () => clearTimeout(Focus);
+      }
+    }, [onFocus]);
 
+  return (
     <View style={{height:'auto',flex:1,borderWidth: 1, padding: 8, margin: 10,borderRadius: 20,flexDirection:'row',justifyContent:'space-between',backgroundColor:'transparent',borderColor:Theme.text}}>
       <View style={{width:30}}><Ionicons name="search" color={Theme.text} size={20} /></View>
-      <TextInput value={search} onChangeText={onChange} placeholder="Search..." style={[{flex:1,color:Theme.text}]}/>
+      <TextInput ref={inputRef} defaultValue={temp} onChangeText={HandleChange} placeholder="Search..." style={[{flex:1,color:Theme.text}]}/>
     </View>
-
   )
 }
 
@@ -293,5 +389,6 @@ export {
   NoRecords,
   MainViewer,
   AttachmentField,
-  SearchField
+  SearchField,
+  ProjectSearchPage
 };

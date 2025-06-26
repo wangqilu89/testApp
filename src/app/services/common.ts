@@ -65,6 +65,9 @@ const NumberComma = (str:string|number) => {
   return str.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 }
 
+const NumberPercent = (str:string|number) => {
+  return NumberComma(str) + ' %'
+}
 
 export {
     postFunc,
@@ -74,5 +77,6 @@ export {
     USER_ID,
     FetchData,
     ProperCase,
-    NumberComma
+    NumberComma,
+    NumberPercent
 };

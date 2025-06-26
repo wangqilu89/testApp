@@ -15,36 +15,33 @@ const addOpacity = (hex: string, opacity: number) => {
     const alpha = Math.round(opacity * 255).toString(16).padStart(2, '0');
     return hex + alpha;
 };
-
-
 const FormContainer = ({children,AddStyle}:{children: React.ReactNode,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     return (
         <ScrollView style={[Form.container,AddStyle?.StyleContainer]} contentContainerStyle={{flex:1,alignItems: 'flex-start',maxWidth:600}}>{children}</ScrollView>
     )
 };
-
 const FormRow = ({styles,children}:{styles?: ViewStyle,children: React.ReactNode }) => {
     const {Form} = useThemedStyles();
     return (
         <View style={[Form.rowContainer,styles]}>{children}</View>
     )
 }
-const FormLabel = ({label,styles}:{label?:string,styles?:TextStyle}) => {
+const FormLabel = ({label,mandatory=false,styles}:{label?:string,mandatory?:boolean,styles?:TextStyle}) => {
     const {Form} = useThemedStyles();
     return (
-        <Text style={[Form.label,styles,{paddingTop:15,paddingBottom:15}]}>{label}</Text>
+        <Text style={[Form.label,styles,{paddingTop:15,paddingBottom:15}]}>{label + ' '}{mandatory && <Text style={{ color: 'red' }}>*</Text>}</Text>
     )
 }
-const FormCommon = ({label,children,AddStyle}:{label?:string,children?:React.ReactNode,AddStyle?:KeyStyles}) => {
+const FormCommon = ({label,mandatory=false,children,AddStyle}:{label?:string,mandatory?:boolean,children?:React.ReactNode,AddStyle?:KeyStyles}) => {
     return (
         <FormRow styles={AddStyle?.StyleRow}>
-            <FormLabel label={label} styles={AddStyle?.StyleLabel}/>
+            <FormLabel mandatory={mandatory} label={label} styles={AddStyle?.StyleLabel}/>
             {children}
         </FormRow>
     )
 }
-const FormTextInput = ({label,def,disabled=false,onChange = () => {},AddStyle}:{label?:string,disabled?:boolean,def?:string,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
+const FormTextInput = ({label,mandatory,def,disabled=false,onChange = () => {},AddStyle}:{mandatory?:boolean,label?:string,disabled?:boolean,def?:string,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     const [temp,setTemp] = useState(def);
     const debouncedOnChange = useMemo(() => debounce(onChange, 500), [onChange]);
@@ -54,24 +51,23 @@ const FormTextInput = ({label,def,disabled=false,onChange = () => {},AddStyle}:{
     };
     
     return (
-        <FormCommon label={label} AddStyle={AddStyle}>
+        <FormCommon mandatory={mandatory} label={label} AddStyle={AddStyle}>
             <View style={{height:'100%',flex:1}}>
             <TextInput editable={!disabled}  keyboardType="default" onChangeText={handleChange} value={temp} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
             </View>
         </FormCommon>
     )
 }
-
-const FormAttachFile = ({label,def,disabled=false,onChange = () => {},AddStyle}:{label?:string,def?:{uri: string,name: string,type: string},disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
+const FormAttachFile = ({label,mandatory,def,disabled=false,onChange = () => {},AddStyle}:{label?:string,mandatory?:boolean,def?:{uri: string,name: string,type: string},disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
     
     return (
-        <FormCommon label={label} AddStyle={AddStyle}>
+        <FormCommon label={label} mandatory={mandatory} AddStyle={AddStyle}>
             <AttachmentField disabled={disabled} defaultValue={def} onChange={onChange} style={AddStyle?.StyleInput}/>
         </FormCommon>
         
     )
 }
-const FormNumericInput = ({label,def,disabled = false,onChange = () => {},AddStyle}:{label?:string,def?:string,disabled?:boolean,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
+const FormNumericInput = ({label,mandatory,def,disabled = false,onChange = () => {},AddStyle}:{label?:string,mandatory?:boolean,def?:string,disabled?:boolean,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
     const {Form} = useThemedStyles();
     const [temp,setTemp] = useState(def)
     const debouncedOnChange = useMemo(() => debounce(onChange, 500), [onChange]);
@@ -84,7 +80,7 @@ const FormNumericInput = ({label,def,disabled = false,onChange = () => {},AddSty
         
     };
     return (
-        <FormCommon label={label} AddStyle={AddStyle}>
+        <FormCommon label={label} mandatory={mandatory} AddStyle={AddStyle}>
             <View style={{height:'100%',flex:1}}>
             <TextInput editable={!disabled} selectTextOnFocus={!disabled} inputMode="decimal" value={temp} onChangeText={handleChange} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
             </View>
@@ -92,7 +88,7 @@ const FormNumericInput = ({label,def,disabled = false,onChange = () => {},AddSty
     )
 }
 
-const FormDateInput = ({label = 'Date',def={date:new Date(),startDate:new Date(),endDate:new Date()},mode="single",disabled = false,onChange = () => {},AddStyle}:{label?:string,def?:GenericObject,mode?:"single"|"range"|"multiple",disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
+const FormDateInput = ({label = 'Date',mandatory,def={date:new Date(),startDate:new Date(),endDate:new Date()},mode="single",disabled = false,onChange = () => {},AddStyle}:{label?:string,mandatory?:boolean,def?:GenericObject,mode?:"single"|"range"|"multiple",disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
 
     const {Form} = useThemedStyles();
     const [showDate, setShowDate] = useState(false);
@@ -137,7 +133,7 @@ const FormDateInput = ({label = 'Date',def={date:new Date(),startDate:new Date()
     },[def])
 
     return (
-        <FormCommon label={label} AddStyle={AddStyle}>
+        <FormCommon mandatory={mandatory} label={label} AddStyle={AddStyle}>
             <TouchableOpacity disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setShowDate(true)} >
                  <Text style={[Form.input,AddStyle?.StyleInput]}>{temp.date?.toISOString().split('T')[0]??''}</Text>
             </TouchableOpacity>
@@ -193,11 +189,14 @@ const FormSubmit = ({label = 'Submit',onPress = () => {},AddStyle}:{label?:strin
 
     )
 }
+interface FormAutoProps extends DropdownMenuProps {
+    mandatory ?:boolean
+}
 
-const FormAutoComplete:React.FC<DropdownMenuProps> = (options = {}) => {
+const FormAutoComplete:React.FC<FormAutoProps> = (options = {}) => {
     const finalOptions = useMemo(() => ({ ...defaultDropProps, ...options }), [options]);
     
-    const {label,def,disabled,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj} = finalOptions;
+    const {label,def,disabled,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj,mandatory} = finalOptions;
     const [loadObj,setLoadObj] = useState(LoadObj)
     const onChange = useCallback((item:any) => finalOptions.onChange(item), [finalOptions.onChange]);
 
@@ -206,7 +205,7 @@ const FormAutoComplete:React.FC<DropdownMenuProps> = (options = {}) => {
       },[LoadObj])
 
     return (
-        <FormCommon label={label} AddStyle={AddStyle}>
+        <FormCommon mandatory={mandatory} label={label} AddStyle={AddStyle}>
             <DropdownMenu label={label} def={def} searchable={searchable} disabled={disabled} onChange={onChange} AddStyle={AddStyle} LoadObj={loadObj} Defined={Defined} SearchObj={SearchObj} SearchFunction={SearchFunction}/>
         </FormCommon>
     )

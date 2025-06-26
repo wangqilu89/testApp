@@ -9,7 +9,6 @@ import { useUser } from '@/components/User';
 import { useListPost } from '@/hooks/useListPost'
 import { GenericObject,PageProps,User,PageInfoColConfig,PageInfoRowProps,MenuOption} from '@/types';
 
-
 const approvals:MenuOption[] = [
   { internalid: 'timesheet', name: 'Timesheets',icon:'time-outline'},
   { internalid: 'expense', name: 'Expense Claims',icon:'card-outline'},
@@ -18,13 +17,11 @@ const approvals:MenuOption[] = [
   { internalid: 'lost', name: 'Lost Clients',icon:'reader-outline'},
 ];
 
-
-
 function MainScreen() {
   return (
     <MainPage redirect="approve" pages={approvals} title="Approve"/>
   );
-}
+};
 
 function ApprovalCategoryScreen({ category,user}:PageProps) {
   const pathname = usePathname();
@@ -52,7 +49,7 @@ function ApprovalCategoryScreen({ category,user}:PageProps) {
     timesheet: [{internalid:"employee"},{internalid:"weekdate"} ,{internalid:"project"},{internalid:"task"},{internalid:"memo"},{internalid:"val_timecosts",value:{handle:NumberComma}},{internalid:"val_hours",value:{handle:NumberComma}}],
     expense:[{internalid:"employee"},{internalid:"project"},{internalid:"category"},{internalid:"expense_date"},{internalid:"memo"},{internalid:'val_amount',value:{handle:NumberComma}}],
     leave:[{internalid:"employee"},{internalid:"leave_type"},{internalid:"leave_period"},{internalid:"date_requested"},{internalid:"leave_no"},{internalid:"memo"},{internalid:"val_days",value:{handle:NumberComma}}],
-    invoice:[{internalid:"customer"},{internalid:"date"},{internalid:"document_number"},{internalid:"email_addresses"},{internalid:'project'},{internalid:'currency'},{internalid:'val_service',value:{handle:NumberComma}},{internalid:'val_ope',value:{handle:NumberComma}},{internalid:'val_total',value:{handle:NumberComma}},{internalid:'val_sgd_total',name: 'SGD Total',value:{handle:NumberComma}}],
+    invoice:[{internalid:"customer"},{internalid:"date"},{internalid:"document_number"},{internalid:"email_addresses"},{internalid:'project'},{internalid:'currency'},{internalid:'val_service',value:{handle:NumberComma}},{internalid:'val_ope',name:'OPE',value:{handle:NumberComma}},{internalid:'val_total',value:{handle:NumberComma}},{internalid:'val_sgd_total',name: 'SGD Total',value:{handle:NumberComma}}],
     lost:[{internalid:"customer"},{internalid:'lost_reason'},{internalid:'amount',value:{handle:NumberComma}}]
   };
 
@@ -79,7 +76,7 @@ function ApprovalCategoryScreen({ category,user}:PageProps) {
             {newCol.map((colName, index) => (
               <View key={index} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
                 <View style={[{width:150},colName?.format?.StyleContainer]}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'},colName?.format?.StyleLabel]}>{colName?.name??ProperCase(colName.internalid.replace('val_',''))}</Text></View>
-                <View style={[{flex:1},colName?.value?.format?.StyleContainer]}><Text numberOfLines={expanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14},colName?.value?.format?.StyleLabel]}>{colName?.value?.handle?.(item[colName.internalid] ?? '')}</Text></View>
+                <View style={[{flex:1},colName?.value?.format?.StyleContainer]}><Text numberOfLines={expanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14},colName?.value?.format?.StyleLabel]}>{colName?.value?.handle?(colName.value.handle(item[colName.internalid] ?? '')):(item[colName.internalid] ?? '')}</Text></View>
               </View>
             ))}
         </TouchableOpacity>
@@ -130,7 +127,7 @@ function ApprovalCategoryScreen({ category,user}:PageProps) {
           {list.length > 0 ? (
             <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1}}>
               {/*Search*/}
-              <View style={{marginLeft:50,marginRight:50}}><SearchField search={search} onChange={setSearch} /></View>
+              <View style={{marginLeft:50,marginRight:50}}><SearchField def={search} onChange={setSearch} /></View>
               
               <FlatList
                 style={[Form.container]}
@@ -171,7 +168,7 @@ function ApprovalCategoryScreen({ category,user}:PageProps) {
         </View>
     
   );
-}
+};
 
 export default function ApproveTransactionsScreen() {
   const { category } = useLocalSearchParams();

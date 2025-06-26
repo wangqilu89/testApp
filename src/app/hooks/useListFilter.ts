@@ -68,8 +68,10 @@ const useListFilter = ( options: UseListFilterOptions) => {
   useEffect(() => {
     let filtered = list;
     if (SearchFunction && search) {
+      
       const keyword = search.trim().toLowerCase();
       filtered = SearchFunction(list,keyword)
+      
     }
     setDisplayList(filtered.slice(0, page * pageSize))
   }, [list,search, page]);

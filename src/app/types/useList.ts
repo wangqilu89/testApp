@@ -21,6 +21,7 @@ export interface DropdownMenuProps extends Omit<UseListFilterOptions,'Enabled'> 
     def?: GenericObject,
     searchable?:boolean,
     disabled?: boolean,
+    showdrop?: boolean,
     onChange?: (item: GenericObject) => void,
     AddStyle?: KeyStyles
 }

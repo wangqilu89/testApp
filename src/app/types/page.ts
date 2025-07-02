@@ -2,8 +2,10 @@ import { GenericObject,KeyStyles,User } from "@/types";
 
 export interface PageProps {
     user:User,
+    BaseObj:GenericObject,
     category?:string,
     id?:string,
+    
 }
 
 export interface PageInfoRowProps {
@@ -20,6 +22,7 @@ export interface PageInfoColProps {
     internalid:string,
     name?:string,
     format?:KeyStyles,
+    other?:string,
     value?:{
         handle?:(value:string|number) => string|number,
         format?:KeyStyles

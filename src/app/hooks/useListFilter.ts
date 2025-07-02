@@ -42,27 +42,26 @@ const useListFilter = ( options: UseListFilterOptions) => {
         const newSelectedIds = isSelected ? prev.filter((i) => i !== key) : [...prev, key];
         return newSelectedIds;
     });
+    
   };
   
   const HandleSelectAll = () => {
-    /*
-    displayList.forEach((item) => {
-        if (selectedKeys.includes(item.internalid) != selectAll) {
-            HandleSelect(item['internalid'])
-        }
-    })
-    */
+    
     setSelectAll(!selectAll)
   };
 
+  const ResetSelectAll = () => {
+    
+    setSelectAll(true);
+    setSelectedKeys([]);
+  }
   const ResetLoad = () => {
     if (LoadObj) {
       UpdateLoad(LoadObj)
     }
     setSearch('');
     setExpandedKeys([]);
-    setSelectAll(true);
-    setSelectedKeys([]);
+    ResetSelectAll();
   }
 
   useEffect(() => {
@@ -85,13 +84,15 @@ const useListFilter = ( options: UseListFilterOptions) => {
   }, [search]);
 
   useEffect(() => {
+    
     displayList.forEach((item) => {
+      
       if (selectedKeys.includes(item.internalid) === selectAll) {
           HandleSelect(item['internalid'])
       }
     })
   },[selectAll])
-  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad};
+  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad,ResetSelectAll};
 }
 
 export {useListFilter}

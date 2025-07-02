@@ -63,7 +63,7 @@ const useListGet = (options: UseListOptions) => {
   }, [loadObj,items,Enabled]);
   
   useEffect(() => {
-    if (Defined.length > 0) {
+    if (Defined && Defined.length > 0) {
       setItems(Defined)
     }
   },[Defined])

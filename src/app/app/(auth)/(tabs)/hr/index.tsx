@@ -30,7 +30,7 @@ function MainScreen() {
 }
 
 //Expense CLaims
-function ExpenseMain({user}: PageProps) {
+function ExpenseMain({user,BaseObj}: PageProps) {
 
   interface RowProps extends Omit<PageInfoRowProps,'columns'> {
     'columns': PageInfoColProps
@@ -40,7 +40,6 @@ function ExpenseMain({user}: PageProps) {
   const router = useRouter();
   const { Page, Header, Listing, Form, CategoryButton, Theme,StatusColors } = useThemedStyles();
   const isWeb = useWebCheck();
-  const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
 
   const { list, displayList,expandedKeys, search,setSearch, loadMore,HandleExpand} = useListFilter({
     LoadObj:{...BaseObj,command:'HR : Get Expense List' },
@@ -193,7 +192,7 @@ function ExpenseMain({user}: PageProps) {
   )
 }
 
-function ApplyClaim({ category,id, user }: PageProps) {
+function ApplyClaim({ category,id, user,BaseObj}: PageProps) {
 
   /*Declarations */
   const { Page, Header, Listing, Form, ListHeader, CategoryButton, Theme } = useThemedStyles();
@@ -210,7 +209,7 @@ function ApplyClaim({ category,id, user }: PageProps) {
 
   
   const { ShowLoading,HideLoading} = usePrompt();
-  const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
+  
   
   const COLUMN_CONFIG: PageInfoColConfig=[
     {internalid:'number'},
@@ -437,19 +436,19 @@ function ApplyClaim({ category,id, user }: PageProps) {
   )
 }
 
-function ExpenseClaim({ category, id, user }: PageProps) {
+function ExpenseClaim({ category, id, user,BaseObj}: PageProps) {
 
   switch (category) {
     case 'submit-expense':
-        return <ApplyClaim category={category} id={id} user={user} />
+        return <ApplyClaim category={category} id={id} user={user} BaseObj={BaseObj} />
     default :
-        return <ExpenseMain user={user}  />
+        return <ExpenseMain user={user} BaseObj={BaseObj}  />
   }
 }
 
 
 //Leave Functions
-function LeaveMain({user}: { user: GenericObject | null;}) {
+function LeaveMain({user,BaseObj}: { user: GenericObject | null,BaseObj:GenericObject}) {
   const {Page,Header,CategoryButton,Theme} = useThemedStyles();
   const pathname = usePathname();
   const router = useRouter();
@@ -482,18 +481,18 @@ function LeaveMain({user}: { user: GenericObject | null;}) {
             ))}
         </View>
         {activeTab === 'balance'  && (
-          <LeaveMainBal user={user} today={today}/>
+          <LeaveMainBal user={user} today={today} BaseObj={BaseObj} />
         )}
         {activeTab === 'application'  && (
-          <LeaveMainApply user={user} today={today}/>
+          <LeaveMainApply user={user} today={today} BaseObj={BaseObj}/>
         )}
     </View>   
   )
 }
 
-function LeaveMainBal ({user,today}: { user: GenericObject | null;today:Date}) {
+function LeaveMainBal ({user,today,BaseObj}: { user: GenericObject | null;today:Date,BaseObj:GenericObject}) {
   const { Listing, Form,Theme } = useThemedStyles();
-  const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
+  
     
   const { list} = useListFilter({LoadObj:{...BaseObj,data:{date:today.getFullYear()},command: "HR : Get Leave balance" }});
 
@@ -525,9 +524,9 @@ function LeaveMainBal ({user,today}: { user: GenericObject | null;today:Date}) {
 
 }
 
-function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date}) {
+function LeaveMainApply ({user,today,BaseObj}: { user: GenericObject | null;today:Date,BaseObj:GenericObject}) {
   const {Listing,Form,CategoryButton,Theme,StatusColors} = useThemedStyles();
-  const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
+ 
 
   const {list,displayList,expandedKeys, search, setSearch, loadMore,HandleExpand} = useListFilter({
     LoadObj:{...BaseObj,data:{date:today.getFullYear()},command:'HR : Get Leave application' },
@@ -622,14 +621,13 @@ function LeaveMainApply ({user,today}: { user: GenericObject | null;today:Date})
   )
 }
 
-function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
+function ApplyLeave({ id, user,BaseObj}: { id: string; user: GenericObject | null,BaseObj:GenericObject }) {
   const { Page, Header, Listing, Form, CategoryButton, Theme } = useThemedStyles();
   const isWeb = useWebCheck();
   const router = useRouter();
   const pathname = usePathname();
   const { ShowPrompt } = usePrompt();
-  
-  const BaseObj = {user:(user?.id??'0'),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
+
   
   const [year, setYear] = useState('');
   const [apply, setApply] = useState<GenericObject>({
@@ -782,7 +780,7 @@ function ApplyLeave({ id, user }: { id: string; user: GenericObject | null }) {
   
 }
 
-function Leave({ category, id, user }: { category: string; id: string; user: GenericObject | null }) {
+function Leave({ category, id, user,BaseObj }: { category: string; id: string; user: GenericObject | null,BaseObj:GenericObject }) {
   const { Page } = useThemedStyles();
   
 
@@ -792,22 +790,21 @@ function Leave({ category, id, user }: { category: string; id: string; user: Gen
         <View style={[Page.container]}>
           {/*HEADER */}
           
-          <ApplyLeave id={id} user={user} />
+          <ApplyLeave id={id} user={user} BaseObj={BaseObj} />
         </View>
         )
     default :
-        return <LeaveMain user={user} />
+        return <LeaveMain user={user} BaseObj={BaseObj} />
   }
 }
 
 //PaySlip
-function PaySlip({ category,user}: { category: string,user:GenericObject|null}) {
+function PaySlip({ category,user,BaseObj}: { category: string,user:GenericObject|null,BaseObj:GenericObject}) {
   const { ShowPrompt} = usePrompt();
   const pathname = usePathname();
   const router = useRouter();
   const isWeb = useWebCheck(); // Only "true web" if wide
   const {Form,Listing,ListHeader,Page,Header,Theme,CategoryButton} = useThemedStyles()
-  const BaseObj = {user:(user?.id??'0'),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
   const BaseURL = 'https://6134818.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=1325&deploy=2&compid=6134818&ns-at=AAEJ7tMQJ3SMaw4sy0kmPgB70YakOyRxtZWjGXjhVrFJF6GqVtI&recordType=payslip&recordId='
   
   const COLUMN_CONFIG: PageInfoColConfig=[
@@ -953,7 +950,7 @@ function DocumentView({url,doc}:{url:string,doc:string}) {
 
 export default function HRScreen() {
     const {category,id = '0',url = '',doc = ''} = useLocalSearchParams<Partial<{ category: string; id: string; url: string; doc: string }>>();
-    const { user} = useUser(); // ✅ Pull from context
+    const { user,BaseObj} = useUser(); // ✅ Pull from context
     
     switch (category){
         case 'attachment':
@@ -961,14 +958,14 @@ export default function HRScreen() {
         
         case 'expense' :
         case 'submit-expense':
-            return <ExpenseClaim category={category} id={id} user={user as User}/>;
+            return <ExpenseClaim category={category} id={id} user={user as User} BaseObj={BaseObj as GenericObject}/>;
         
         case 'leave' :
         case 'submit-leave':
-          return <Leave category={category} id={id} user={user}/>;
+          return <Leave category={category} id={id} user={user} BaseObj={BaseObj as GenericObject}/>;
 
         case 'payslip'  :
-            return <PaySlip category={category} user={user}/>;
+            return <PaySlip category={category} user={user} BaseObj={BaseObj as GenericObject}/>;
 
         default:
             return <MainScreen />;

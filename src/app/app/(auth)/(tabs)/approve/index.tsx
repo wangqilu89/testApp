@@ -23,12 +23,12 @@ function MainScreen() {
   );
 };
 
-function ApprovalCategoryScreen({ category,user}:PageProps) {
+function ApprovalCategoryScreen({ category,user,BaseObj}:PageProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isWeb = useWebCheck(); // Only "true web" if wide
   const {Form,Listing,Page,Header,Theme,CategoryButton} = useThemedStyles()
-  const BaseObj = {user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'};
+  
 
   const { list, displayList,loading, search,setSearch,loadMore,expandedKeys,HandleExpand,HandleSelect,selectedKeys,HandleSelectAll,selectAll,HandleAction} = useListPost(((category ?? 'index') === 'index') ? 
     {}:
@@ -41,7 +41,7 @@ function ApprovalCategoryScreen({ category,user}:PageProps) {
               .toLowerCase()
               .includes(keyword)
           )
-        )}
+      )}
     }
   );
 
@@ -172,11 +172,11 @@ function ApprovalCategoryScreen({ category,user}:PageProps) {
 
 export default function ApproveTransactionsScreen() {
   const { category } = useLocalSearchParams();
-  const { user} = useUser(); // ✅ Pull from context
+  const { user,BaseObj} = useUser(); // ✅ Pull from context
   
   if (!category) {
     return <MainScreen />;
   }
-  return <ApprovalCategoryScreen category={category as string} user={user as User} />;
+  return <ApprovalCategoryScreen category={category as string} user={user as User} BaseObj={BaseObj as GenericObject} />;
 }
  

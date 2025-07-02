@@ -52,17 +52,18 @@ const GetPostOptions = async (payload:object,method:string) => {
     return options;
 }
 
-const ProperCase = (str:string) => {
-  return str.toLowerCase().split(/_/g).map(function(word) {
+const ProperCase = (str:string|number) => {
+  
+  return str.toString().toLowerCase().split(/_/g).map(function(word) {
       return word.charAt(0).toUpperCase() + word.slice(1);
   }).join(' ');
 } 
 
 const NumberComma = (str:string|number) => {
-  if (typeof str == 'string') {
-      return parseFloat(str).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-  }
-  return str.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+  let num = ((typeof str == 'string')?(parseFloat(str)):str)
+  num = isNaN(num)?0:num
+  return ((num < 0 )?('(' + Math.abs(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ')'):num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","))
+
 }
 
 const NumberPercent = (str:string|number) => {

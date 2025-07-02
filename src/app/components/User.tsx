@@ -1,13 +1,11 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect,useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SERVER_URL,postFunc} from '@/services/common';
-import { useRouter } from 'expo-router';
+import { SERVER_URL,postFunc,RESTLET,REACT_ENV,USER_ID} from '@/services/common';
+import { useRouter} from 'expo-router';
 import { usePrompt } from '@/components/AlertModal';
 
 import { Platform } from 'react-native';
 import { UserContextType,User } from '@/types';
-
-
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -33,6 +31,26 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
+  
+
+  const login = async (userData: User) => {
+    setUser(userData);
+    await AsyncStorage.setItem('userSession', JSON.stringify(userData));
+  };
+
+  const logout = async () => {
+    try {
+        await postFunc(SERVER_URL + '/auth/logout')
+
+    } catch (error) {
+        console.warn('Failed to logout from server:', error);
+    }
+    setUser(null);
+    await AsyncStorage.multiRemove(['userSession', 'connect.sid']);
+    router.replace('/'); 
+  };
+
+  const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'}),[user]);
 
   useEffect(() => {
     
@@ -84,25 +102,8 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       };
   }, []);
 
-  const login = async (userData: User) => {
-    setUser(userData);
-    await AsyncStorage.setItem('userSession', JSON.stringify(userData));
-  };
-
-  const logout = async () => {
-    try {
-        await postFunc(SERVER_URL + '/auth/logout')
-
-    } catch (error) {
-        console.warn('Failed to logout from server:', error);
-    }
-    setUser(null);
-    await AsyncStorage.multiRemove(['userSession', 'connect.sid']);
-    router.replace('/'); 
-  };
-
   return (
-    <UserContext.Provider value={{ user, login, logout }}>
+    <UserContext.Provider value={{ user,BaseObj, login, logout }}>
       {children}
     </UserContext.Provider>
   );

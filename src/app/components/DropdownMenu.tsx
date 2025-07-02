@@ -4,9 +4,10 @@ import Modal from 'react-native-modal';
 import debounce from 'lodash.debounce';
 import { useListFilter } from '@/hooks/useListFilter'
 import { GenericObject,KeyStyles,DropdownMenuProps,SelectOptions } from '@/types';
+import { Ionicons } from '@expo/vector-icons';
 
 
-const defaultDropProps = {label:'Select',def:{id:'',name:''},searchable:false,disabled:false,onChange:()=>{},LoadObj:null,Defined:[],SearchObj:null,SearchFunction:null}
+const defaultDropProps = {label:'Select',def:{id:'',name:''},searchable:false,disabled:false,onChange:()=>{},LoadObj:null,Defined:[],SearchObj:null,SearchFunction:null,showdrop:false}
 const MenuOption = ({onSelect,item}:SelectOptions) => {
   return (
     <TouchableOpacity onPress={onSelect} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
@@ -19,15 +20,16 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
 
   //const finalOptions = useMemo(() => ({ ...defaultDropProps, ...options }), [options]);
   const finalOptions = { ...defaultDropProps, ...options };
-  const {label,def,disabled,onChange,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj} = finalOptions;
-  const [temp, setTemp] = useState(def);
+  const {label,def,disabled,onChange,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj,showdrop} = finalOptions;
+  const [temp, setTemp] = useState<GenericObject>({});
+  
   const [modal, setModal] = useState(false);
   const [position, setPosition] = useState({x: 0, y: 0, width: 0});
   
   const triggerRef = useRef<View>(null)
   const inputRef = useRef<TextInput>(null);
   const {list,displayList,search,setSearch,loading,UpdateLoad} = useListFilter({LoadObj:LoadObj,LoadModal:false,Defined:Defined, SearchFunction: SearchFunction,SearchObj:SearchObj,Enabled:true})
-  
+
   //const [search,setSearch] = useState('')
   //const {list,loading,UpdateLoad} = useListGet({LoadModal:false,Defined:Defined,LoadObj:LoadObj,Enabled:enabled})
 
@@ -49,8 +51,10 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
   };
 
   const ReferenceField = () => (
-    <TouchableOpacity ref={triggerRef} disabled={disabled} style={[AddStyle?.StyleInput,{ flex: 1, borderRadius: 5, borderWidth: 1, paddingLeft: 10, marginTop: 10, paddingTop: 5, marginBottom: 10, paddingBottom: 5 }]} onPress={handleOpen}>
-      <Text style={[AddStyle?.StyleInput]}>{temp?.name ?? ''}</Text>
+    <TouchableOpacity ref={triggerRef} disabled={disabled} style={[{ flex: 1, borderRadius: 5, borderWidth: 1, paddingLeft: 10, marginTop: 10, paddingTop: 5, marginBottom: 10, paddingBottom: 5,flexDirection:'row',marginRight:15},AddStyle?.StyleInput]} onPress={handleOpen}>
+      <Text style={[AddStyle?.StyleInput,{flex:1}]}>{temp?.name ?? ''}</Text>
+      {showdrop && (<View style={{ justifyContent: 'center', alignItems: 'center' }}><Ionicons name="chevron-down" style={[{fontSize:23,fontWeight:'bold',alignItems:'center'},AddStyle?.StyleInput]} /></View>)}
+      
     </TouchableOpacity>
   );  
 
@@ -71,6 +75,10 @@ const DropdownMenu:React.FC<DropdownMenuProps> = React.memo((options = {}) => {
 
     }
   }, [modal]);
+
+  useEffect(() => {
+    setTemp(def)
+  },[def])
   
   return (
     <>

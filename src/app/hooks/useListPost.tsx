@@ -9,7 +9,7 @@ const defaultOptions = {LoadModal:true,LoadObj:null,Defined:[],SearchFunction:nu
 const useListPost = (options: UseListPostOptions) => {
   const finalOptions = { ...defaultOptions, ...options };
   const {LoadObj,PostObj} = finalOptions;
-  const {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad} = useListFilter(finalOptions);
+  const {list,displayList,setSearch,search,loading,LoadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad,ResetSelectAll,LoadAll} = useListFilter(finalOptions);
   const { ShowPrompt } = usePrompt();
   
   const HandleAction = async (action:string,PromptObj:GenericObject,refresh:boolean) => {
@@ -43,7 +43,7 @@ const useListPost = (options: UseListPostOptions) => {
 
   }
 
-  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad,HandleAction}
+  return {list,displayList,setSearch,search,loading,LoadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad,HandleAction,ResetSelectAll,LoadAll}
 }
 
 export {useListPost}

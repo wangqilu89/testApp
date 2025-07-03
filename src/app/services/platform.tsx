@@ -64,16 +64,20 @@ const MainPage = ({redirect,title,pages}:{redirect:string;title:string,pages:Men
   );
 }
 
-const ProjectSearchPage = ({SearchObj,HandleClose=null}:{SearchObj:GenericObject,HandleClose?:(()=> void)|null}) => {
+const ProjectSearchPage = ({SearchObj,children,HandleClose=null}:{SearchObj:GenericObject,children?: React.ReactNode,HandleClose?:(()=> void)|null}) => {
   const router = useRouter();
+  const [openSearch,setOpenSearch] = useState(false);
+  const NoRecordsStyle:GenericObject = {StyleContainer:{width:'100%',paddingBottom: 0,backgroundColor:'transparent'},StyleLabel:{textAlign: 'center',color:'black',fontSize: 14, fontWeight: 'bold'}}
   const {Listing,Form} = useThemedStyles()
-  const HandleSelect = (id: string) => {
-    router.push(`/project?id=${id}` as any); // 👈 Route to dynamic approval page
-    HandleClose?.()
-  };
   const COLUMN_CONFIG: PageInfoColConfig= [{internalid:'id',name:'Project Code'},{internalid:'name',name:'Project Name'},{internalid:'customer'}];
-  const {list,displayList,search,setSearch,loading,UpdateLoad,loadMore} = useListFilter({LoadModal:false,SearchObj:SearchObj,Enabled:true})
+  const {list,displayList,search,setSearch,loading,UpdateLoad,LoadMore} = useListFilter({LoadModal:false,SearchObj:SearchObj,Enabled:true})
   
+  
+  const HandleSelect = (id: string) => {
+    setOpenSearch(false);
+    setSearch('');
+    router.push(`/project?id=${id}` as any); 
+  };
   
   const InfoRow = ({item,columns}:PageInfoRowProps) => {
     const newCol = useMemo(() => {
@@ -96,57 +100,69 @@ const ProjectSearchPage = ({SearchObj,HandleClose=null}:{SearchObj:GenericObject
     );
   };
 
+  const CloseSearch = () => {
+    HandleClose?.();
+    setSearch('');
+    setOpenSearch(false);
+  }
+ 
   return (
     <>
         {/*Search*/}
-        <View style={{marginLeft:50,marginRight:50,width:'100%',flexDirection:'row'}}>
-          <SearchField placeholder={"Find Projects"} def={search} onChange={setSearch} onFocus={true} />
-          {HandleClose && (
-            <TouchableOpacity onPress={HandleClose} style={{ backgroundColor: '#dc3545',width:75,maxWidth:75,padding: 12,borderRadius: 8,marginVertical:10,alignItems: 'center'}}>
-              <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        
-        <View style={[{flex:1,flexDirection:'column',alignItems:'center',justifyContent:'center',marginTop:40,marginVertical:5}]}>
-          {loading ? (
-            <ActivityIndicator size="large" style={{ margin: 10,justifyContent:'center'}} />
-          ):
-          (list.length === 0?(
-              <View style={{width:'100%',paddingBottom: 0,backgroundColor:'transparent',flex:1,height:'auto'}}>
-                <Text style={{textAlign: 'center',color:'black',fontSize: 14, fontWeight: 'bold'}}>No records found.</Text>
-              </View>
-            ):(
-              <FlatList
-                      style={[Form.container]}
-                      data={displayList}
-                      keyExtractor={(item) => item.internalid}
-                      renderItem={({ item }) => {
-                        return (
-                          <InfoRow item={item} columns={COLUMN_CONFIG} />
-                        )
-                      }}
-                      onEndReached={() => {
-                        if (displayList.length < list.length) {
-                          loadMore();
-                        }
-                      }}
-                      onEndReachedThreshold={0.5}
-                    />
-              )
-          )}
-                  
-        
-        </View>
-  </>
+            {openSearch ? (
+              <View style={{marginLeft:50,marginRight:50,width:'100%',flexDirection:'row'}}>
+                <SearchField placeholder={"Find Projects"} def={search} onChange={setSearch} onFocus={true} />
+                  <TouchableOpacity onPress={CloseSearch} style={{ backgroundColor: '#dc3545',width:75,maxWidth:75,padding: 12,borderRadius: 8,marginVertical:10,alignItems: 'center'}}>
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              ):(
+                <View style={{marginLeft:50,marginRight:50,width:'100%',flexDirection:'row'}}>
+                <TouchableOpacity onPress={() => {setOpenSearch(true)}} style={{alignSelf:'stretch',width:'100%'}}>
+                  <SearchField placeholder={"Find Projects"}/>
+                </TouchableOpacity>
+                </View>
+            )}
+
+          <View style={[{flex:1,flexDirection:'column',alignItems:'center',justifyContent:'center',marginTop:10,marginVertical:5,width:'100%'}]}>
+            {openSearch ? 
+               (loading ? (
+                 <ActivityIndicator size="large" style={{ margin: 10,justifyContent:'center'}} />
+                ):(
+                list.length === 0?(
+                  <NoRecords AddStyle={NoRecordsStyle} />
+                ):(
+                  <FlatList
+                        style={[Form.container]}
+                        data={displayList}
+                        keyExtractor={(item) => item.internalid}
+                        renderItem={({ item }) => {
+                          return (
+                            <InfoRow item={item} columns={COLUMN_CONFIG} />
+                          )
+                        }}
+                        onEndReached={() => {
+                          if (displayList.length < list.length) {
+                            LoadMore();
+                          }
+                        }}
+                        onEndReachedThreshold={0.5}
+                      />
+                )
+            )):(children)}
+                    
+          
+          </View>
+    </>
+     
   );
 }
 
-const NoRecords = () => {
+const NoRecords = ({AddStyle}:{AddStyle?:KeyStyles}) => {
   const {Page,Header} = useThemedStyles()
   return (
-    <View style={[Page.container,{flex:1,height:'auto'}]}>
-        <Text style={[Header.textReverse]}>No records found.</Text>
+    <View style={[Page.container,{flex:1,height:'auto'},AddStyle?.StyleContainer]}>
+        <Text style={[Header.textReverse,AddStyle?.StyleLabel]}>No records found.</Text>
     </View>
     
   )

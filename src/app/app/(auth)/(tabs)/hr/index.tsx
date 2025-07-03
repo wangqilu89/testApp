@@ -41,7 +41,7 @@ function ExpenseMain({user,BaseObj}: PageProps) {
   const { Page, Header, Listing, Form, CategoryButton, Theme,StatusColors } = useThemedStyles();
   const isWeb = useWebCheck();
 
-  const { list, displayList,expandedKeys, search,setSearch, loadMore,HandleExpand} = useListFilter({
+  const { list, displayList,expandedKeys, search,setSearch, LoadMore,LoadAll} = useListFilter({
     LoadObj:{...BaseObj,command:'HR : Get Expense List' },
     SearchFunction: (i, keyword) => {
       return i.flatMap((j) => {
@@ -174,11 +174,16 @@ function ExpenseMain({user,BaseObj}: PageProps) {
                     }}
                     onEndReached={() => {
                         if (displayList.length < list.length) {
-                        loadMore();
+                        LoadMore();
                         }
                     }}
                     onEndReachedThreshold={0.5}
                 />
+                {displayList.length < list.length && (
+                <TouchableOpacity onPress={() => {LoadAll()}} style={[Form.container,{flex:-1,alignItems:'center',marginVertical:5}]}>
+                  <Text style={{fontWeight:'bold'}}>Show All</Text>
+                </TouchableOpacity>
+                )}
             </View>
       ) : (!visibility && 
           <View style={{flex:1,flexDirection:'column',width:'100%'}}>
@@ -528,7 +533,7 @@ function LeaveMainApply ({user,today,BaseObj}: { user: GenericObject | null;toda
   const {Listing,Form,CategoryButton,Theme,StatusColors} = useThemedStyles();
  
 
-  const {list,displayList,expandedKeys, search, setSearch, loadMore,HandleExpand} = useListFilter({
+  const {list,displayList,expandedKeys, search, setSearch, LoadMore,HandleExpand,LoadAll} = useListFilter({
     LoadObj:{...BaseObj,data:{date:today.getFullYear()},command:'HR : Get Leave application' },
     SearchFunction: (i, keyword) => {
       return i.filter((item: GenericObject) =>
@@ -611,12 +616,17 @@ function LeaveMainApply ({user,today,BaseObj}: { user: GenericObject | null;toda
             }}
             onEndReached={() => {
               if (displayList.length < list.length) {
-              loadMore();
+              LoadMore();
               }
           }}
           onEndReachedThreshold={0.5}
           
         />
+        {displayList.length < list.length && (
+          <TouchableOpacity onPress={() => {LoadAll()}} style={[Form.container,{flex:-1,alignItems:'center',marginVertical:5}]}>
+              <Text style={{fontWeight:'bold'}}>Show All</Text>
+          </TouchableOpacity>
+         )}
     </View>
   )
 }
@@ -677,7 +687,7 @@ function ApplyLeave({ id, user,BaseObj}: { id: string; user: GenericObject | nul
         applied = parseInt(NewList.working[dayofweek]?.day ?? 0) * (apply.startam.internalid == '3' ? 1 : 0.5);
       } 
       else if (CompareDates(refdate, enddate) === 0) {
-        applied = parseInt(NewList.working[dayofweek]?.day ?? 0) * (apply.startpm.internalid == '3' ? 1 : 0.5);
+        applied = parseInt(NewList.working[dayofweek]?.day ?? 0) * (apply.endam.internalid == '3' ? 1 : 0.5);
       } 
       else {
         applied = NewList.working[dayofweek]?.day ?? 0;
@@ -762,13 +772,13 @@ function ApplyLeave({ id, user,BaseObj}: { id: string; user: GenericObject | nul
     <FormContainer>
       <FormDateInput mode="range" mandatory={true} label="Start Date" def={{ date: apply.startdate, startDate: apply.startdate, endDate: apply.enddate }}
         onChange={({ startDate, endDate }) => { updateApply('startdate', HandleDate(startDate)); updateApply('enddate', HandleDate(endDate)); }} />
-      <FormAutoComplete label="AM/PM " mandatory={true} def={apply.startam} searchable={false} onChange={(item) => updateApply('startam', item)} Defined={[{internalid:'3',name:'Full Day'}, {internalid:'1',name:'AM'}, {internalid:'2',name:'PM'}]} />
+      <FormAutoComplete label="AM/PM " AddStyle={{StyleInput:{marginRight:0}}} mandatory={true} def={apply.startam} searchable={false} onChange={(item) => updateApply('startam', item)} Defined={[{internalid:'3',name:'Full Day'}, {internalid:'1',name:'AM'}, {internalid:'2',name:'PM'}]} />
       
       <FormDateInput mode="range" mandatory={true} label="End Date" def={{ date: apply.enddate, startDate: apply.startdate, endDate: apply.enddate }}
         onChange={({ startDate, endDate }) => { updateApply('startdate', HandleDate(startDate)); updateApply('enddate', HandleDate(endDate)); }} />
-      <FormAutoComplete label="AM/PM "  mandatory={true} def={apply.startam} searchable={false} onChange={(item) => updateApply('startpm', item)} Defined={[{internalid:'3',name:'Full Day'}, {internalid:'1',name:'AM'}, {internalid:'2',name:'PM'}]} />
+      <FormAutoComplete label="AM/PM "  AddStyle={{StyleInput:{marginRight:0}}} mandatory={true} def={apply.startam} searchable={false} onChange={(item) => updateApply('endam', item)} Defined={[{internalid:'3',name:'Full Day'}, {internalid:'1',name:'AM'}, {internalid:'2',name:'PM'}]} />
       <FormTextInput disabled label="Days Applied" key={apply.day} def={apply.day} onChange={(text) => updateApply('day', text)} />
-      <FormAutoComplete label="Leave Type " mandatory={true} def={apply.leave} searchable={false} onChange={(item) => updateApply('leave', item)} LoadObj={loadObj} />
+      <FormAutoComplete label="Leave Type " AddStyle={{StyleInput:{marginRight:0}}} mandatory={true} def={apply.leave} searchable={false} onChange={(item) => updateApply('leave', item)} LoadObj={loadObj} />
       
       <FormTextInput label="Reason" mandatory={true} key={apply.reason} def={apply.reason} onChange={(text) => updateApply('reason', text)} />
       <FormAttachFile label="Attach File " mandatory={apply.leave?.mandatory??false}  def={apply.file} onChange={(file) => {updateApply('file',file)}} />
@@ -813,7 +823,7 @@ function PaySlip({ category,user,BaseObj}: { category: string,user:GenericObject
     {internalid:'val_salary',value:{handle:NumberComma}}
   ]
 
-  const {list,displayList,setSearch,search,loading,loadMore,HandleSelect,selectedKeys,HandleSelectAll,selectAll} = useListFilter({
+  const {list,displayList,setSearch,search,loading,LoadMore,HandleSelect,selectedKeys,HandleSelectAll,selectAll,LoadAll} = useListFilter({
     LoadObj:{...BaseObj,command:'HR : Get payslip List'},
     SearchFunction: (i, keyword) => {
       return i.flatMap((j) => {
@@ -913,21 +923,26 @@ function PaySlip({ category,user,BaseObj}: { category: string,user:GenericObject
                 }}
                 onEndReached={() => {
                   if (displayList.length < list.length) {
-                    loadMore();
+                    LoadMore();
                   }
                 }}
                 onEndReachedThreshold={0.5}
               />
 
               {/*Button */}
-              {selectedKeys.length > 0 && (
+              {selectedKeys.length > 0 ? (
                 <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'center', marginTop:10,flex:-1}}>
                   <TouchableOpacity onPress={HandleDownload} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Download</Text>
                   </TouchableOpacity>
                   
                 </View>
-              )}
+              ): (
+                displayList.length < list.length && (
+                  <TouchableOpacity onPress={() => {LoadAll()}} style={[Form.container,{flex:-1,alignItems:'center',marginVertical:5}]}>
+                    <Text style={{fontWeight:'bold'}}>Show All</Text>
+                  </TouchableOpacity>
+              ))}
 
             </View>
           ):(!loading && 

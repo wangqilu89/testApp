@@ -28,8 +28,14 @@ const useListFilter = ( options: UseListFilterOptions) => {
 
   
   
-  const loadMore = () => setPage(prev => prev + 1);
-  
+  const LoadMore = () => {
+    setPage(prev => prev + 1)
+  };
+
+  const LoadAll = () => {
+    setPage(Math.ceil(list.length/pageSize))
+  };
+
   const HandleExpand = (key: string) => {
     setExpandedKeys((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
@@ -45,8 +51,7 @@ const useListFilter = ( options: UseListFilterOptions) => {
     
   };
   
-  const HandleSelectAll = () => {
-    
+  const HandleSelectAll = () => {  
     setSelectAll(!selectAll)
   };
 
@@ -67,10 +72,8 @@ const useListFilter = ( options: UseListFilterOptions) => {
   useEffect(() => {
     let filtered = list;
     if (SearchFunction && search) {
-      
       const keyword = search.trim().toLowerCase();
       filtered = SearchFunction(list,keyword)
-      
     }
     setDisplayList(filtered.slice(0, page * pageSize))
   }, [list,search, page]);
@@ -92,7 +95,7 @@ const useListFilter = ( options: UseListFilterOptions) => {
       }
     })
   },[selectAll])
-  return {list,displayList,setSearch,search,loading,loadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad,ResetSelectAll};
+  return {list,displayList,setSearch,search,loading,LoadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad,ResetSelectAll,LoadAll};
 }
 
 export {useListFilter}

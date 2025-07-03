@@ -30,7 +30,7 @@ function ApprovalCategoryScreen({ category,user,BaseObj}:PageProps) {
   const {Form,Listing,Page,Header,Theme,CategoryButton} = useThemedStyles()
   
 
-  const { list, displayList,loading, search,setSearch,loadMore,expandedKeys,HandleExpand,HandleSelect,selectedKeys,HandleSelectAll,selectAll,HandleAction} = useListPost(((category ?? 'index') === 'index') ? 
+  const { list, displayList,loading, search,setSearch,LoadMore,expandedKeys,HandleExpand,HandleSelect,selectedKeys,HandleSelectAll,selectAll,HandleAction,LoadAll} = useListPost(((category ?? 'index') === 'index') ? 
     {}:
     { LoadObj:{...BaseObj,command:`Approve : Get ${category} List`},
       PostObj:{...BaseObj},
@@ -140,14 +140,14 @@ function ApprovalCategoryScreen({ category,user,BaseObj}:PageProps) {
                 }}
                 onEndReached={() => {
                   if (displayList.length < list.length) {
-                    loadMore();
+                    LoadMore();
                   }
                 }}
                 onEndReachedThreshold={0.5}
               />
 
               {/*Button */}
-              {selectedKeys.length > 0 && (
+              {selectedKeys.length > 0 ? (
                 <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10,flex:-1}}>
                   <TouchableOpacity onPress={() => HandleAction('Approve',ApproveObj,true)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Approve Selected</Text>
@@ -157,7 +157,11 @@ function ApprovalCategoryScreen({ category,user,BaseObj}:PageProps) {
                   </TouchableOpacity>
                   
                 </View>
-              )}
+              ):(displayList.length < list.length && (
+                <TouchableOpacity onPress={() => {LoadAll()}} style={[Form.container,{flex:-1,alignItems:'center',marginVertical:5}]}>
+                  <Text style={{fontWeight:'bold'}}>Show All</Text>
+                </TouchableOpacity>
+              ))}
 
             </View>
           ):(

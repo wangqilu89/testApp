@@ -49,7 +49,7 @@ function ProjectDetails ({tab,data,styles,HandleSelect}:{tab?:GenericObject,data
     const {Listing,Form,Theme,CategoryButton,Header} = styles
     const [selectMode,setSelectMode] = useState(false);
     const [totalDropdown,setTotalDropdown] = useState<GenericObject>({internalid:'total',other:'num',value:{handle:NumberComma}})
-    const { list,displayList,loadMore,expandedKeys,HandleExpand,search,setSearch,selectAll,selectedKeys,HandleSelect : AddSelectKey,HandleSelectAll,ResetSelectAll} = useListFilter({
+    const { list,displayList,LoadMore,expandedKeys,HandleExpand,search,setSearch,selectAll,selectedKeys,HandleSelect : AddSelectKey,HandleSelectAll,ResetSelectAll,LoadAll} = useListFilter({
         Defined:data,
         SearchFunction: (i, keyword) => {
           return i.filter((item: GenericObject) =>
@@ -146,7 +146,7 @@ function ProjectDetails ({tab,data,styles,HandleSelect}:{tab?:GenericObject,data
                 
             </View>
             <FlatList
-                style={[Form.container,{marginBottom:20}]}
+                style={[Form.container,{marginBottom:((displayList.length < list.length)?0:20)}]}
                 data={displayList}
                 keyExtractor={(item) => item.internalid}
                 renderItem={({ item }) => {
@@ -156,7 +156,7 @@ function ProjectDetails ({tab,data,styles,HandleSelect}:{tab?:GenericObject,data
                 }}
                 onEndReached={() => {
                     if (displayList.length < list.length) {
-                        loadMore();
+                        LoadMore();
                     }
                 }}
                 stickyHeaderIndices={[0]}
@@ -195,6 +195,11 @@ function ProjectDetails ({tab,data,styles,HandleSelect}:{tab?:GenericObject,data
                     )
                 }}
             />
+            {displayList.length < list.length && (
+            <TouchableOpacity onPress={() => {LoadAll()}} style={[Form.container,{flex:-1,alignItems:'center',marginVertical:5,marginBottom:20}]}>
+                <Text style={{fontWeight:'bold'}}>Show All</Text>
+            </TouchableOpacity>
+            )}
         </>
     )
 };
@@ -474,7 +479,7 @@ function ProjectList ({data,styles,HandleSelect}:{data:GenericObject[],styles:Ge
     
     const {Listing,Form,Theme,CategoryButton} = styles
     
-    const { list,displayList,loadMore,expandedKeys,HandleExpand,search,setSearch} = useListFilter({
+    const { list,displayList,LoadMore,expandedKeys,HandleExpand,search,setSearch,LoadAll} = useListFilter({
         Defined:data,
         SearchFunction: (i, keyword) => {
             
@@ -535,7 +540,7 @@ function ProjectList ({data,styles,HandleSelect}:{data:GenericObject[],styles:Ge
         {/*Search*/}
         {list.length > 5 && (<SearchField def={search} onChange={setSearch} AddStyle={{StyleContainer:{flex:-1}}}/>)}
         <FlatList
-            style={[Form.container,{marginBottom:20}]}
+            style={[Form.container,{marginBottom:((displayList.length < list.length)?0:20)}]}
             data={displayList}
             keyExtractor={(item) => item.internalid}
             renderItem={({ item }) => {
@@ -545,11 +550,16 @@ function ProjectList ({data,styles,HandleSelect}:{data:GenericObject[],styles:Ge
             }}
             onEndReached={() => {
                 if (displayList.length < list.length) {
-                    loadMore();
+                    LoadMore();
                 }
             }}
             onEndReachedThreshold={0.5}
             />
+        {displayList.length < list.length && (
+            <TouchableOpacity onPress={() => {LoadAll()}} style={[Form.container,{flex:-1,alignItems:'center',marginVertical:5,marginBottom:20}]}>
+                <Text style={{fontWeight:'bold'}}>Show All</Text>
+            </TouchableOpacity>
+        )}
         </>
     )
 
@@ -635,48 +645,41 @@ export default function ProjectScreen() {
     
     return (
     <View style={[Page.container,{backgroundColor:'transparent',height:'auto',flex:1,flexDirection:'column',justifyContent:'flex-start'}]}>
-        {/*Search*/}
-        {openSearch?(
-            <ProjectSearchPage SearchObj={{...BaseObj,command:'Project : Get Project Listing'}} HandleClose={CloseSearch}/>
-        ) : (
-               <TouchableOpacity  onPress={() => {setOpenSearch(true)}} style={{alignSelf:'stretch',marginLeft:50,marginRight:50}}>
-                  <SearchField placeholder={"Find Projects"}/>
-               </TouchableOpacity>
-        )}
-        {(id != '0' || !id) && 
-            (<View style={{flex:1,width:'100%',flexDirection:'column',backgroundColor:Theme.background,borderRadius:20,borderTopLeftRadius:10,borderTopRightRadius:10}}>
-                <DropdownMenu showdrop={true} def={projectNav} Defined={TabList} label={''} searchable={false} AddStyle={{StyleInput:{...Header.text,borderWidth:0,flex:-1}}} onChange={(item) => setProjectNav(item as any)}/>
-                <View style={{flex: 1,overflow: 'hidden',backgroundColor:Theme.containerBackground,borderRadius:20,paddingTop:10,paddingLeft:20,paddingRight:20}} onLayout={onContentLayout}>
-                    <ScrollView 
-                            ref={NavScrollRef} 
-                            horizontal={false}              
-                            snapToInterval={projectPageHeight}
-                            decelerationRate="fast"
-                            scrollEventThrottle={16}
-                            onScroll={HandleScroll}
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={{ height: projectPageHeight * 5 }}>
-                            
-                                    <View key={0} style={{height:projectPageHeight,width:'100%'}}>
-                                        <ProjectOverview data={pageData.Overview} styles={DefinedStyles} />
-                                    </View>
-                                    <View key={1} style={{height:projectPageHeight,width:'100%'}}>
-                                        <ProjectList data={pageData.Projects} styles={DefinedStyles} HandleSelect={SelectProject} />
-                                    </View>
-                                    <View key={2} style={{height:projectPageHeight,width:'100%'}}>
-                                        <ProjectDetails tab={TabList[2]} data={pageData.Invoices} styles={DefinedStyles} HandleSelect={(item:any) => {}} />
-                                    </View>
-                                    <View key={3} style={{height:projectPageHeight,width:'100%'}}>
-                                        <ProjectDetails tab={TabList[3]} data={pageData.Expenses} styles={DefinedStyles} HandleSelect={(item:any) => {}} />
-                                    </View>
-                                    <View key={4} style={{height:projectPageHeight,width:'100%'}}>
-                                        <ProjectDetails tab={TabList[4]} data={pageData.Time} styles={DefinedStyles} HandleSelect={(item:any) => {}} />
-                                    </View>
-                        </ScrollView>
-                    </View>
-                </View>   
-            )
-        }
+        <ProjectSearchPage SearchObj={{...BaseObj,command:'Project : Get Project Listing'}} >
+            {(id != '0' || !id) && (
+               <View style={{flex:1,width:'100%',flexDirection:'column',backgroundColor:Theme.background,borderRadius:20,borderTopLeftRadius:10,borderTopRightRadius:10}}>
+                  <DropdownMenu showdrop={true} def={projectNav} Defined={TabList} label={''} searchable={false} AddStyle={{StyleInput:{...Header.text,borderWidth:0,flex:-1}}} onChange={(item) => setProjectNav(item as any)}/>
+                     <View style={{flex: 1,overflow: 'hidden',backgroundColor:Theme.containerBackground,borderRadius:20,paddingTop:10,paddingLeft:20,paddingRight:20}} onLayout={onContentLayout}>
+                        <ScrollView 
+                                ref={NavScrollRef} 
+                                horizontal={false}              
+                                snapToInterval={projectPageHeight}
+                                decelerationRate="fast"
+                                scrollEventThrottle={16}
+                                onScroll={HandleScroll}
+                                showsVerticalScrollIndicator={false}
+                                contentContainerStyle={{ height: projectPageHeight * 5 }}>
+                                
+                                        <View key={0} style={{height:projectPageHeight,width:'100%'}}>
+                                            <ProjectOverview data={pageData.Overview} styles={DefinedStyles} />
+                                        </View>
+                                        <View key={1} style={{height:projectPageHeight,width:'100%'}}>
+                                            <ProjectList data={pageData.Projects} styles={DefinedStyles} HandleSelect={SelectProject} />
+                                        </View>
+                                        <View key={2} style={{height:projectPageHeight,width:'100%'}}>
+                                            <ProjectDetails tab={TabList[2]} data={pageData.Invoices} styles={DefinedStyles} HandleSelect={(item:any) => {}} />
+                                        </View>
+                                        <View key={3} style={{height:projectPageHeight,width:'100%'}}>
+                                            <ProjectDetails tab={TabList[3]} data={pageData.Expenses} styles={DefinedStyles} HandleSelect={(item:any) => {}} />
+                                        </View>
+                                        <View key={4} style={{height:projectPageHeight,width:'100%'}}>
+                                            <ProjectDetails tab={TabList[4]} data={pageData.Time} styles={DefinedStyles} HandleSelect={(item:any) => {}} />
+                                        </View>
+                            </ScrollView>
+                        </View>
+               </View>   
+            )}
+        </ProjectSearchPage>
     </View>
     )
   

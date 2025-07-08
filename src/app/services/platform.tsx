@@ -30,6 +30,7 @@ const useWebCheck = () => {
     
   
 }; 
+
 const LoadingScreen = ({txt}:{txt:string}) => {
   const {Page,Header,ReactTag} = useThemedStyles();
   return (
@@ -39,7 +40,6 @@ const LoadingScreen = ({txt}:{txt:string}) => {
     </View>
   )
 }
-
 
 const MainPage = ({redirect,title,pages}:{redirect:string;title:string,pages:MenuOption[];}) => {
   const router = useRouter();
@@ -78,7 +78,13 @@ const ProjectSearchPage = ({SearchObj,children,HandleClose=null}:{SearchObj:Gene
     setSearch('');
     router.push(`/project?id=${id}` as any); 
   };
-  
+
+  const CloseSearch = () => {
+    HandleClose?.();
+    setSearch('');
+    setOpenSearch(false);
+  };
+
   const InfoRow = ({item,columns}:PageInfoRowProps) => {
     const newCol = useMemo(() => {
       return Array.isArray(columns)?columns:[];
@@ -100,11 +106,7 @@ const ProjectSearchPage = ({SearchObj,children,HandleClose=null}:{SearchObj:Gene
     );
   };
 
-  const CloseSearch = () => {
-    HandleClose?.();
-    setSearch('');
-    setOpenSearch(false);
-  }
+  
  
   return (
     <>

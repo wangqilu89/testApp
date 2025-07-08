@@ -26,14 +26,15 @@ const useListPost = (options: UseListPostOptions) => {
     } while (!proceed)
 
     if (result.confirmed) {
+      
+      console.log('Post Obj',PostObj)
+      //const NewObj = { ...PostObj, command: (PostObj?.command??'') + action, data:{action:action,value:result.value,data:selectedKeys}};
+      //const final = await FetchData(NewObj);
       const ConfirmObj = {
         msg:action + ' performed successfully.',
         icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},
         cancel:{visible:false}
-      }
-      console.log('Post Obj',PostObj)
-      //const NewObj = { ...PostObj, command: (PostObj?.command??'') + action, data:{action:action,value:result.value,data:selectedKeys}};
-      //const final = await FetchData(NewObj);
+      };
       result = await ShowPrompt(ConfirmObj)
     }
     

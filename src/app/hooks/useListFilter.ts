@@ -59,7 +59,8 @@ const useListFilter = ( options: UseListFilterOptions) => {
     
     setSelectAll(true);
     setSelectedKeys([]);
-  }
+  };
+  
   const ResetLoad = () => {
     if (LoadObj) {
       UpdateLoad(LoadObj)
@@ -67,7 +68,7 @@ const useListFilter = ( options: UseListFilterOptions) => {
     setSearch('');
     setExpandedKeys([]);
     ResetSelectAll();
-  }
+  };
 
   useEffect(() => {
     let filtered = list;
@@ -94,7 +95,8 @@ const useListFilter = ( options: UseListFilterOptions) => {
           HandleSelect(item['internalid'])
       }
     })
-  },[selectAll])
+  },[selectAll]);
+  
   return {list,displayList,setSearch,search,loading,LoadMore,HandleExpand,expandedKeys,HandleSelect,selectedKeys,HandleSelectAll,selectAll,UpdateLoad,ResetLoad,ResetSelectAll,LoadAll};
 }
 

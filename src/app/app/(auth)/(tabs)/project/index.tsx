@@ -42,166 +42,6 @@ const LoadData = async (Payload:GenericObject,options:GenericObject) => {
 
       }
       
-}
-
-function ProjectDetails ({tab,data,styles,HandleSelect}:{tab?:GenericObject,data:GenericObject[],styles:GenericObject,HandleSelect:(item:any) => void}) {
-    
-    const {Listing,Form,Theme,CategoryButton,Header} = styles
-    const [selectMode,setSelectMode] = useState(false);
-    const [totalDropdown,setTotalDropdown] = useState<GenericObject>({internalid:'total',other:'num',value:{handle:NumberComma}})
-    const { list,displayList,LoadMore,expandedKeys,HandleExpand,search,setSearch,selectAll,selectedKeys,HandleSelect : AddSelectKey,HandleSelectAll,ResetSelectAll,LoadAll} = useListFilter({
-        Defined:data,
-        SearchFunction: (i, keyword) => {
-          return i.filter((item: GenericObject) =>
-            Object.values(item).some((val) =>{
-              return (typeof val === 'object' ? (val?.name ?? '') : val.toString())
-                .toLowerCase()
-                .includes(keyword)
-            }
-            )
-        )}
-    });
-
-    const COLUMN_CONFIG: PageInfoColConfig = {Invoices:[
-            {internalid:'company',name:'Customer'},
-            {internalid:'date',name:'Date'},
-            {internalid:'name',name:'Document Number'},
-            {internalid:'type',name:'Record Type',value:{handle:ProperCase}},
-            {internalid:'status',name:'Status'},
-            {internalid:'feeincome',name:'Fee Income',other:'num',value:{handle:NumberComma}},
-            {internalid:'disbursement',name:'OPE',other:'num',value:{handle:NumberComma}},
-            {internalid:'total',name:'Total',other:'num',value:{handle:NumberComma}}
-        ],
-        Expenses:[
-            {internalid:'company',name:'Entity'},
-            {internalid:'date',name:'Date'},
-            {internalid:'name',name:'Document Number'},
-            {internalid:'type',name:'Record Type',value:{handle:ProperCase}},
-            {internalid:'currency',name:'Memo'},
-            {internalid:'status',name:'Status'},
-            {internalid:'feeincome',name:'Expenses',other:'num',value:{handle:NumberComma}},
-            {internalid:'total',name:'Total',other:'num',value:{handle:NumberComma}}
-        ],
-        Time:[
-            {internalid:'company',name:'Employee'},
-            {internalid:'date',name:'Date'},
-            {internalid:'name',name:'Billing Class'},
-            {internalid:'status',name:'Status'},
-            {internalid:'feeincome',name:'Hours',other:'num',value:{handle:NumberComma}},
-            {internalid:'total',name:'Total',other:'num',value:{handle:NumberComma}}
-
-        ]
-    }
-
-    const ProjectListRow = ({expanded,item,columns}:PageInfoRowProps) => {
-        const newCol = useMemo(() => {
-          return Array.isArray(columns)?
-             ((columns.length > 3 && !expanded)?
-              [...columns.slice(0, 3), ...columns.slice(-1)]:
-              columns.slice())
-             :[];
-        }, [expanded, columns]);
-        
-        
-        return (
-          <View style={{backgroundColor:Theme.containerBackground,flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8,borderWidth:1,borderRadius:10}}>
-            {selectMode && (
-            <TouchableOpacity style={{flexDirection:'column',height:'100%'}} onPress={() => {AddSelectKey(item.internalid);}}>
-                <Text style={[Listing.text,{fontSize:15}]}>{selectedKeys.includes(item.internalid) ? '☑️' : '⬜'}</Text>
-            </TouchableOpacity>
-            )}
-            <TouchableOpacity style={{flexDirection:'column',flex:1}} onLongPress={() => {setSelectMode(true);AddSelectKey(item.internalid)}} onPress={() => {HandleSelect(item.internalid);}}>
-                {newCol.map((colName, index) => (
-                  <View key={index} style={{flexDirection:'row',marginRight:5,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
-                    <View style={[{width:150},colName?.format?.StyleContainer]}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'},colName?.format?.StyleLabel]}>{colName?.name??ProperCase(colName.internalid.replace('val_',''))}</Text></View>
-                    <View style={[{flex:1},colName?.value?.format?.StyleContainer]}><Text numberOfLines={expanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14},colName?.value?.format?.StyleLabel]}>{colName?.value?.handle?(colName.value.handle(item[colName.internalid] ?? '')):(item[colName.internalid] ?? '')}</Text></View>
-                  </View>
-                ))}
-            </TouchableOpacity>
-            <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1,height:'100%'}} onPress={() => HandleExpand(item.internalid)}>
-              <Ionicons name={expanded?"chevron-up":"chevron-down"} style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
-            </TouchableOpacity>
-          </View>
-        );
-    };
-    return (
-        <>  
-            <View style={{flexDirection:'row'}}>
-                
-                {selectMode && (
-                <TouchableOpacity onPress={HandleSelectAll} style={{alignItems:'center',justifyContent:'center',marginRight:10}}>
-                    <Ionicons name={selectAll?"square-outline":"checkbox-outline"} style={[{fontSize:20}]} />
-                </TouchableOpacity>
-                )}
-                <View style={{flex:1}}>
-                {list.length > 5 && (
-                    <SearchField def={search} onChange={setSearch} AddStyle={{StyleContainer:{flex:-1}}}/>
-                )}
-                </View>
-                {selectMode && (
-                <TouchableOpacity onPress={() => {ResetSelectAll();setSelectMode(false)}} style={{alignItems:'center',justifyContent:'center',marginRight:10}}>
-                    <Text style={[{fontSize:15}]}>Cancel</Text>
-                </TouchableOpacity>
-                )}
-                
-            </View>
-            <FlatList
-                style={[Form.container,{marginBottom:((displayList.length < list.length)?0:20)}]}
-                data={displayList}
-                keyExtractor={(item) => item.internalid}
-                renderItem={({ item }) => {
-                return (
-                    <ProjectListRow expanded={expandedKeys.includes(item.internalid)} item={item} columns={COLUMN_CONFIG[tab?.internalid]} />
-                )
-                }}
-                onEndReached={() => {
-                    if (displayList.length < list.length) {
-                        LoadMore();
-                    }
-                }}
-                stickyHeaderIndices={[0]}
-                onEndReachedThreshold={0.5}
-                ListHeaderComponent={() => {
-                    if (selectedKeys.length == 0) {
-                        return (<></>)
-                    }
-                    const columns = COLUMN_CONFIG[tab?.internalid] ?? [];
-                    const DropdownList = columns.filter(col => col.other === 'num')
-                    const numericKeys = DropdownList.map(col => col.internalid);
-                    const totals = list
-                        .filter(item => selectedKeys.includes(item.internalid))
-                        .reduce((acc, item) => {
-                          numericKeys.forEach(key => {
-                            acc[key] = (acc[key] ?? 0) + Number(item[key] ?? 0);
-                          });
-                          return acc;
-                        }, {} as Record<string, number>);
-
-                    return (
-                    
-                        <View key={0} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,backgroundColor:Theme.containerBackground}}>
-                            <View style={[{width:50}]}>
-                                <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>Total</Text>
-                            </View>
-                            <View style={[{width:150}]}>
-                                <DropdownMenu showdrop={true} def={totalDropdown} Defined={DropdownList} label={''} searchable={false} AddStyle={{StyleInput:{borderWidth:0,fontSize:14,fontWeight:'bold',margin:0,padding:0}}} onChange={(item) => setTotalDropdown(item as any)}/>
-                            </View>
-                            <View style={[{flex:1,alignItems:'flex-end'}]}>
-                                <Text numberOfLines={-1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{NumberComma(totals[totalDropdown.internalid])}</Text>
-                            </View>
-                            
-                        </View>
-                        
-                    )
-                }}
-            />
-            {displayList.length < list.length && (
-            <TouchableOpacity onPress={() => {LoadAll()}} style={[Form.container,{flex:-1,alignItems:'center',marginVertical:5,marginBottom:20}]}>
-                <Text style={{fontWeight:'bold'}}>Show All</Text>
-            </TouchableOpacity>
-            )}
-        </>
-    )
 };
 
 function ProjectOverview({data,styles}:{data:GenericObject[],styles:GenericObject}) {
@@ -318,7 +158,7 @@ function ProjectOverview({data,styles}:{data:GenericObject[],styles:GenericObjec
                     return (
                     <View key={index + 2} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3}}>
                         <View style={[{width:200}]}>
-                            <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{item?.name}</Text>
+                            <Text numberOfLines={2} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{item?.name}</Text>
                         </View>
                         <View style={[{flex:1,alignItems:'flex-end'}]}>
                             <Text numberOfLines={-1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>{NumberComma(item?.budget??0)}</Text>
@@ -565,6 +405,165 @@ function ProjectList ({data,styles,HandleSelect}:{data:GenericObject[],styles:Ge
 
 };
 
+function ProjectDetails ({tab,data,styles,HandleSelect}:{tab?:GenericObject,data:GenericObject[],styles:GenericObject,HandleSelect:(item:any) => void}) {
+    
+    const {Listing,Form,Theme,CategoryButton,Header} = styles
+    const [selectMode,setSelectMode] = useState(false);
+    const [totalDropdown,setTotalDropdown] = useState<GenericObject>({internalid:'total',other:'num',value:{handle:NumberComma}})
+    const { list,displayList,LoadMore,expandedKeys,HandleExpand,search,setSearch,selectAll,selectedKeys,HandleSelect : AddSelectKey,HandleSelectAll,ResetSelectAll,LoadAll} = useListFilter({
+        Defined:data,
+        SearchFunction: (i, keyword) => {
+          return i.filter((item: GenericObject) =>
+            Object.values(item).some((val) =>{
+              return (typeof val === 'object' ? (val?.name ?? '') : val.toString())
+                .toLowerCase()
+                .includes(keyword)
+            }
+            )
+        )}
+    });
+
+    const COLUMN_CONFIG: PageInfoColConfig = {Invoices:[
+            {internalid:'company',name:'Customer'},
+            {internalid:'date',name:'Date'},
+            {internalid:'name',name:'Document Number'},
+            {internalid:'type',name:'Record Type',value:{handle:ProperCase}},
+            {internalid:'status',name:'Status'},
+            {internalid:'feeincome',name:'Fee Income',other:'num',value:{handle:NumberComma}},
+            {internalid:'disbursement',name:'OPE',other:'num',value:{handle:NumberComma}},
+            {internalid:'total',name:'Total',other:'num',value:{handle:NumberComma}}
+        ],
+        Expenses:[
+            {internalid:'company',name:'Entity'},
+            {internalid:'date',name:'Date'},
+            {internalid:'name',name:'Document Number'},
+            {internalid:'type',name:'Record Type',value:{handle:ProperCase}},
+            {internalid:'currency',name:'Memo'},
+            {internalid:'status',name:'Status'},
+            {internalid:'feeincome',name:'Expenses',other:'num',value:{handle:NumberComma}},
+            {internalid:'total',name:'Total',other:'num',value:{handle:NumberComma}}
+        ],
+        Time:[
+            {internalid:'company',name:'Employee'},
+            {internalid:'date',name:'Date'},
+            {internalid:'name',name:'Billing Class'},
+            {internalid:'status',name:'Status'},
+            {internalid:'feeincome',name:'Hours',other:'num',value:{handle:NumberComma}},
+            {internalid:'total',name:'Total',other:'num',value:{handle:NumberComma}}
+
+        ]
+    }
+
+    const ProjectListRow = ({expanded,item,columns}:PageInfoRowProps) => {
+        const newCol = useMemo(() => {
+          return Array.isArray(columns)?
+             ((columns.length > 3 && !expanded)?
+              [...columns.slice(0, 3), ...columns.slice(-1)]:
+              columns.slice())
+             :[];
+        }, [expanded, columns]);
+        
+        
+        return (
+          <View style={{backgroundColor:Theme.containerBackground,flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8,borderWidth:1,borderRadius:10}}>
+            {selectMode && (
+            <TouchableOpacity style={{flexDirection:'column',height:'100%'}} onPress={() => {AddSelectKey(item.internalid);}}>
+                <Text style={[Listing.text,{fontSize:15}]}>{selectedKeys.includes(item.internalid) ? '☑️' : '⬜'}</Text>
+            </TouchableOpacity>
+            )}
+            <TouchableOpacity style={{flexDirection:'column',flex:1}} onLongPress={() => {setSelectMode(true);AddSelectKey(item.internalid)}} onPress={() => {HandleSelect(item.internalid);}}>
+                {newCol.map((colName, index) => (
+                  <View key={index} style={{flexDirection:'row',marginRight:5,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
+                    <View style={[{width:150},colName?.format?.StyleContainer]}><Text style={[Listing.text,{fontSize:14,fontWeight:'bold'},colName?.format?.StyleLabel]}>{colName?.name??ProperCase(colName.internalid.replace('val_',''))}</Text></View>
+                    <View style={[{flex:1},colName?.value?.format?.StyleContainer]}><Text numberOfLines={expanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14},colName?.value?.format?.StyleLabel]}>{colName?.value?.handle?(colName.value.handle(item[colName.internalid] ?? '')):(item[colName.internalid] ?? '')}</Text></View>
+                  </View>
+                ))}
+            </TouchableOpacity>
+            <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1,height:'100%'}} onPress={() => HandleExpand(item.internalid)}>
+              <Ionicons name={expanded?"chevron-up":"chevron-down"} style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
+            </TouchableOpacity>
+          </View>
+        );
+    };
+    return (
+        <>  
+            <View style={{flexDirection:'row'}}>
+                
+                {selectMode && (
+                <TouchableOpacity onPress={HandleSelectAll} style={{alignItems:'center',justifyContent:'center',marginRight:10}}>
+                    <Ionicons name={selectAll?"square-outline":"checkbox-outline"} style={[{fontSize:20}]} />
+                </TouchableOpacity>
+                )}
+                <View style={{flex:1}}>
+                {list.length > 5 && (
+                    <SearchField def={search} onChange={setSearch} AddStyle={{StyleContainer:{flex:-1}}}/>
+                )}
+                </View>
+                {selectMode && (
+                <TouchableOpacity onPress={() => {ResetSelectAll();setSelectMode(false)}} style={{alignItems:'center',justifyContent:'center',marginRight:10}}>
+                    <Text style={[{fontSize:15}]}>Cancel</Text>
+                </TouchableOpacity>
+                )}
+                
+            </View>
+            <FlatList
+                style={[Form.container,{marginBottom:((displayList.length < list.length)?0:20)}]}
+                data={displayList}
+                keyExtractor={(item) => item.internalid}
+                renderItem={({ item }) => {
+                return (
+                    <ProjectListRow expanded={expandedKeys.includes(item.internalid)} item={item} columns={COLUMN_CONFIG[tab?.internalid]} />
+                )
+                }}
+                onEndReached={() => {
+                    if (displayList.length < list.length) {
+                        LoadMore();
+                    }
+                }}
+                stickyHeaderIndices={[0]}
+                onEndReachedThreshold={0.5}
+                ListHeaderComponent={() => {
+                    if (selectedKeys.length == 0) {
+                        return (<></>)
+                    }
+                    const columns = COLUMN_CONFIG[tab?.internalid] ?? [];
+                    const DropdownList = columns.filter(col => col.other === 'num')
+                    const numericKeys = DropdownList.map(col => col.internalid);
+                    const totals = list
+                        .filter(item => selectedKeys.includes(item.internalid))
+                        .reduce((acc, item) => {
+                          numericKeys.forEach(key => {
+                            acc[key] = (acc[key] ?? 0) + Number(item[key] ?? 0);
+                          });
+                          return acc;
+                        }, {} as Record<string, number>);
+
+                    return (
+                    
+                        <View key={0} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,backgroundColor:Theme.containerBackground}}>
+                            <View style={[{width:50}]}>
+                                <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>Total</Text>
+                            </View>
+                            <View style={[{width:150}]}>
+                                <DropdownMenu showdrop={true} def={totalDropdown} Defined={DropdownList} label={''} searchable={false} AddStyle={{StyleInput:{borderWidth:0,fontSize:14,fontWeight:'bold',margin:0,padding:0}}} onChange={(item) => setTotalDropdown(item as any)}/>
+                            </View>
+                            <View style={[{flex:1,alignItems:'flex-end'}]}>
+                                <Text numberOfLines={-1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>{NumberComma(totals[totalDropdown.internalid])}</Text>
+                            </View>
+                            
+                        </View>
+                        
+                    )
+                }}
+            />
+            {displayList.length < list.length && (
+            <TouchableOpacity onPress={() => {LoadAll()}} style={[Form.container,{flex:-1,alignItems:'center',marginVertical:5,marginBottom:20}]}>
+                <Text style={{fontWeight:'bold'}}>Show All</Text>
+            </TouchableOpacity>
+            )}
+        </>
+    )
+};
 
 export default function ProjectScreen() {
     const {id = '0'} = useLocalSearchParams<Partial<{ category: string; id: string; url: string; doc: string }>>();
@@ -635,7 +634,7 @@ export default function ProjectScreen() {
             
             if (NavScrollRef.current) {
                 const TabIndex = TabList.findIndex((item) => item.internalid === projectNav.internalid)
-                NavScrollRef.current.scrollTo({ y: projectPageHeight * TabIndex, animated: true });
+                NavScrollRef.current.scrollTo({ y: projectPageHeight * TabIndex + 20, animated: true });
             }
             setTimeout(() => {NavScroll.current = true;}, 500); 
         }
@@ -683,4 +682,4 @@ export default function ProjectScreen() {
     </View>
     )
   
-}
+};

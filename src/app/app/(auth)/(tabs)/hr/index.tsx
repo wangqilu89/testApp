@@ -353,7 +353,15 @@ function ApplyClaim({ category,id, user,BaseObj}: PageProps) {
         <FormTextInput label="ID " def={claim.internalid} onChange={(text) => {updateMain('internalid', text)}} AddStyle={{StyleRow:{display:'none'}}} />
         <FormDateInput disabled={true} label='Date ' def={{date:claim.date}} onChange={({date})=>{updateMain('date',date)}}/>
         <FormTextInput disabled={true} label="Document Number " key={claim.document_number} def={claim.document_number} onChange={(text) => {updateMain('document_number', text)}}/>
-        <FormAutoComplete label="Employee "  def={claim.employee} searchable={false} disabled={true} onChange={(item)=>{updateMain('employee', item)}} LoadObj={{ ...BaseObj, command: "HR : Get Employee Listing",data:{keyword:BaseObj.user}}} />
+        <FormAutoComplete 
+          label="Employee "  
+          def={claim.employee} 
+          searchable={false} 
+          disabled={true} 
+          onChange={(item)=>{updateMain('employee', item)}} 
+          LoadObj={{ ...BaseObj, command: "HR : Get Employee Listing",data:{keyword:BaseObj.user}}} 
+          AddStyle={{StyleInput:{flex:1,marginRight:0}}}
+        />
         
         <FlatList
           style={[Form.container,{paddingHorizontal:0}]}
@@ -396,9 +404,34 @@ function ApplyClaim({ category,id, user,BaseObj}: PageProps) {
       <FormContainer>
         <FormTextInput label="ID " def={line.internalid} onChange={(text) => updateLine('internalid', text)} AddStyle={{StyleRow:{display:'none'}}}/>
         <FormDateInput label='Date ' mandatory={true} def={{date:line.date}} onChange={({date})=>{updateLine('date',date);updateLine('expense_date',date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear())}}/>
-        <FormAutoComplete label="Project "  mandatory={true} def={line.project??{}} searchable={true} onChange={(item)=>{updateLine('project',item);updateLine('task',null)}} SearchObj={{ ...BaseObj, command: "HR : Get Project Listing" }} />
-        <FormAutoComplete label="Task "  mandatory={true} def={line.task??{}} searchable={true} onChange={(item)=>{updateLine('task',item)}} SearchFunction={SearchFunc} LoadObj={lineTask} />
-        <FormAutoComplete label="Category "  mandatory={true} def={line.category??{}} searchable={true} onChange={(item)=>{updateLine('category',item)}}  SearchObj={{ ...BaseObj, command: "HR : Get Category Listing" }} />
+        <FormAutoComplete 
+           label="Project "  
+           mandatory={true} 
+           def={line.project??{}} 
+           searchable={true} 
+           onChange={(item)=>{updateLine('project',item);updateLine('task',null)}} 
+           SearchObj={{ ...BaseObj, command: "HR : Get Project Listing" }}
+           AddStyle={{StyleInput:{flex:1,marginRight:0}}}
+        />
+        <FormAutoComplete 
+           label="Task "  
+           mandatory={true} 
+           def={line.task??{}} 
+           searchable={true} 
+           onChange={(item)=>{updateLine('task',item)}} 
+           SearchFunction={SearchFunc} 
+           LoadObj={lineTask} 
+           AddStyle={{StyleInput:{flex:1,marginRight:0}}}
+        />
+        <FormAutoComplete 
+           label="Category "  
+           mandatory={true} 
+           def={line.category??{}} 
+           searchable={true} 
+           onChange={(item)=>{updateLine('category',item)}}  
+           SearchObj={{ ...BaseObj, command: "HR : Get Category Listing" }} 
+           AddStyle={{StyleInput:{flex:1,marginRight:0}}}
+         />
         <FormTextInput label="Memo " mandatory={true} def={line.memo} onChange={(text) => updateLine('memo', text)}/>
         <FormNumericInput label="Value " mandatory={true} def={line.val_amount} onChange={(text) => updateLine('val_amount', text)} />
         <FormAttachFile label="Attach File " def={line.file} onChange={(file) => {updateLine('file',file)}} />
@@ -772,14 +805,38 @@ function ApplyLeave({ id, user,BaseObj}: { id: string; user: GenericObject | nul
     <FormContainer>
       <FormDateInput mode="range" mandatory={true} label="Start Date" def={{ date: apply.startdate, startDate: apply.startdate, endDate: apply.enddate }}
         onChange={({ startDate, endDate }) => { updateApply('startdate', HandleDate(startDate)); updateApply('enddate', HandleDate(endDate)); }} />
-      <FormAutoComplete label="AM/PM " AddStyle={{StyleInput:{marginRight:0}}} mandatory={true} def={apply.startam} searchable={false} onChange={(item) => updateApply('startam', item)} Defined={[{internalid:'3',name:'Full Day'}, {internalid:'1',name:'AM'}, {internalid:'2',name:'PM'}]} />
+      <FormAutoComplete 
+         label="AM/PM " 
+         AddStyle={{StyleInput:{marginRight:0,flex:1}}} 
+         mandatory={true} 
+         def={apply.startam} 
+         searchable={false} 
+         onChange={(item) => updateApply('startam', item)} 
+         Defined={[{internalid:'3',name:'Full Day'}, {internalid:'1',name:'AM'}, {internalid:'2',name:'PM'}]} 
+       />
       
       <FormDateInput mode="range" mandatory={true} label="End Date" def={{ date: apply.enddate, startDate: apply.startdate, endDate: apply.enddate }}
         onChange={({ startDate, endDate }) => { updateApply('startdate', HandleDate(startDate)); updateApply('enddate', HandleDate(endDate)); }} />
-      <FormAutoComplete label="AM/PM "  AddStyle={{StyleInput:{marginRight:0}}} mandatory={true} def={apply.startam} searchable={false} onChange={(item) => updateApply('endam', item)} Defined={[{internalid:'3',name:'Full Day'}, {internalid:'1',name:'AM'}, {internalid:'2',name:'PM'}]} />
+      <FormAutoComplete 
+         label="AM/PM "  
+         AddStyle={{StyleInput:{flex:1,marginRight:0}}} 
+         mandatory={true} 
+         def={apply.startam} 
+         searchable={false} 
+         onChange={(item) => updateApply('endam', item)} 
+         Defined={[{internalid:'3',name:'Full Day'}, {internalid:'1',name:'AM'}, {internalid:'2',name:'PM'}]}
+        />
       <FormTextInput disabled label="Days Applied" key={apply.day} def={apply.day} onChange={(text) => updateApply('day', text)} />
-      <FormAutoComplete label="Leave Type " AddStyle={{StyleInput:{marginRight:0}}} mandatory={true} def={apply.leave} searchable={false} onChange={(item) => updateApply('leave', item)} LoadObj={loadObj} />
-      
+      <FormAutoComplete 
+         label="Leave Type " 
+         AddStyle={{StyleInput:{flex:1,marginRight:0}}} 
+         mandatory={true} 
+         def={apply.leave} 
+         searchable={false} 
+         onChange={(item) => updateApply('leave', item)} 
+         LoadObj={loadObj} 
+       />
+    
       <FormTextInput label="Reason" mandatory={true} key={apply.reason} def={apply.reason} onChange={(text) => updateApply('reason', text)} />
       <FormAttachFile label="Attach File " mandatory={apply.leave?.mandatory??false}  def={apply.file} onChange={(file) => {updateApply('file',file)}} />
       <View style={{flex:1}} />
@@ -822,9 +879,9 @@ function PaySlip({ category,user,BaseObj}: { category: string,user:GenericObject
     {internalid:'name',name:'Period'},
     {internalid:'val_salary',value:{handle:NumberComma}}
   ]
-
+  
   const {list,displayList,setSearch,search,loading,LoadMore,HandleSelect,selectedKeys,HandleSelectAll,selectAll,LoadAll} = useListFilter({
-    LoadObj:{...BaseObj,command:'HR : Get payslip List'},
+    LoadObj:{...BaseObj,user:user?.id??0,command:'HR : Get payslip List'},
     SearchFunction: (i, keyword) => {
       return i.flatMap((j) => {
         const CheckA = Object.values(j).some((val) => 

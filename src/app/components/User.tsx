@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useEffect,useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SERVER_URL,postFunc,RESTLET,REACT_ENV,USER_ID} from '@/services/common';
+import { SERVER_URL,postFunc,RESTLET,REACT_ENV,USER_ID} from '@/services/_common';
 import { useRouter} from 'expo-router';
 import { usePrompt } from '@/components/AlertModal';
 
 import { Platform } from 'react-native';
 import { UserContextType,User } from '@/types';
+import { useColorScheme} from 'react-native';
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -27,11 +28,12 @@ const getConnectSid = async (url: string) => {
 };
   
 const UserProvider = ({ children }: { children: React.ReactNode }) => {
+  
   const { ShowLoading, HideLoading } = usePrompt();
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
-
-  
+  let ColorScheme = useColorScheme();
+  ColorScheme = ColorScheme??'light'
 
   const login = async (userData: User) => {
     setUser(userData);
@@ -51,6 +53,8 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'}),[user]);
+
+  
 
   useEffect(() => {
     
@@ -103,7 +107,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user,BaseObj, login, logout }}>
+    <UserContext.Provider value={{ BaseObj,ColorScheme,user, login, logout }}>
       {children}
     </UserContext.Provider>
   );

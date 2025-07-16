@@ -3,13 +3,13 @@ import { Platform,View,Text, ActivityIndicator} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import {SERVER_URL} from '@/services';
-import { useThemedStyles } from '@/styles';
+import {ThemedStyles } from '@/styles';
 
 
 
 export default function IndexScreen() {
   
-  const {Page} = useThemedStyles()
+  const {Page} = ThemedStyles('light')
   const router = useRouter();
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function IndexScreen() {
   }, []);
   
   const LoadingScreen = ({txt}:{txt:string}) => {
-    const {Page,Header,ReactTag} = useThemedStyles();
+    const {Page,Header,ReactTag} = ThemedStyles();
     return (
       <View style={[Page.loading]}>
         <ActivityIndicator size="large" />

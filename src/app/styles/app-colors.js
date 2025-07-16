@@ -2,7 +2,9 @@
 const tintColorLight = '#11181C';
 const tintColorDark = '#fff';
 const darkMoore = '#004C6C'
+const darkMoore50  ='#7fa5b5' 
 const lightMoore = '#009FE3'
+const lightMoore50 = '#7fcff1'
 
 export const Colors = {
   light: {
@@ -17,7 +19,8 @@ export const Colors = {
     tabIconDefault: '#687076',
     tabIconSelected: darkMoore,
     mooreDefault:darkMoore,
-    mooreReverse:lightMoore
+    mooreReverse:lightMoore,
+    mooreReverse50:lightMoore50
   },
   dark: {
     pageBackground:'#11181C',
@@ -31,7 +34,8 @@ export const Colors = {
     tabIconDefault: '#9BA1A6',
     tabIconSelected: lightMoore,
     mooreDefault:lightMoore,
-    mooreReverse:darkMoore
+    mooreReverse:darkMoore,
+    mooreReverse50:darkMoore50
   },
 };
 

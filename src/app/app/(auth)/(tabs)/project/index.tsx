@@ -1,20 +1,20 @@
 
-import { View, Text, TouchableOpacity, FlatList, Linking,ScrollView,StyleSheet,LayoutChangeEvent,findNodeHandle,NativeSyntheticEvent,NativeScrollEvent} from 'react-native';
+import { View, Text, TouchableOpacity, FlatList,ScrollView,LayoutChangeEvent,NativeSyntheticEvent,NativeScrollEvent} from 'react-native';
 
 import { useEffect, useState,useMemo,useRef} from 'react';
 import { useLocalSearchParams} from 'expo-router';
-import { useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,FetchData,SearchField,ProperCase,NumberComma,ProjectSearchPage,NumberPercent} from '@/services'; // 👈 functions
+import { FetchData,ProperCase,NumberComma,ProjectSearchPage,NumberPercent} from '@/services'; // 👈 functions
 
 import { usePrompt } from '@/components/AlertModal';
 import { useUser } from '@/components/User';
 import { useListFilter } from '@/hooks/useListFilter'
 
 import { Ionicons } from '@expo/vector-icons'; 
-import {useThemedStyles} from '@/styles';
+import {ThemedStyles} from '@/styles';
 import { GenericObject,MenuOption,PageProps, User,PageInfoColConfig,PageInfoRowProps,PageInfoColProps, KeyStyles} from '@/types';
 
 import { DropdownMenu } from '@/components/DropdownMenu';
-
+import { SearchField } from '@/components/SearchField';
 
 const TabList = [
     {internalid:'Overview',name:'Overview'},
@@ -315,7 +315,7 @@ function ProjectOverview({data,styles}:{data:GenericObject[],styles:GenericObjec
     )
 };
 
-function ProjectList ({data,styles,HandleSelect}:{data:GenericObject[],styles:GenericObject,HandleSelect:(item:any) => void}) {
+function ProjectList ({data,styles,HandleSelect,scheme}:{data:GenericObject[],styles:GenericObject,HandleSelect:(item:any) => void,scheme:'light'|'dark'}) {
     
     const {Listing,Form,Theme,CategoryButton} = styles
     
@@ -378,7 +378,7 @@ function ProjectList ({data,styles,HandleSelect}:{data:GenericObject[],styles:Ge
     return (
         <>
         {/*Search*/}
-        {list.length > 5 && (<SearchField def={search} onChange={setSearch} AddStyle={{StyleContainer:{flex:-1}}}/>)}
+        {list.length > 5 && (<SearchField def={search} onChange={setSearch} AddStyle={{StyleContainer:{flex:-1}}} scheme={scheme}/>)}
         <FlatList
             style={[Form.container,{marginBottom:((displayList.length < list.length)?0:20)}]}
             data={displayList}
@@ -405,7 +405,7 @@ function ProjectList ({data,styles,HandleSelect}:{data:GenericObject[],styles:Ge
 
 };
 
-function ProjectDetails ({tab,data,styles,HandleSelect}:{tab?:GenericObject,data:GenericObject[],styles:GenericObject,HandleSelect:(item:any) => void}) {
+function ProjectDetails ({tab,data,styles,HandleSelect,scheme}:{tab?:GenericObject,data:GenericObject[],styles:GenericObject,HandleSelect:(item:any) => void,scheme:'light'|'dark'}) {
     
     const {Listing,Form,Theme,CategoryButton,Header} = styles
     const [selectMode,setSelectMode] = useState(false);
@@ -496,7 +496,7 @@ function ProjectDetails ({tab,data,styles,HandleSelect}:{tab?:GenericObject,data
                 )}
                 <View style={{flex:1}}>
                 {list.length > 5 && (
-                    <SearchField def={search} onChange={setSearch} AddStyle={{StyleContainer:{flex:-1}}}/>
+                    <SearchField def={search} onChange={setSearch} AddStyle={{StyleContainer:{flex:-1}}} scheme={scheme} />
                 )}
                 </View>
                 {selectMode && (
@@ -568,8 +568,8 @@ function ProjectDetails ({tab,data,styles,HandleSelect}:{tab?:GenericObject,data
 export default function ProjectScreen() {
     const {id = '0'} = useLocalSearchParams<Partial<{ category: string; id: string; url: string; doc: string }>>();
 
-    const { user,BaseObj} = useUser(); 
-    const DefinedStyles = useThemedStyles();
+    const { user,BaseObj,ColorScheme} = useUser(); 
+    const DefinedStyles = ThemedStyles(ColorScheme??'light');
     const {Page,Header,Theme,CategoryButton,Listing} = DefinedStyles;
     const promptOptions = usePrompt();
     const NavScrollRef = useRef<ScrollView>(null);
@@ -644,7 +644,7 @@ export default function ProjectScreen() {
     
     return (
     <View style={[Page.container,{backgroundColor:'transparent',height:'auto',flex:1,flexDirection:'column',justifyContent:'flex-start'}]}>
-        <ProjectSearchPage SearchObj={{...BaseObj,command:'Project : Get Project Listing'}} >
+        <ProjectSearchPage SearchObj={{...BaseObj,command:'Project : Get Project Listing'}} scheme={ColorScheme??'light'} >
             {(id != '0' || !id) && (
                <View style={{flex:1,width:'100%',flexDirection:'column',backgroundColor:Theme.background,borderRadius:20,borderTopLeftRadius:10,borderTopRightRadius:10}}>
                   <DropdownMenu showdrop={true} def={projectNav} Defined={TabList} label={''} searchable={false} AddStyle={{StyleInput:{...Header.text,borderWidth:0,flex:-1}}} onChange={(item) => setProjectNav(item as any)}/>
@@ -663,16 +663,16 @@ export default function ProjectScreen() {
                                             <ProjectOverview data={pageData.Overview} styles={DefinedStyles} />
                                         </View>
                                         <View key={1} style={{height:projectPageHeight,width:'100%'}}>
-                                            <ProjectList data={pageData.Projects} styles={DefinedStyles} HandleSelect={SelectProject} />
+                                            <ProjectList data={pageData.Projects} styles={DefinedStyles} HandleSelect={SelectProject} scheme={ColorScheme??'light'} />
                                         </View>
                                         <View key={2} style={{height:projectPageHeight,width:'100%'}}>
-                                            <ProjectDetails tab={TabList[2]} data={pageData.Invoices} styles={DefinedStyles} HandleSelect={(item:any) => {}} />
+                                            <ProjectDetails tab={TabList[2]} data={pageData.Invoices} styles={DefinedStyles} HandleSelect={(item:any) => {}} scheme={ColorScheme??'light'}/>
                                         </View>
                                         <View key={3} style={{height:projectPageHeight,width:'100%'}}>
-                                            <ProjectDetails tab={TabList[3]} data={pageData.Expenses} styles={DefinedStyles} HandleSelect={(item:any) => {}} />
+                                            <ProjectDetails tab={TabList[3]} data={pageData.Expenses} styles={DefinedStyles} HandleSelect={(item:any) => {}} scheme={ColorScheme??'light'}/>
                                         </View>
                                         <View key={4} style={{height:projectPageHeight,width:'100%'}}>
-                                            <ProjectDetails tab={TabList[4]} data={pageData.Time} styles={DefinedStyles} HandleSelect={(item:any) => {}} />
+                                            <ProjectDetails tab={TabList[4]} data={pageData.Time} styles={DefinedStyles} HandleSelect={(item:any) => {}} scheme={ColorScheme??'light'}/>
                                         </View>
                             </ScrollView>
                         </View>

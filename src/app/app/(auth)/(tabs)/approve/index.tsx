@@ -3,11 +3,12 @@ import { View, Text, TouchableOpacity, FlatList, Alert,Linking} from 'react-nati
 import { useMemo} from 'react';
 import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; 
-import { useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,MainPage,NoRecords,SearchField,ProperCase,NumberComma} from '@/services'; // 👈 update path
-import {useThemedStyles} from '@/styles';
+import { useWebCheck,RESTLET,SERVER_URL,REACT_ENV,USER_ID,MainPage,NoRecords,ProperCase,NumberComma} from '@/services'; // 👈 update path
+import {ThemedStyles} from '@/styles';
 import { useUser } from '@/components/User';
 import { useListPost } from '@/hooks/useListPost'
 import { GenericObject,PageProps,User,PageInfoColConfig,PageInfoRowProps,MenuOption} from '@/types';
+import { SearchField } from '@/components/SearchField';
 
 const approvals:MenuOption[] = [
   { internalid: 'timesheet', name: 'Timesheets',icon:'time-outline'},
@@ -17,17 +18,17 @@ const approvals:MenuOption[] = [
   { internalid: 'lost', name: 'Lost Clients',icon:'reader-outline'},
 ];
 
-function MainScreen() {
+function MainScreen({scheme}:{scheme:'light'|'dark'|undefined}) {
   return (
-    <MainPage redirect="approve" pages={approvals} title="Approve"/>
+    <MainPage redirect="approve" pages={approvals} title="Approve" scheme={scheme}/>
   );
 };
 
-function ApprovalCategoryScreen({ category,user,BaseObj}:PageProps) {
+function ApprovalCategoryScreen({ category,user,BaseObj,scheme}:PageProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isWeb = useWebCheck(); // Only "true web" if wide
-  const {Form,Listing,Page,Header,Theme,CategoryButton} = useThemedStyles()
+  const {Form,Listing,Page,Header,Theme,CategoryButton} = ThemedStyles(scheme)
   
 
   const { list, displayList,loading, search,setSearch,LoadMore,expandedKeys,HandleExpand,HandleSelect,selectedKeys,HandleSelectAll,selectAll,HandleAction,LoadAll} = useListPost(((category ?? 'index') === 'index') ? 
@@ -101,7 +102,7 @@ function ApprovalCategoryScreen({ category,user,BaseObj}:PageProps) {
 
   if (!category || category == 'index') {
     return (
-      <MainScreen />
+      <MainScreen scheme={scheme}/>
     );
   }
 
@@ -127,7 +128,7 @@ function ApprovalCategoryScreen({ category,user,BaseObj}:PageProps) {
           {list.length > 0 ? (
             <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1}}>
               {/*Search*/}
-              <View style={{marginLeft:50,marginRight:50}}><SearchField def={search} onChange={setSearch} /></View>
+              <View style={{marginLeft:50,marginRight:50}}><SearchField def={search} onChange={setSearch} scheme={scheme}/></View>
               
               <FlatList
                 style={[Form.container]}
@@ -165,7 +166,7 @@ function ApprovalCategoryScreen({ category,user,BaseObj}:PageProps) {
 
             </View>
           ):(
-            !loading && <NoRecords/>
+            !loading && <NoRecords scheme={scheme}/>
           )}
           </>
           
@@ -176,11 +177,11 @@ function ApprovalCategoryScreen({ category,user,BaseObj}:PageProps) {
 
 export default function ApproveTransactionsScreen() {
   const { category } = useLocalSearchParams();
-  const { user,BaseObj} = useUser(); // ✅ Pull from context
+  const { user,BaseObj,ColorScheme} = useUser(); // ✅ Pull from context
   
   if (!category) {
-    return <MainScreen />;
+    return <MainScreen scheme={ColorScheme??'light'} />;
   }
-  return <ApprovalCategoryScreen category={category as string} user={user as User} BaseObj={BaseObj as GenericObject} />;
+  return <ApprovalCategoryScreen category={category as string} user={user as User} BaseObj={BaseObj as GenericObject} scheme={ColorScheme??'light'} />;
 }
  

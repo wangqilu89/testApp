@@ -4,12 +4,9 @@ import { GenericObject } from '@/types';
 
 
 
-export const useThemedStyles = () => {
+export const ThemedStyles = (scheme?:'light'|'dark') => {
   
-  const colorScheme = useColorScheme();
-  const Theme = Colors[colorScheme ?? 'light']
-  
-
+  const Theme = Colors[scheme??'light']
   const StatusColors:GenericObject = {
       /* 
     0 -> Open

@@ -5,7 +5,7 @@ export interface PageProps {
     BaseObj:GenericObject,
     category?:string,
     id?:string,
-    
+    scheme:'light'|'dark'|undefined
 }
 
 export interface PageInfoRowProps {

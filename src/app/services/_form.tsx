@@ -1,48 +1,44 @@
-import { ScrollView,View, Text, TextInput,TouchableOpacity,ViewStyle,TextStyle,StyleSheet} from 'react-native';
-import DateTimePicker from 'react-native-ui-datepicker';
+import { ScrollView,View, Text, TextInput,TouchableOpacity,ViewStyle,TextStyle} from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; 
 import Modal from "react-native-modal";
 import { useState,useMemo,useEffect,useCallback} from 'react';
 import {defaultDropProps,DropdownMenu } from '@/components/DropdownMenu';
-import { AttachmentField} from '@/services'; 
-import {useThemedStyles} from '@/styles';
+import { AttachmentField } from '@/components/AttachmentField';
+import {ThemedStyles} from '@/styles';
 import debounce from 'lodash.debounce';
 import isEqual from 'lodash/isEqual';
-
 import { KeyStyles,GenericObject,DropdownMenuProps} from '@/types';
+import { DatePicker } from '@/components/DatePicker';
 
-const addOpacity = (hex: string, opacity: number) => {
-    const alpha = Math.round(opacity * 255).toString(16).padStart(2, '0');
-    return hex + alpha;
-};
-const FormContainer = ({children,AddStyle}:{children: React.ReactNode,AddStyle?:KeyStyles}) => {
-    const {Form} = useThemedStyles();
+
+const FormContainer = ({children,AddStyle,scheme}:{children: React.ReactNode,AddStyle?:KeyStyles,scheme:'light'|'dark'|undefined}) => {
+    const {Form} = ThemedStyles(scheme??'light')
     return (
         <ScrollView style={[Form.container,AddStyle?.StyleContainer]} contentContainerStyle={{flex:1,alignItems: 'flex-start',maxWidth:600}}>{children}</ScrollView>
     )
 };
-const FormRow = ({styles,children}:{styles?: ViewStyle,children: React.ReactNode }) => {
-    const {Form} = useThemedStyles();
+const FormRow = ({children,AddStyle,scheme}:{children: React.ReactNode,AddStyle?: ViewStyle,scheme:'light'|'dark'|undefined}) => {
+    const {Form} = ThemedStyles(scheme??'light');
     return (
-        <View style={[Form.rowContainer,styles]}>{children}</View>
+        <View style={[Form.rowContainer,AddStyle]}>{children}</View>
     )
 }
-const FormLabel = ({label,mandatory=false,styles}:{label?:string,mandatory?:boolean,styles?:TextStyle}) => {
-    const {Form} = useThemedStyles();
+const FormLabel = ({label,mandatory=false,AddStyle,scheme}:{label?:string,mandatory?:boolean,AddStyle?:TextStyle,scheme:'light'|'dark'|undefined}) => {
+    const {Form} = ThemedStyles(scheme??'light');
     return (
-        <Text style={[Form.label,styles,{paddingTop:15,paddingBottom:15}]}>{label + ' '}{mandatory && <Text style={{ color: 'red' }}>*</Text>}</Text>
+        <Text style={[Form.label,AddStyle,{paddingTop:15,paddingBottom:15}]}>{label + ' '}{mandatory && <Text style={{ color: 'red' }}>*</Text>}</Text>
     )
 }
-const FormCommon = ({label,mandatory=false,children,AddStyle}:{label?:string,mandatory?:boolean,children?:React.ReactNode,AddStyle?:KeyStyles}) => {
+const FormCommon = ({label,mandatory=false,children,AddStyle,scheme}:{label?:string,mandatory?:boolean,children?:React.ReactNode,AddStyle?:KeyStyles,scheme:'light'|'dark'|undefined}) => {
     return (
-        <FormRow styles={AddStyle?.StyleRow}>
-            <FormLabel mandatory={mandatory} label={label} styles={AddStyle?.StyleLabel}/>
+        <FormRow AddStyle={AddStyle?.StyleRow} scheme={scheme}>
+            <FormLabel mandatory={mandatory} label={label} AddStyle={AddStyle?.StyleLabel} scheme={scheme}/>
             {children}
         </FormRow>
     )
 }
-const FormTextInput = ({label,mandatory,def,disabled=false,onChange = () => {},AddStyle}:{mandatory?:boolean,label?:string,disabled?:boolean,def?:string,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
-    const {Form} = useThemedStyles();
+const FormTextInput = ({label,mandatory,def,disabled=false,onChange = () => {},AddStyle,scheme}:{mandatory?:boolean,label?:string,disabled?:boolean,def?:string,onChange?: (item: string) => void,AddStyle?:KeyStyles,scheme:'light'|'dark'|undefined}) => {
+    const {Form} = ThemedStyles(scheme??'light');
     const [temp,setTemp] = useState(def);
     const debouncedOnChange = useMemo(() => debounce(onChange, 500), [onChange]);
     const handleChange = (text:string) => {
@@ -51,24 +47,24 @@ const FormTextInput = ({label,mandatory,def,disabled=false,onChange = () => {},A
     };
     
     return (
-        <FormCommon mandatory={mandatory} label={label} AddStyle={AddStyle}>
+        <FormCommon mandatory={mandatory} label={label} AddStyle={AddStyle} scheme={scheme}>
             <View style={{height:'100%',flex:1}}>
             <TextInput editable={!disabled}  keyboardType="default" onChangeText={handleChange} value={temp} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
             </View>
         </FormCommon>
     )
 }
-const FormAttachFile = ({label,mandatory,def,disabled=false,onChange = () => {},AddStyle}:{label?:string,mandatory?:boolean,def?:{uri: string,name: string,type: string},disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
+const FormAttachFile = ({label,mandatory,def,disabled=false,onChange = () => {},AddStyle,scheme}:{label?:string,mandatory?:boolean,def?:{uri: string,name: string,type: string},disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles,scheme:'light'|'dark'|undefined}) => {
     
     return (
-        <FormCommon label={label} mandatory={mandatory} AddStyle={AddStyle}>
-            <AttachmentField disabled={disabled} defaultValue={def} onChange={onChange} style={AddStyle?.StyleInput}/>
+        <FormCommon label={label} mandatory={mandatory} AddStyle={AddStyle} scheme={scheme}>
+            <AttachmentField disabled={disabled} defaultValue={def} onChange={onChange} style={AddStyle?.StyleInput} scheme={scheme}/>
         </FormCommon>
         
     )
 }
-const FormNumericInput = ({label,mandatory,def,disabled = false,onChange = () => {},AddStyle}:{label?:string,mandatory?:boolean,def?:string,disabled?:boolean,onChange?: (item: string) => void,AddStyle?:KeyStyles}) => {
-    const {Form} = useThemedStyles();
+const FormNumericInput = ({label,mandatory,def,disabled = false,onChange = () => {},AddStyle,scheme}:{label?:string,mandatory?:boolean,def?:string,disabled?:boolean,onChange?: (item: string) => void,AddStyle?:KeyStyles,scheme:'light'|'dark'|undefined}) => {
+    const {Form} = ThemedStyles(scheme??'light');
     const [temp,setTemp] = useState(def)
     const debouncedOnChange = useMemo(() => debounce(onChange, 500), [onChange]);
     
@@ -80,7 +76,7 @@ const FormNumericInput = ({label,mandatory,def,disabled = false,onChange = () =>
         
     };
     return (
-        <FormCommon label={label} mandatory={mandatory} AddStyle={AddStyle}>
+        <FormCommon label={label} mandatory={mandatory} AddStyle={AddStyle} scheme={scheme}>
             <View style={{height:'100%',flex:1}}>
             <TextInput editable={!disabled} selectTextOnFocus={!disabled} inputMode="decimal" value={temp} onChangeText={handleChange} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
             </View>
@@ -88,14 +84,11 @@ const FormNumericInput = ({label,mandatory,def,disabled = false,onChange = () =>
     )
 }
 
-const FormDateInput = ({label = 'Date',mandatory,def={date:new Date(),startDate:new Date(),endDate:new Date()},mode="single",disabled = false,onChange = () => {},AddStyle}:{label?:string,mandatory?:boolean,def?:GenericObject,mode?:"single"|"range"|"multiple",disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles}) => {
+const FormDateInput = ({label = 'Date',mandatory,def={date:new Date(),startDate:new Date(),endDate:new Date()},mode="single",disabled = false,onChange = () => {},AddStyle,scheme}:{label?:string,mandatory?:boolean,def?:GenericObject,mode?:"single"|"range"|"multiple",disabled?:boolean,onChange?: (item: any) => void,AddStyle?:KeyStyles,scheme:'light'|'dark'|undefined}) => {
 
-    const {Form} = useThemedStyles();
+    const {Form,Theme} = ThemedStyles(scheme);
     const [showDate, setShowDate] = useState(false);
-    const [temp,setTemp] = useState<GenericObject>({})
-    const {Theme} = useThemedStyles();
-    
-    
+    const [temp,setTemp] = useState<GenericObject>({})    
     const HandleChange = (selected:GenericObject,addFunction?:(item: any) => void) => {
         const updated = { ...temp, ...selected };
         if (!isEqual(updated,temp)) {
@@ -108,22 +101,7 @@ const FormDateInput = ({label = 'Date',mandatory,def={date:new Date(),startDate:
         onChange?.(item);
         setShowDate(false);
     }
-    const Components = {
-        IconNext:<Ionicons name='chevron-forward' style={{fontSize:30,color:Theme.background}}/>,
-        IconPrev:<Ionicons name='chevron-back' style={{fontSize:30,color:Theme.background}}/>
-    }
-    const DateStyles = StyleSheet.create({
-        
-        selected: {backgroundColor:addOpacity(Theme.mooreReverse,0.5)},
-        range_start:{backgroundColor:addOpacity(Theme.mooreReverse,0.5)},
-        range_end:{backgroundColor:addOpacity(Theme.mooreReverse,0.5)},
-        range_middle:{backgroundColor:addOpacity(Theme.mooreReverse,0.2)},
-        
-        month_selector_label:{fontSize:20,color:Theme.background},
-        year_selector_label:{fontSize:20,color:Theme.background},
-        weekday:{borderBottomWidth:1,borderColor:Theme.mooreReverse},
-        weekday_label:{fontWeight:'bold',color:Theme.background}
-    })
+
 
     useEffect(() => {
         setTemp((prev) => {
@@ -133,7 +111,7 @@ const FormDateInput = ({label = 'Date',mandatory,def={date:new Date(),startDate:
     },[def])
 
     return (
-        <FormCommon mandatory={mandatory} label={label} AddStyle={AddStyle}>
+        <FormCommon mandatory={mandatory} label={label} AddStyle={AddStyle} scheme={scheme}>
             <TouchableOpacity disabled={disabled} style={[AddStyle?.StyleInput,{flex:1,borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]} onPress={() => setShowDate(true)} >
                  <Text style={[Form.input,AddStyle?.StyleInput]}>{temp.date?.toISOString().split('T')[0]??''}</Text>
             </TouchableOpacity>
@@ -142,12 +120,17 @@ const FormDateInput = ({label = 'Date',mandatory,def={date:new Date(),startDate:
                     <TouchableOpacity onPress={() => setShowDate(false)} style={{alignItems:'flex-end'}}><Ionicons name='close-outline' style={{fontSize:30}}/></TouchableOpacity>
                     
                     {mode === "single" ?
-                    (<View style={{borderRadius:10,borderWidth:1,borderColor:Theme.background,marginHorizontal:8,marginBottom:8}}>
-                        <DateTimePicker timeZone="UTC"  styles={DateStyles} components={Components} mode="single" date={def.date} onChange={(s) => {HandleChange(s,CloseDate)}}/>
+                    (<View style={{borderRadius:10,borderWidth:1,borderColor:Theme.background,marginHorizontal:'auto',marginBottom:8,justifyContent:'center',alignItems:'center'}}>
+                        <View style={{maxWidth:350}}>
+                            <DatePicker Mode='single' Dates={temp} Change={(s) => {HandleChange(s,CloseDate)}} scheme={scheme} />
+                        </View>
                      </View>):
                     (<View style={{flexDirection:'column'}}>
-                        <View style={{borderRadius:10,borderWidth:1,borderColor:Theme.background,marginHorizontal:8,marginBottom:8}}>
-                          <DateTimePicker timeZone="UTC" styles={DateStyles} components={Components} mode="range" startDate={temp.startDate} endDate={temp.endDate} onChange={(s) => {HandleChange(s)}}/>
+                        
+                        <View style={{borderRadius:10,borderWidth:1,borderColor:Theme.background,marginHorizontal:'auto',marginBottom:8,justifyContent:'center',alignItems:'center'}}>
+                        <View style={{maxWidth:350}}>
+                            <DatePicker Mode='range' Dates={temp} Change={(s) => {HandleChange(s)}} scheme={scheme} />
+                        </View>
                         </View>
                         <View style={{flex:1,marginHorizontal:8,alignItems:'center',flexDirection:'row'}}>
                             <View style={{flex:1,alignItems:'center',flexDirection:'column'}}>
@@ -168,7 +151,7 @@ const FormDateInput = ({label = 'Date',mandatory,def={date:new Date(),startDate:
                             </View>
                             
                         </View>
-                        <FormSubmit label="Ok" onPress={() => {CloseDate(temp)}}/>
+                        <FormSubmit label="Ok" onPress={() => {CloseDate(temp)}} scheme={scheme}/>
                      </View>
                     )
                     }
@@ -178,10 +161,11 @@ const FormDateInput = ({label = 'Date',mandatory,def={date:new Date(),startDate:
         </FormCommon>
     )
 }
-const FormSubmit = ({label = 'Submit',onPress = () => {},AddStyle}:{label?:string,onPress?: (item: any) => void,AddStyle?:KeyStyles}) => {
-    const {Form} = useThemedStyles();
+
+const FormSubmit = ({label = 'Submit',onPress = () => {},AddStyle,scheme}:{label?:string,onPress?: (item: any) => void,AddStyle?:KeyStyles,scheme:'light'|'dark'|undefined}) => {
+    const {Form} = ThemedStyles(scheme??'light');
     return (
-        <FormRow styles={{justifyContent:'center',...AddStyle?.StyleRow}}>
+        <FormRow AddStyle={{justifyContent:'center',...AddStyle?.StyleRow}} scheme={scheme}>
             <View style={{paddingTop:15,paddingBottom:15}}>
             <Text style={[Form.button,AddStyle?.StyleInput]} onPress={onPress}>{label}</Text>
             </View>
@@ -189,14 +173,16 @@ const FormSubmit = ({label = 'Submit',onPress = () => {},AddStyle}:{label?:strin
 
     )
 }
+
 interface FormAutoProps extends DropdownMenuProps {
-    mandatory ?:boolean
+    mandatory ?:boolean,
+    scheme:'light'|'dark'|undefined
 }
 
-const FormAutoComplete:React.FC<FormAutoProps> = (options = {}) => {
+const FormAutoComplete:React.FC<FormAutoProps> = (options = {scheme:'light'}) => {
     const finalOptions = useMemo(() => ({ ...defaultDropProps, ...options }), [options]);
     
-    const {label,def,disabled,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj,mandatory} = finalOptions;
+    const {label,def,disabled,AddStyle,Defined,searchable,SearchFunction,LoadObj,SearchObj,mandatory,scheme} = finalOptions;
     const [loadObj,setLoadObj] = useState(LoadObj)
     const onChange = useCallback((item:any) => finalOptions.onChange(item), [finalOptions.onChange]);
 
@@ -205,7 +191,7 @@ const FormAutoComplete:React.FC<FormAutoProps> = (options = {}) => {
       },[LoadObj])
 
     return (
-        <FormCommon mandatory={mandatory} label={label} AddStyle={AddStyle}>
+        <FormCommon mandatory={mandatory} label={label} AddStyle={AddStyle} scheme={scheme}>
             <DropdownMenu label={label} def={def} searchable={searchable} disabled={disabled} onChange={onChange} AddStyle={AddStyle} LoadObj={loadObj} Defined={Defined} SearchObj={SearchObj} SearchFunction={SearchFunction}/>
         </FormCommon>
     )

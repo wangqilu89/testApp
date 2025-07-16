@@ -25,3 +25,10 @@ export interface MenuOption extends GenericOption {
   details?: MenuOption[];
   icon?:string
 }
+
+export interface DatePickerProps {
+    Mode:'single'|'range',
+    Dates?:GenericObject,
+    scheme:'light'|'dark'|undefined
+    Change?:(item:any) => void
+}

@@ -1,5 +1,8 @@
+import { Platform,Dimensions } from 'react-native';
+import { useState,useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+
 const { SERVER_URL, RESTLET,REACT_ENV,USER_ID} = Constants.expoConfig?.extra || {};
 
 
@@ -70,6 +73,27 @@ const NumberPercent = (str:string|number) => {
   return NumberComma(str) + ' %'
 }
 
+const addOpacity = (hex: string, opacity: number) => {
+    const alpha = Math.round(opacity * 255).toString(16).padStart(2, '0');
+    return hex + alpha;
+};
+
+const useWebCheck = () => {
+  const getPlatformState = () => {return ((Platform.OS === 'web') &&  (Dimensions.get('window').width >= 768))}
+  const [isWeb, setIsWeb] = useState(getPlatformState());
+  useEffect(() => {
+    const updateState = () => {
+      setIsWeb(getPlatformState());
+    };
+    // Listen to window resize events
+    const subscription = Dimensions.addEventListener('change', updateState);
+    return () => subscription.remove?.(); // Remove listener cleanly
+  }, []);
+  
+  return isWeb;
+    
+}; 
+
 export {
     postFunc,
     RESTLET,
@@ -79,5 +103,7 @@ export {
     FetchData,
     ProperCase,
     NumberComma,
-    NumberPercent
+    NumberPercent,
+    addOpacity,
+    useWebCheck
 };

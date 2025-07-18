@@ -65,7 +65,7 @@ const FormAttachFile = ({label,mandatory,def,disabled=false,onChange = () => {},
 }
 const FormNumericInput = ({label,mandatory,def,disabled = false,onChange = () => {},AddStyle,scheme}:{label?:string,mandatory?:boolean,def?:string,disabled?:boolean,onChange?: (item: string) => void,AddStyle?:KeyStyles,scheme:'light'|'dark'|undefined}) => {
     const {Form} = ThemedStyles(scheme??'light');
-    const [temp,setTemp] = useState(def)
+    const [temp,setTemp] = useState('0')
     const debouncedOnChange = useMemo(() => debounce(onChange, 500), [onChange]);
     
     const handleChange = (text:string) => {
@@ -75,10 +75,13 @@ const FormNumericInput = ({label,mandatory,def,disabled = false,onChange = () =>
         debouncedOnChange(numericValue);
         
     };
+    useEffect(() => {
+       setTemp(def??'0')
+    },[def])
     return (
         <FormCommon label={label} mandatory={mandatory} AddStyle={AddStyle} scheme={scheme}>
             <View style={{height:'100%',flex:1}}>
-            <TextInput editable={!disabled} selectTextOnFocus={!disabled} inputMode="decimal" value={temp} onChangeText={handleChange} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
+                <TextInput editable={!disabled} selectTextOnFocus={!disabled} inputMode="decimal" value={temp} onChangeText={handleChange} style={[Form.input,AddStyle?.StyleInput,{borderRadius:5,borderWidth:1,paddingLeft:10,marginTop:10,paddingTop:5,marginBottom:10,paddingBottom:5}]}/>
             </View>
         </FormCommon>
     )

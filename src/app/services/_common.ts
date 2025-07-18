@@ -94,6 +94,23 @@ const useWebCheck = () => {
     
 }; 
 
+const GetWeekDates = (t:string,d:Date) => {
+  const DateStr = d.toISOString().split('T')[0] + 'T00:00:00.000Z'
+  let e = new Date(DateStr)
+  if (t == 'start') {
+    e.setDate(e.getDate() - e.getDay());
+  }
+  else if (t === 'end') {
+    e.setDate(e.getDate() - e.getDay() + 7)
+  }
+  return e
+}
+
+const DateCompare = (D1:Date,D2:Date) => {
+  return ((D1>D2)?1:((D2>D1)?2:0))
+
+}
+
 export {
     postFunc,
     RESTLET,
@@ -105,5 +122,7 @@ export {
     NumberComma,
     NumberPercent,
     addOpacity,
-    useWebCheck
+    useWebCheck,
+    GetWeekDates,
+    DateCompare
 };

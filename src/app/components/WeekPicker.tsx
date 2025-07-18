@@ -4,37 +4,34 @@ import { Ionicons } from '@expo/vector-icons';
 import { addOpacity} from '@/services'; 
 import {ThemedStyles} from '@/styles';
 import { DatePickerProps,GenericObject } from '@/types';
+import { usePrompt } from '@/components/AlertModal';
+import { DatePicker } from '@/components/DatePicker';
+import { isEqual } from 'lodash';
+import { GetWeekDates } from '@/services';
 
 
 const screenWidth = Dimensions.get('window').width;
-interface WeekPickerProps extends DatePickerProps {
-    HeaderButton?: () => void
-}
 
-export const WeekPicker:React.FC<WeekPickerProps > = React.memo(({Mode,Dates={date:new Date(),startDate:new Date(),endDate:new Date()},scheme,Change,HeaderButton}) => {
+const DaysOfWeek = ['Su','Mo','Tu','We','Th','Fr','Sa']
 
-    const DaysOfWeek = ['Su','Mo','Tu','We','Th','Fr','Sa']
-    const MonthName = ['January','February','March','April','May','June','July','August','September','October','November','December']
-    const [weekStart,setWeekStart] = useState(Dates.startDate)
-    const [selected,setSelected]  = useState(Dates.date)
+const MonthName = ['January','February','March','April','May','June','July','August','September','October','November','December']
+
+export const WeekPicker:React.FC<DatePickerProps > = React.memo(({Mode,Dates={date:new Date(),startDate:new Date(),endDate:new Date()},scheme,Change}) => {
+   
+    const [temp,setTemp] = useState(() =>
+        Object.fromEntries(
+          Object.entries(Dates).map(([key, value]) => [key, GetWeekDates('now', value as Date)])
+        )
+      );
+      
+    const {ShowPrompt,HidePrompt} = usePrompt()
     const {Theme} = ThemedStyles(scheme??'light')
-    
 
-    const DateCompare = (date1:Date,date2:Date) => {
-        date1 = new Date(date1.getFullYear(),date1.getMonth(),date1.getDate())
-        date2 = new Date(date2.getFullYear(),date2.getMonth(),date2.getDate())
-        return ((date1 > date2)?1:((date1 < date2)?2:0))
-        
-    }
     const DateStyles = StyleSheet.create({
-
         selected: {backgroundColor:addOpacity(Theme.mooreReverse,0.5)},
-
         range_fill:{backgroundColor:addOpacity(Theme.mooreReverse,0.2)},
         range_start:{backgroundColor:addOpacity(Theme.mooreReverse,0.5)},
         range_end:{backgroundColor:addOpacity(Theme.mooreReverse,0.5)},
-        
-
         month_selector_label:{fontSize:20,color:Theme.background},
         year_selector_label:{fontSize:20,color:Theme.background},
         weekday:{borderBottomWidth:1,borderColor:Theme.mooreReverse},
@@ -42,30 +39,66 @@ export const WeekPicker:React.FC<WeekPickerProps > = React.memo(({Mode,Dates={da
         outside_label:{color:'#999DA0'}
     })
 
-    const HandleChange = (item:any) => {
-        setSelected(item)
-        Change?.(item)
+
+    const UpdateTemp = (s:GenericObject) => {
+        const updated = {...temp,...s};
+        if (!isEqual(updated,temp)) {
+            setTemp(updated)
+        }
     }
-    const HandleDates = (action:string) => {
-        let refdate = new Date(weekStart);
-        refdate.setDate(refdate.getDate() + (action === 'forward'?7:-7))
-        setWeekStart(refdate)
+    
+    const CalendarChange = (s:GenericObject) => {
+        const updated = {date:s.date,startDate:GetWeekDates('start',s.date),endDate:GetWeekDates('end',s.date)};
+        
+        if (!isEqual(updated,temp)) {
+            UpdateTemp(updated)
+            HidePrompt(updated)
+        }
     }
+    
+    const DateChange = (s:GenericObject) => {
+        UpdateTemp(s)
+    }
+
+    const WeekChange = (action:string) => {
+        let start = new Date(temp.startDate);
+        let end = new Date(temp.endDate);
+        start.setDate(start.getDate() + (action === 'forward'?7:-7))
+        end.setDate(end.getDate() + (action === 'forward'?7:-7))
+        UpdateTemp({startDate:start,endDate:end})
+    }
+  
+    
+    const ShowCalendar = () => {
+        return ShowPrompt({
+          msg:(
+          <View style={{flex:1,maxWidth:350}}>
+            <DatePicker Mode='single' Dates={temp} Change={(s) => {CalendarChange(s)}} scheme={scheme} />
+          </View>
+          ),
+          icon:{visible:false,label:<></>},
+          input:{visible:false},
+          ok:{visible:false},
+          cancel:{visible:false}
+    
+        })
+    }
+
     useEffect(() => {
-        setWeekStart(Dates.startDate);
-        setSelected(Dates.date)
-    },[Dates])
+        Change?.(temp)
+    },[temp])
+
     
     return (
         <View style={{width:'100%'}}>
             <View style={{width:screenWidth}}></View>
             <View style={{width:'100%',justifyContent:'space-evenly'}}>
-                <TouchableOpacity style={{flexDirection:'row',justifyContent:'center',marginVertical:10}} onPress={() => {HeaderButton?.()}}>
+                <TouchableOpacity style={{flexDirection:'row',justifyContent:'center',marginVertical:10}} onPress={() => {ShowCalendar()}}>
                     <View style={{alignItems:'center',marginHorizontal:5}}>
-                        <Text style={[DateStyles.month_selector_label]}>{MonthName[weekStart.getMonth()]}</Text>
+                        <Text style={[DateStyles.month_selector_label]}>{MonthName[temp.startDate.getMonth()]}</Text>
                     </View>
                     <View style={{alignItems:'center',marginHorizontal:5}}>
-                        <Text style={[DateStyles.year_selector_label]}>{weekStart.getFullYear()}</Text>
+                        <Text style={[DateStyles.year_selector_label]}>{temp.startDate.getFullYear()}</Text>
                     </View>
                 </TouchableOpacity>
             </View>
@@ -77,16 +110,16 @@ export const WeekPicker:React.FC<WeekPickerProps > = React.memo(({Mode,Dates={da
                 <View style={{flex:1,alignItems:'center'}}></View>
             </View>
             <View style={{flex:1,width:'100%',flexDirection:'row'}}>
-                <TouchableOpacity style={{flex:1,justifyContent:'center',alignItems:'center'}} onPress={() => {HandleDates('backward')}} >
+                <TouchableOpacity style={{flex:1,justifyContent:'center',alignItems:'center'}} onPress={() => {WeekChange('backward')}} >
                     <Ionicons name='chevron-back' style={{fontSize:18,color:Theme.background}}/>
                 </TouchableOpacity>
                 {DaysOfWeek.map((_,index) => {
-                    let refdate = new Date(weekStart);
+                    let refdate = new Date(temp.startDate);
                     refdate.setDate(refdate.getDate() - refdate.getDay()  + index)
-                    return (<TouchableOpacity style={[{flex:1,justifyContent:'center',alignItems:'center',minHeight: 46},((DateCompare(refdate,selected) === 0)?DateStyles.selected:{})]} onPress={() => {HandleChange(refdate)}}><Text>{refdate.getDate()}</Text></TouchableOpacity>)
+                    return (<TouchableOpacity style={[{flex:1,justifyContent:'center',alignItems:'center',minHeight: 46},((isEqual(GetWeekDates('now',refdate),GetWeekDates('now',temp.date)))?DateStyles.selected:{})]} onPress={() => {DateChange({date:refdate})}}><Text>{refdate.getDate()}</Text></TouchableOpacity>)
                 }
                 )}
-                <TouchableOpacity style={{flex:1,justifyContent:'center',alignItems:'center'}} onPress={() => {HandleDates('forward')}} >
+                <TouchableOpacity style={{flex:1,justifyContent:'center',alignItems:'center'}} onPress={() => {WeekChange('forward')}} >
                     <Ionicons name='chevron-forward' style={{fontSize:18,color:Theme.background}}/>
                 </TouchableOpacity>
             </View>

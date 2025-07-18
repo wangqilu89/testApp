@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, FlatList, Linking,ScrollView, ViewStyle,Dimensions} from 'react-native';
 import { useEffect, useState,useMemo} from 'react';
 import { useRouter, usePathname} from 'expo-router';
-import { useWebCheck,FetchData,ProperCase,NumberComma} from '@/services'; // 👈 functions
+import { useWebCheck,FetchData,ProperCase,NumberComma,GetWeekDates,DateCompare} from '@/services'; // 👈 functions
 import { NoRecords,} from '@/services'; // 👈 Common Screens
 import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete,FormAttachFile} from '@/services';
 import { usePrompt } from '@/components/AlertModal';
@@ -15,280 +15,227 @@ import { WeekPicker } from '@/components/WeekPicker';
 import { useDefaultStyles as CalendarStyle } from 'react-native-ui-datepicker';
 import { isEqual } from 'lodash';
 
-
-
-const GetWeekDates = (t:string,d:Date) => {
-  let e = new Date(d)
-  if (t == 'start') {
-    e.setDate(e.getDate() - e.getDay());
-  }
-  else if (t === 'end') {
-    e.setDate(e.getDate() - e.getDay() + 7)
-  }
-  return e
+interface TimesheetProps extends PageProps {
+  date?:string
+}
+interface TimeData {
+  internalid: string,
+  date: Date;
+  project: GenericObject | null,
+  task: GenericObject | null,
+  duration: string,
+  type: GenericObject | null,
+  status: GenericObject | null,
+  memo: string
 }
 
-const TimesheetMain = ({user,BaseObj,scheme}: PageProps) =>{
+
+const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
+  
   const { Page, Header, Listing, Form, CategoryButton, Theme,StatusColors } = ThemedStyles(scheme);
-  const today = new Date();
+  const pathname = usePathname();
+  const router = useRouter();
+  const refdate = date?date:new Date().toISOString().split('T')[0]
+  const today = GetWeekDates('now',new Date(refdate + 'T00:00:00.000Z'))
   const startDate = GetWeekDates('start',today)
   const endDate  = GetWeekDates('end',today)
-  const [temp,setTemp] = useState<GenericObject>({date:today,startDate:startDate,endDate:endDate})
+  const [temp,setTemp] = useState<GenericObject>({date:today,startDate:startDate,endDate:endDate});
+ 
+  const toRefresh = useMemo(() => {return temp},[temp.startDate.getTime(),temp.endDate.getTime()])
+  const toFilter = useMemo(() => {return temp},[temp.date.getTime()])
 
-  const { ShowPrompt,HidePrompt,visibility} = usePrompt();
-  const DatePickerChange = (s:GenericObject) => {
-    const updated = {date:s.date,startDate:GetWeekDates('start',s.date),endDate:GetWeekDates('end',s.date)};
-    if (!isEqual(updated,temp)) {
-      HidePrompt(updated)
+  const { list, displayList,setSearch,UpdateLoad,LoadAll,LoadMore,expandedKeys,HandleExpand} = useListFilter({
+    LoadObj:null,
+    SearchFunction: (l, keyword) => {
+      return l.filter((i: GenericObject) =>
+        {return ((DateCompare(temp.date,temp.startDate) <= 1 && DateCompare(temp.endDate,temp.date) <= 1  )?(i.date.toLowerCase().includes(keyword)):i) }
+      );
     }
-    setTemp(updated)
-  }
-  const ShowCalendar = () => {
-    return ShowPrompt({
-      msg:(
-      <View style={{flex:1,maxWidth:350}}>
-        <DatePicker Mode='single' Dates={temp} Change={(s) => {DatePickerChange(s)}} scheme={scheme} />
-      </View>
-      ),
-      icon:{visible:false,label:<></>},
-      input:{visible:false},
-      ok:{visible:false},
-      cancel:{visible:false}
-
-    })
-  }
-
-  return (
-    <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
-      <View style={{flex:1,maxWidth:450,flexDirection:'column',minWidth:0}} >
-        <WeekPicker Mode='single' Dates={temp} scheme={scheme} Change={(s) => {setTemp((prev) => ({...prev,date:s}))}} HeaderButton={() => ShowCalendar()}/>
-      </View>
-      
-    </View>
-    
-  )
-}
-
-const SubmitTime = ({ category,id, user,BaseObj,scheme}: PageProps) => {
-
-  /*Declarations */
-  const { Page, Header, Listing, Form, ListHeader, CategoryButton, Theme } = ThemedStyles(scheme);
-  const router = useRouter();
-  const pathname = usePathname();
-  const today = new Date()
-  const isWeb = useWebCheck(); 
-  const [currentLine, setCurrentLine] = useState(0);
-  const [showLine,setShowLine]= useState(false);
-  const [claim,setClaim] = useState<{internalid:string,date:Date,document_number:string,employee:GenericObject,line:GenericObject[]}>({internalid:'',date:today,document_number:'To Be Generated',employee:{},line:[]});
-  const [line,setLine] = useState<LineItem>({number:'0',date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:claim.internalid + '.0',project:null,task:null,category:null,memo:'',val_amount:'0',file:null});
-  const [lineTask,setLineTask] = useState<GenericObject|null>(null);
-  const memoTask = useMemo(() => line, [line.project]);
-
-  
-  const { ShowLoading,HideLoading} = usePrompt();
-  
-  
+  });
+ 
   const COLUMN_CONFIG: PageInfoColConfig=[
-    {internalid:'number'},
-    {internalid:'expense_date'},
-    {internalid:'project'},
-    {internalid:'val_amount',value:{handle:NumberComma}}
+    {internalid:'name',name:'Project'},
+    {internalid:'task',name:'Project Task'},
+    {internalid:'date'},
+    {internalid:'status'},
+    {internalid:'val_duration',value:{handle:NumberComma}}
   ]
 
-  const DefaultLine:LineItem = {number:'0',date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:claim.internalid + '.0',project:null,task:null,category:null,memo:'',val_amount:'0',file:null}
-  /* Props */
-  interface LineItem {
-    number: string,
-    expense_date:string,
-    date: Date,
-    internalid: string,
-    project: GenericObject|null,
-    task:GenericObject|null,
-    category: GenericObject|null,
-    memo: string,
-    val_amount: string,
-    file: any
-  };
-  
-  interface ColProps extends Omit<PageInfoRowProps,'columns'> {
-    'columns': PageInfoColProps
-  }
-
-  /* Functions */
-  const updateLine = (key:keyof typeof line,value: any) => {
-    setLine((prev) => {
-      return {...prev, [key]: value }
-    })
-  }
-  const updateMain = (key:keyof typeof claim,value: any) => {
-    setClaim((prev) => {
-      return {...prev, [key]: value }
-    })
-    
-  }
-  const loadData = async (id:string|undefined) => {
-    ShowLoading({msg:'Loading List...'})
-    try {
-      let data = null
-      let lineNo = 0
-      if (id != '0') {
-        data = await FetchData({...BaseObj,command:`HR : Get Expense Report`,data:{internalid:id}})
-      }
-      if (data) {
-        
-        data = data[0]
-        let refDate = data.date.split('/')
-        data.date = new Date(refDate[2],parseInt(refDate[1]) - 1,refDate[0])
-        data.line.forEach(function (i:GenericObject) {
-          i.expense_date = i.date
-          refDate = i.date.split('/')
-          i.date = new Date(refDate[2],parseInt(refDate[1]) - 1,refDate[0])
-          lineNo = parseInt(i.number)
-        })
-        
-      }
-      else {
-        data = {internalid:'0',date:today,document_number:'To be Generated',employee:{id:BaseObj.user,name:user?.name},line:[]}
-        lineNo += 1
-      }
-      
-      setClaim(data)
-      setCurrentLine(lineNo)
-      
-    } 
-    catch (err) {
-      console.error(`Failed to fetch ${category} :`, err);
-    } 
-    finally {
-      HideLoading({confirmed: true, value: ''})
-    }
-  };
-  const submitLine = (item:LineItem) => {
-      const refDate = item.date;
-      item.expense_date = refDate.getDate() + '/' + (refDate.getMonth() + 1) + '/' + refDate.getFullYear();
-      setClaim((prev) => {
-        const existingIndex = prev.line.findIndex(i => i.number === item.number);
-        let updatedLine;
-        if (existingIndex === -1) {
-          // Add new
-          updatedLine = [...prev.line, item];
-          setCurrentLine(currentLine + 1)
-        } 
-        else {
-          updatedLine = [...prev.line];
-          updatedLine[existingIndex] = { ...updatedLine[existingIndex], ...item };
-        }
-    
-        return { ...prev, line: updatedLine };
-    
-      })
-      
-  }
-  
-  /* Node Functions */
-  const ColInfo = ({columns,index,item}: ColProps) => {
+  const RowInfo = ({expanded,item,columns}:PageInfoRowProps) => {
+    const newCol = useMemo(() => {
+      return Array.isArray(columns)?
+         ((columns.length > 3 && !expanded)?
+          [...columns.slice(0, 3), ...columns.slice(-1)]:
+          columns.slice())
+         :[];
+    }, [expanded, columns]);
     return (
-        <View key={index} style={{flex:1,flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
-            <View style={[{width:150},columns?.format?.StyleContainer]}>
-              <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'},columns?.format?.StyleLabel]}>
-                {columns?.name??ProperCase(columns.internalid.replace('val_',''))}
-              </Text>
-            </View>
-            <View style={{flex:1}}>
-                <Text numberOfLines={1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>
-                  {columns?.value?.handle?columns.value.handle((typeof item[columns.internalid] === 'object')
-                     ?(item[columns.internalid]['name']??''):(item[columns.internalid]??''))
-                     :(typeof item[columns.internalid] === 'object')?(item[columns.internalid]['name']??''):(item[columns.internalid]??'')
-                  }
-                </Text>
-              </View>
-        </View>
-    )
-  }
-  const RowInfo = ({item,columns}:PageInfoRowProps) => {
-    return (
-      <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
-        <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:30,marginRight:30}} onPress={() => {setLine(item as LineItem);setShowLine(true)}}>
-            {Array.isArray(columns)?
-              columns.map((colName, index) => (
-                <ColInfo columns={colName} index={index} item={item}/>
-              )):<></>
-          }
+      <View style={{backgroundColor:'white',flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+        <TouchableOpacity style={{flexDirection:'column',flex:1}} onPress={() => {return router.replace({ pathname:pathname as any,params: {category: 'submit-time',id:item.internalid,date:item.date} })} }>
+            {newCol.map((colName, index) => (
+                <View key={index} style={{flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index === 0?1:0}}>
+                  <View style={{width:150}}>
+                    <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'}]}>
+                      {colName?.name??ProperCase(colName.internalid.replace('val_',''))}
+                    </Text>
+                  </View>
+                  <View style={{flex:1}}>
+                    <Text numberOfLines={expanded?-1:1} ellipsizeMode="tail"  style={[Listing.text,{fontSize:14}]}>
+                      {colName?.value?.handle?(colName.value.handle(item[colName.internalid] ?? '')):(item[colName.internalid] ?? '')}
+                    </Text>
+                  </View>
+                </View>
+              )
+            )}
+        </TouchableOpacity>
+        <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',height:'100%'}} onPress={() => HandleExpand(item.internalid)}>
+          <Ionicons name={expanded?"chevron-up":"chevron-down"} style={[CategoryButton.icon,Listing.text,{flex:1,fontSize:23,paddingLeft:3,paddingRight:3}]} />
         </TouchableOpacity>
       </View>
     );
   };
 
-  const ExpenseHeader = () => {
-    return (
-      <FormContainer scheme={scheme}>
-        <FormTextInput label="ID " def={claim.internalid} onChange={(text) => {updateMain('internalid', text)}} AddStyle={{StyleRow:{display:'none'}}} scheme={scheme}/>
-        <FormDateInput disabled={true} label='Date ' def={{date:claim.date}} onChange={({date})=>{updateMain('date',date)}} scheme={scheme}/>
-        <FormTextInput disabled={true} label="Document Number " key={claim.document_number} def={claim.document_number} onChange={(text) => {updateMain('document_number', text)}} scheme={scheme}/>
-        <FormAutoComplete 
-          label="Employee "  
-          def={claim.employee} 
-          searchable={false} 
-          disabled={true} 
-          onChange={(item)=>{updateMain('employee', item)}} 
-          LoadObj={{ ...BaseObj, command: "HR : Get Employee Listing",data:{keyword:BaseObj.user}}} 
-          AddStyle={{StyleInput:{flex:1,marginRight:0}}}
-          scheme={scheme}
-        />
-        
-        <FlatList
-          style={[Form.container,{paddingHorizontal:0}]}
-          data={claim.line}
-          stickyHeaderIndices={[0]}
-          ListHeaderComponent={
-                <View style={[ListHeader.container,{marginTop:20,flexDirection:'row',backgroundColor:Theme.backgroundReverse}]}>
-                    <Ionicons name="attach" style={[CategoryButton.icon,Listing.text,{flex:-1,fontSize:23,color:Theme.backgroundReverse}]} />
-                    <Text style={[ListHeader.text,{fontSize:18,flex:1}]}>Line Items</Text>
-                    <TouchableOpacity style={{flex:-1}}  onPress={() => {setLine(DefaultLine);setShowLine(true)}}>
-                      <Ionicons name="add" style={[CategoryButton.icon,Listing.text,{fontSize:23,color:Theme.textReverse}]} />     
-                    </TouchableOpacity>                     
-                </View>
-            }
-          keyExtractor={(item) => item.internalid}
-          renderItem={({ item }) => {
-            return (
-              <RowInfo item={item} columns={COLUMN_CONFIG} />
-            )
-          }}
-          
-        />
-        {claim.line.length > 0 && (<FormSubmit onPress={()=>{}} scheme={scheme}/>)}
-      </FormContainer>
-    )
-  }
-  const ExpenseLine = () => {
-    
-    const SearchFunc = (i:GenericObject[], keyword:string) => {
-      
-      return i.filter((item: GenericObject) =>
-        Object.values(item).some((val) =>
-          String(typeof val === 'object' ? val?.name ?? '' : val)
-            .toLowerCase()
-            .includes(keyword)
-        )
-      );
+
+
+  const UpdateTemp = (s:GenericObject) => {
+    const updated = {...temp,...s};
+    if (!isEqual(updated,temp)) {
+        setTemp(updated)
     }
-    return (
-      <FormContainer scheme={scheme}>
-        <FormTextInput label="ID " def={line.internalid} onChange={(text) => updateLine('internalid', text)} AddStyle={{StyleRow:{display:'none'}}} scheme={scheme}/>
-        <FormDateInput 
-           label='Date ' 
-           mandatory={true} 
-           def={{date:line.date}} 
-           onChange={({date})=>{updateLine('date',date);updateLine('expense_date',date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear())}}
-           scheme={scheme}
-        />
-        <FormAutoComplete 
+  }
+
+  useEffect(() => {
+    UpdateLoad({...BaseObj,command: 'HR : Get Timebill List',data: temp})
+  },[toRefresh])
+
+  useEffect(() => {
+    const DateStr = temp.date.getFullYear() + '-' + (temp.date.getMonth() + 1).toString().padStart(2,'0') + '-' + temp.date.getDate().toString().padStart(2,'0')  
+    setSearch(DateStr)
+  },[toFilter])
+
+  return (
+    <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
+      <View style={{maxWidth:450,flexDirection:'column',minWidth:0}} >
+        <WeekPicker Mode='single' Dates={temp} scheme={scheme} Change={(s) => {UpdateTemp(s)}} />
+      </View>
+      <View style={{flex:1,width:'100%'}}>
+        <FlatList
+                style={[Form.container]}
+                data={displayList}
+                keyExtractor={(item) => item.internalid}
+                
+                renderItem={({ item }) => {
+                  return (
+                    <RowInfo expanded={expandedKeys.includes(item.internalid)} item={item} columns={COLUMN_CONFIG} />
+                  )
+                }}
+                onEndReached={() => {
+                  if (displayList.length < list.length) {
+                    LoadMore();
+                  }
+                }}
+                onEndReachedThreshold={0.5}
+              />
+
+      </View>
+       
+    </View>
+    
+  )
+}
+
+
+const SubmitTime = ({ id='0', user,BaseObj,scheme,date}:TimesheetProps) => {
+  const DateStr = date?.split('-')??''
+  
+  const { Page, Header, Listing, Form, CategoryButton, Theme } = ThemedStyles(scheme);
+  const isWeb = useWebCheck();
+  const router = useRouter();
+  const pathname = usePathname();
+
+
+  const [data, setData] = useState<TimeData>({
+    internalid:id,
+    date:(DateStr?new Date(parseInt(DateStr[0]),parseInt(DateStr[1])-1,parseInt(DateStr[2])):new Date()),
+    project:null,
+    task:null,
+    duration:'0',
+    type:null,
+    status:null,
+    memo:''
+  });
+  const [taskLoad,setTaskLoad] = useState<GenericObject|null>(null)
+  const memoTask = useMemo(() => data, [data.project]);
+  
+  const InitData = async () => {
+    let RawData = await FetchData({ ...BaseObj, command: "HR : Get Saved Timebill",data:{internalid:id,date:date}})
+    RawData = RawData[0]
+    RawData.date = new Date(RawData.date + 'T00:00:00.000Z')
+    console.log('Raw Duration',RawData.duration)
+    setData(RawData)
+   
+  }
+
+  const UpdateData = (s:GenericObject) => {
+    const updated = {...data,...s};
+    if (!isEqual(updated,data)) {
+        setData(updated)
+    }
+    
+  };
+
+  const SearchFunc = (i:GenericObject[], keyword:string) => {
+      
+    return i.filter((item: GenericObject) =>
+      Object.values(item).some((val) =>
+        String(typeof val === 'object' ? val?.name ?? '' : val)
+          .toLowerCase()
+          .includes(keyword)
+      )
+    );
+  };
+
+  useEffect(() => {
+    setTaskLoad(data.project?{ ...BaseObj, command: "HR : Get task Listing",data:{project:data.project}}:null)
+  },[memoTask])
+
+  useEffect(()=> {
+    
+    if (id != '0') {
+      InitData()
+
+    }
+  },[])
+  
+  return (
+    <>
+    {!isWeb && (
+      <View style={[Header.container,{flexDirection:'row'}]}>
+          <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any,params: { category: 'timesheet',date:date} })}>
+              <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+          </TouchableOpacity>
+          <Text style={[Header.text,{flex:1,width:'auto'}]}>{id == '0'?'Create':'Update'} Time</Text>
+          <TouchableOpacity disabled={true} style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({ pathname:pathname as any,params: { category: 'submit-leave' } })}>
+              <Ionicons name="add" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30,color:Theme.background}]} />
+          </TouchableOpacity>
+      </View>
+    )}
+    <FormContainer scheme={scheme}>
+      <FormDateInput 
+        mode="single"
+        disabled={true}
+        mandatory={true} 
+        label="Start Date" 
+        def={{ date: data.date}}
+        onChange={({date}) => { UpdateData({date:GetWeekDates('now',date)}) }} 
+        scheme={scheme}
+      />
+      <FormAutoComplete 
            label="Project "  
            mandatory={true} 
-           def={line.project??{}} 
+           def={data.project??{}} 
            searchable={true} 
-           onChange={(item)=>{updateLine('project',item);updateLine('task',null)}} 
+           onChange={(item)=>{ UpdateData({project:item});UpdateData({task:null});}} 
            SearchObj={{ ...BaseObj, command: "HR : Get Project Listing" }}
            AddStyle={{StyleInput:{flex:1,marginRight:0}}}
            scheme={scheme}
@@ -296,72 +243,65 @@ const SubmitTime = ({ category,id, user,BaseObj,scheme}: PageProps) => {
         <FormAutoComplete 
            label="Task "  
            mandatory={true} 
-           def={line.task??{}} 
+           def={data.task??{}} 
            searchable={true} 
-           onChange={(item)=>{updateLine('task',item)}} 
+           onChange={(item)=>{UpdateData({task:item})}} 
            SearchFunction={SearchFunc} 
-           LoadObj={lineTask} 
+           LoadObj={taskLoad} 
            AddStyle={{StyleInput:{flex:1,marginRight:0}}}
            scheme={scheme}
         />
         <FormAutoComplete 
-           label="Category "  
+           label="Type " 
+           AddStyle={{StyleInput:{marginRight:0,flex:1}}} 
            mandatory={true} 
-           def={line.category??{}} 
-           searchable={true} 
-           onChange={(item)=>{updateLine('category',item)}}  
-           SearchObj={{ ...BaseObj, command: "HR : Get Category Listing" }} 
-           AddStyle={{StyleInput:{flex:1,marginRight:0}}}
+           def={data.type??{internalid:'1',name:'Regular'}} 
+           searchable={false} 
+           onChange={(item) => UpdateData({type:item})} 
+           Defined={[{internalid:'1',name:'Regular'}, {internalid:'2',name:'Over Time'}]} 
            scheme={scheme}
          />
-        <FormTextInput label="Memo " mandatory={true} def={line.memo} onChange={(text) => updateLine('memo', text)} scheme={scheme}/>
-        <FormNumericInput label="Value " mandatory={true} def={line.val_amount} onChange={(text) => updateLine('val_amount', text)} scheme={scheme} />
-        <FormAttachFile label="Attach File " def={line.file} onChange={(file) => {updateLine('file',file)}} scheme={scheme} />
-        <View style={{flex:1}} />
-        <FormSubmit label={currentLine == parseInt(line.number)?'Add':'Update'} onPress={()=>{submitLine(line);setShowLine(false);}} scheme={scheme}/>
-      </FormContainer>
-    )
-  }
-
-  useEffect(() => {
-    setLineTask(line.project?{ ...BaseObj, command: "HR : Get task Listing",data:{project:line.project}}:null)
-  },[memoTask])
-
-  useEffect(() => {
-      loadData(id);
-  }, [id]);
-
-  return (
-      <View style={[Page.container]}>
-            {!isWeb ? (
-              <>
-              <View style={[Header.container,{flexDirection:'row'}]}>
-                  <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {if (showLine) {setLine(DefaultLine);setShowLine(false);} else {router.replace({pathname:pathname as any})}}}>
-                      <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
-                  </TouchableOpacity>
-                  <Text style={[Header.text,{flex:1,width:'auto'}]}> {showLine ? ('Line : ' + line.number) : 'Expense Claim'}</Text>
-              </View>
-              {showLine ? (<ExpenseLine />):(<ExpenseHeader />)}
-              </>
-            ) : (
-              <View style={{flexDirection:'column'}}>
-                <ExpenseHeader />
-                {showLine && (<ExpenseLine />)}
-              </View>
-            )
-            
-            
-            }
-      </View>
-  )
+        <FormAutoComplete 
+           label="Status " 
+           AddStyle={{StyleInput:{marginRight:0,flex:1}}} 
+           mandatory={true} 
+           def={data.status??{internalid:'1',name:'Regular'}} 
+           searchable={false} 
+           onChange={(item) => UpdateData({type:item})} 
+           LoadObj={{ ...BaseObj, command: "HR : Get Time Status List" }}
+           scheme={scheme}
+         />
+        <FormNumericInput 
+            label="Duration " 
+            mandatory={true} 
+            def={data.duration} 
+            onChange={(text) => UpdateData({duration:text})} 
+            scheme={scheme} 
+        />
+        <FormTextInput 
+            label="Memo" 
+            mandatory={true} 
+            key={data.memo} 
+            def={data.memo} 
+            onChange={(text) => UpdateData({memo:text})} 
+            scheme={scheme} 
+        />
+      <View style={{flex:1}} />
+      <FormSubmit onPress={()=>{}} scheme={scheme}/>
+    </FormContainer>
+    </>
+  );
+  
 }
 
-export const Timesheet = ({ category, id, user,BaseObj,scheme}: PageProps) => {
+
+
+export const Timesheet = ({ category, id, user,BaseObj,scheme,date}: TimesheetProps) => {
 
   switch (category) {
-    case 'submit-timesheet':
-        return <SubmitTime category={category} id={id} user={user} BaseObj={BaseObj} scheme={scheme??'light'} />
+    case 'submit-time':
+        return <SubmitTime category={category} id={id} user={user} BaseObj={BaseObj} scheme={scheme??'light'} date={date} />
     default :
-        return <TimesheetMain user={user} BaseObj={BaseObj} scheme={scheme??'light'}  />
+        return <TimesheetMain user={user} BaseObj={BaseObj} scheme={scheme??'light'} date={date} />
   }
 }

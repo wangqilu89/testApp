@@ -33,7 +33,7 @@ function DocumentView({url,doc,scheme}:{url:string,doc:string,scheme:'light'|'da
 }
 
 export default function HRScreen() {
-    const {category,id = '0',url = '',doc = ''} = useLocalSearchParams<Partial<{ category: string; id: string; url: string; doc: string }>>();
+    const {category,id = '0',url = '',doc = '',date = ''} = useLocalSearchParams<Partial<{ category: string; id: string; url: string; doc: string,date:string}>>();
     const { user,BaseObj,ColorScheme} = useUser(); // ✅ Pull from context
     
     switch (category){
@@ -51,7 +51,8 @@ export default function HRScreen() {
         case 'payslip'  :
             return <PaySlip category={category} user={user} BaseObj={BaseObj as GenericObject} scheme={ColorScheme??'light'}/>;
         case 'timesheet':
-            return <Timesheet category={category} id={id} user={user as User} BaseObj={BaseObj as GenericObject} scheme={ColorScheme??'light'}/>;
+        case 'submit-time':
+            return <Timesheet category={category} id={id} user={user as User} BaseObj={BaseObj as GenericObject} date={date} scheme={ColorScheme??'light'}/>;
         default:
             return <MainScreen scheme={ColorScheme??'light'}/>;
     }

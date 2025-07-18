@@ -25,7 +25,6 @@ const useListFilter = ( options: UseListFilterOptions) => {
       return null
     }
   }, [search]);
-
   
   
   const LoadMore = () => {

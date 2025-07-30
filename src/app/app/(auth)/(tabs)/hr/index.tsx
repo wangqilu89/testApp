@@ -33,7 +33,7 @@ function DocumentView({url,doc,scheme}:{url:string,doc:string,scheme:'light'|'da
 }
 
 export default function HRScreen() {
-    const {category,id = '0',url = '',doc = '',date = ''} = useLocalSearchParams<Partial<{ category: string; id: string; url: string; doc: string,date:string}>>();
+    const {category,id = '0',url = '',doc = '',date = '',leave=''} = useLocalSearchParams<Partial<{ category: string; id: string; url: string; doc: string,date:string,leave:string}>>();
     const { user,BaseObj,ColorScheme} = useUser(); // ✅ Pull from context
     
     switch (category){
@@ -46,7 +46,7 @@ export default function HRScreen() {
         
         case 'leave' :
         case 'submit-leave':
-          return <Leave category={category} id={id} user={user} BaseObj={BaseObj as GenericObject} scheme={ColorScheme??'light'}/>;
+          return <Leave category={category} id={id} user={user} BaseObj={BaseObj as GenericObject} leave={leave} scheme={ColorScheme??'light'}/>;
 
         case 'payslip'  :
             return <PaySlip category={category} user={user} BaseObj={BaseObj as GenericObject} scheme={ColorScheme??'light'}/>;

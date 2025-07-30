@@ -1,7 +1,7 @@
 
 import { View, Text, TouchableOpacity, FlatList} from 'react-native';
 
-import { useEffect, useState,useMemo} from 'react';
+import { useEffect, useState,useMemo,useRef} from 'react';
 import { useRouter, usePathname} from 'expo-router';
 import { useWebCheck,FetchData,ProperCase,NumberComma} from '@/services'; // 👈 functions
 
@@ -14,8 +14,13 @@ import { Ionicons } from '@expo/vector-icons';
 import {ThemedStyles} from '@/styles';
 import { GenericObject,PageInfoColConfig,PageInfoRowProps} from '@/types';  
 import { SearchField } from '@/components/SearchField';
+import { PageProps } from '@/types';
   
-  const LeaveMain = ({user,BaseObj,scheme}: { user: GenericObject | null,BaseObj:GenericObject,scheme:'light'|'dark'}) => {
+  interface LeaveProps extends PageProps {
+    leave?:string
+    today?:Date
+  }
+  const LeaveMain = ({user,BaseObj,scheme}: LeaveProps) => {
     const {Page,Header,CategoryButton,Theme} = ThemedStyles(scheme);
     const pathname = usePathname();
     const router = useRouter();
@@ -57,11 +62,12 @@ import { SearchField } from '@/components/SearchField';
     )
   }
   
-  const LeaveMainBal = ({user,today,BaseObj,scheme}: { user: GenericObject | null;today:Date,BaseObj:GenericObject,scheme:'light'|'dark'}) => {
+  const LeaveMainBal = ({user,today,BaseObj,scheme}: LeaveProps) => {
     const { Listing, Form,Theme } = ThemedStyles(scheme);
-    
+    const pathname = usePathname();
+    const router = useRouter();
       
-    const { list} = useListFilter({LoadObj:{...BaseObj,data:{date:today.getFullYear()},command: "HR : Get Leave balance" }});
+    const { list} = useListFilter({LoadObj:{...BaseObj,data:{date:today!.getFullYear()},command: "HR : Get Leave balance" }});
   
     return (
       <View style={{flexDirection:'column',width:'100%',maxWidth:600,flex: 1,marginTop:20}}>
@@ -73,10 +79,10 @@ import { SearchField } from '@/components/SearchField';
           renderItem={({ item }) => {
               return (
                 <View style={{backgroundColor:Theme.containerBackground,flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:8,marginBottom:8,padding:15}}>
-                  <TouchableOpacity style={{flexDirection:'column',alignItems:'flex-start',flex:1,paddingLeft:30}} onPress={() => {}}>
+                  <TouchableOpacity style={{flexDirection:'column',alignItems:'flex-start',flex:1,paddingLeft:30}} onPress={() => {router.replace({pathname:pathname as any,params: {category: 'submit-leave',leave:item.internalid}})}}>
                     <Text style={[Listing.text,{fontSize: 20}]}>{item.name}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1}} onPress={() => {}}>
+                  <TouchableOpacity style={{flexDirection:'row',alignItems:'flex-start',flex:-1}} onPress={() => {router.replace({pathname:pathname as any,params: {category: 'submit-leave',leave:item.internalid}})}}>
                       <Text style={[Listing.text,{fontFamily: 'Righteous_400Regular', fontSize: 20}]}>{item.balance}</Text>
                   </TouchableOpacity>
                       
@@ -91,12 +97,12 @@ import { SearchField } from '@/components/SearchField';
   
   }
   
-  const LeaveMainApply =  ({user,today,BaseObj,scheme}: { user: GenericObject | null;today:Date,BaseObj:GenericObject,scheme:'light'|'dark'}) => {
+  const LeaveMainApply =  ({user,today,BaseObj,scheme}:LeaveProps) => {
     const {Listing,Form,CategoryButton,Theme,StatusColors} = ThemedStyles(scheme);
    
   
     const {list,displayList,expandedKeys, search, setSearch, LoadMore,HandleExpand,LoadAll} = useListFilter({
-      LoadObj:{...BaseObj,data:{date:today.getFullYear()},command:'HR : Get Leave application' },
+      LoadObj:{...BaseObj,data:{date:today!.getFullYear()},command:'HR : Get Leave application' },
       SearchFunction: (i, keyword) => {
         return i.filter((item: GenericObject) =>
           Object.values(item).some((val) =>
@@ -193,13 +199,13 @@ import { SearchField } from '@/components/SearchField';
     )
   }
   
-  const ApplyLeave = ({ id, user,BaseObj,scheme}: { id: string; user: GenericObject | null,BaseObj:GenericObject,scheme:'light'|'dark' }) => {
+  const ApplyLeave = ({ id, user,BaseObj,scheme,leave}: LeaveProps) => {
     const { Page, Header, Listing, Form, CategoryButton, Theme } = ThemedStyles(scheme);
     const isWeb = useWebCheck();
     const router = useRouter();
     const pathname = usePathname();
     const { ShowPrompt } = usePrompt();
-  
+    const pageInit = useRef(true);
     
     const [year, setYear] = useState('');
     const [apply, setApply] = useState<GenericObject>({
@@ -211,7 +217,7 @@ import { SearchField } from '@/components/SearchField';
       leave: {},
       file:null
     });
-    const [loadObj, setLoadObj] = useState({...BaseObj,...({data: { date: apply.startdate.getFullYear(), shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: 'HR : Get Leave balance'})});
+    const [leaveList, setLeaveList] = useState({...BaseObj,...({data: { date: apply.startdate.getFullYear(), shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: 'HR : Get Leave balance'})});
     const [support, setSupport] = useState<{ public: GenericObject[] , working: GenericObject[] }>({
       public: [],
       working: []
@@ -292,12 +298,30 @@ import { SearchField } from '@/components/SearchField';
         const data = await FetchData(LoadObj);
         updatedList[key] = data;
       }
-      setLoadObj({...BaseObj,...({data: { date: YearStr, shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: 'HR : Get Leave balance'})});
+      setLeaveList({...BaseObj,...({data: { date: YearStr, shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: 'HR : Get Leave balance'})});
       
       setSupport(prev => ({ ...prev, ...updatedList }));
       GetLeavePeriod({ ...support, ...updatedList });
     };
-  
+    
+    const InitialLoad = async (leave:string) => {
+      
+      const YearStr = apply.startdate.getFullYear().toString();
+      
+      const LoadObj = {...BaseObj,...({data: { date: YearStr, shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: 'HR : Get Leave balance'})}
+      const data = await FetchData(LoadObj);
+      const item = data.find((i: GenericObject) => i.internalid === leave);
+      if (item) {
+        updateApply('leave', item);
+        updateApply('balance', item.balance);
+      }
+
+      setYear(YearStr);
+    }
+
+
+
+
     useEffect(() => {
       if (apply.startdate.getFullYear() !== apply.enddate.getFullYear()) {
         setSupport({ public: [], working: [] });
@@ -316,6 +340,13 @@ import { SearchField } from '@/components/SearchField';
       GetSupport()
     },[year])
   
+    useEffect(() => {
+      if (pageInit.current && leave && leave != '0') {
+        InitialLoad(leave);
+        pageInit.current = false;
+      }
+      
+    },[leave])
     
     
     return (
@@ -376,11 +407,11 @@ import { SearchField } from '@/components/SearchField';
            mandatory={true} 
            def={apply.leave} 
            searchable={false} 
-           onChange={(item) => updateApply('leave', item)} 
-           LoadObj={loadObj}
+           onChange={(item) => {updateApply('leave', item);updateApply('balance',item.balance)}} 
+           LoadObj={leaveList}
            scheme={scheme} 
          />
-      
+        <FormTextInput disabled label="Leave Balance" key={apply.balance} def={apply.balance} onChange={(text) => updateApply('balance', text)} scheme={scheme}/>
         <FormTextInput label="Reason" mandatory={true} key={apply.reason} def={apply.reason} onChange={(text) => updateApply('reason', text)} scheme={scheme} />
         <FormAttachFile label="Attach File " mandatory={apply.leave?.mandatory??false}  def={apply.file} onChange={(file) => {updateApply('file',file)}} scheme={scheme} />
         <View style={{flex:1}} />
@@ -391,7 +422,7 @@ import { SearchField } from '@/components/SearchField';
     
   }
   
-  export const Leave = ({ category, id, user,BaseObj,scheme}: { category: string; id: string; user: GenericObject | null,BaseObj:GenericObject,scheme:'light'|'dark'|undefined}) => {
+  export const Leave = ({ category, id, user,BaseObj,scheme,leave}: LeaveProps) => {
     const { Page } = ThemedStyles(scheme??'light');
     
   
@@ -401,7 +432,7 @@ import { SearchField } from '@/components/SearchField';
           <View style={[Page.container]}>
             {/*HEADER */}
             
-            <ApplyLeave id={id} user={user} BaseObj={BaseObj} scheme={scheme??'light'}/>
+            <ApplyLeave id={id} user={user} BaseObj={BaseObj} scheme={scheme??'light'} leave={leave??'0'}/>
           </View>
           )
       default :

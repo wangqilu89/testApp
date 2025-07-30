@@ -14,10 +14,11 @@ export const ThemedStyles = (scheme?:'light'|'dark') => {
     2 -> Approved
     3 -> Rejected
     */
-    0:Theme.mooreReverse,
-    1:'#F2AC42',
-    2:'#00B38A',
-    3:'#EA324C'
+    '-1':'transparent',
+    '0':Theme.mooreReverse,
+    '1':'#F2AC42', //Yellow
+    '2':'#00B38A', //Green
+    '3':'#EA324C' //Red
   }
 
   const Align = StyleSheet.create({

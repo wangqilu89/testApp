@@ -16,7 +16,11 @@ const DaysOfWeek = ['Su','Mo','Tu','We','Th','Fr','Sa']
 
 const MonthName = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
-export const WeekPicker:React.FC<DatePickerProps > = React.memo(({Mode,Dates={date:new Date(),startDate:new Date(),endDate:new Date()},scheme,Change}) => {
+interface WeeklyPickerProps extends DatePickerProps {
+    StatusMap?: GenericObject; // ← new
+}
+
+export const WeekPicker:React.FC<WeeklyPickerProps> = React.memo(({Mode,Dates={date:new Date(),startDate:new Date(),endDate:new Date()},scheme,Change,StatusMap}) => {
    
     const [temp,setTemp] = useState(() =>
         Object.fromEntries(
@@ -36,7 +40,8 @@ export const WeekPicker:React.FC<DatePickerProps > = React.memo(({Mode,Dates={da
         year_selector_label:{fontSize:20,color:Theme.background},
         weekday:{borderBottomWidth:1,borderColor:Theme.mooreReverse},
         weekday_label:{fontWeight:'bold',color:Theme.background},
-        outside_label:{color:'#999DA0'}
+        outside_label:{color:'#999DA0'},
+        circle_label:{marginTop: 4,width: 8,height: 8,borderRadius: 4}
     })
 
 
@@ -57,6 +62,7 @@ export const WeekPicker:React.FC<DatePickerProps > = React.memo(({Mode,Dates={da
     }
     
     const DateChange = (s:GenericObject) => {
+        console.log(s)
         UpdateTemp(s)
     }
 
@@ -116,7 +122,14 @@ export const WeekPicker:React.FC<DatePickerProps > = React.memo(({Mode,Dates={da
                 {DaysOfWeek.map((_,index) => {
                     let refdate = new Date(temp.startDate);
                     refdate.setDate(refdate.getDate() - refdate.getDay()  + index)
-                    return (<TouchableOpacity style={[{flex:1,justifyContent:'center',alignItems:'center',minHeight: 46},((isEqual(GetWeekDates('now',refdate),GetWeekDates('now',temp.date)))?DateStyles.selected:{})]} onPress={() => {DateChange({date:refdate})}}><Text>{refdate.getDate()}</Text></TouchableOpacity>)
+                    const dateKey = refdate.toISOString().split('T')[0];
+                    const status = StatusMap?.[dateKey]??'transparent';
+                    return (
+                        <TouchableOpacity style={[{flex:1,justifyContent:'center',alignItems:'center',minHeight: 46},((isEqual(GetWeekDates('now',refdate),GetWeekDates('now',temp.date)))?DateStyles.selected:{})]} onPress={() => {DateChange({date:refdate})}}>
+                            <Text>{refdate.getDate()}</Text>
+                            <View style={[DateStyles.circle_label,{backgroundColor:status}]} />
+                        </TouchableOpacity>
+                    )
                 }
                 )}
                 <TouchableOpacity style={{flex:1,justifyContent:'center',alignItems:'center'}} onPress={() => {WeekChange('forward')}} >

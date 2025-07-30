@@ -1,7 +1,7 @@
 import { GenericObject,KeyStyles,User } from "@/types";
 
 export interface PageProps {
-    user:User,
+    user:User|null,
     BaseObj:GenericObject,
     category?:string,
     id?:string,

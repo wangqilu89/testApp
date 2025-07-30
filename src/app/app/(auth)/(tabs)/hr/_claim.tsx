@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, FlatList, Linking,ScrollView} from 'react-native';
-import { useEffect, useState,useMemo} from 'react';
+import { useEffect, useState,useMemo,useRef} from 'react';
 import { useRouter, usePathname} from 'expo-router';
 import { useWebCheck,FetchData,ProperCase,NumberComma} from '@/services'; // 👈 functions
 import { NoRecords,} from '@/services'; // 👈 Common Screens
@@ -65,6 +65,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
   }
 
   const RowInfo = ({expanded,item,columns}:PageInfoRowProps) => {
+    
     const DocColor = (StatusColors[item?.status]??Theme.text)
     const ExpenseLine = <ScrollView>
                           <FlatList style={[Form.container,{backgroundColor:Theme.containerBackground}]}
@@ -95,14 +96,20 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
                               />
                         </ScrollView>
     const ShowExpenseLines = () => {
-      return ShowPrompt({
-        msg:ExpenseLine,
-        icon:{visible:false,label:<></>},
-        input:{visible:false},
-        ok:{visible:true},
-        cancel:{visible:true}
-
-      })
+      if ((item?.status??'0') == '0') {
+        return router.replace({ pathname:pathname as any,params: { category: 'submit-expense',id:item.internalid } })
+      }
+      else {
+        return ShowPrompt({
+          msg:ExpenseLine,
+          icon:{visible:false,label:<></>},
+          input:{visible:false},
+          ok:{visible:true},
+          cancel:{visible:true}
+  
+        })
+      }
+      
     }
     
     return (
@@ -180,15 +187,22 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
 
 const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
 
+  //Defaults
+  const [currentLine, setCurrentLine] = useState(0);
+  const today = new Date()
+  const DefaultHeader =  {internalid:(id??'0').toString(),status:'Open',date:today,name:'To be Generated',employee:{id:BaseObj.user,name:user?.name},line:[]}
+  const DefaultLine:LineItem = {number:(currentLine + 1).toString(),date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:(id??'0') + '.' + (currentLine + 1),project:null,task:null,category:null,memo:'',val_amount:'0',file:null}
+  
   /*Declarations */
   const { Page, Header, Listing, Form, ListHeader, CategoryButton, Theme } = ThemedStyles(scheme);
   const router = useRouter();
   const pathname = usePathname();
-  const today = new Date()
+  const pageInit = useRef(true);
+  
   const isWeb = useWebCheck(); 
-  const [currentLine, setCurrentLine] = useState(0);
+  
   const [showLine,setShowLine]= useState(false);
-  const [claim,setClaim] = useState<{internalid:string,date:Date,document_number:string,employee:GenericObject,line:GenericObject[]}>({internalid:'',date:today,document_number:'To Be Generated',employee:{},line:[]});
+  const [claim,setClaim] = useState<{internalid:string,date:Date,name:string,status:string,employee:GenericObject,line:GenericObject[]}>(DefaultHeader);
   const [line,setLine] = useState<LineItem>({number:'0',date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:claim.internalid + '.0',project:null,task:null,category:null,memo:'',val_amount:'0',file:null});
   const [lineTask,setLineTask] = useState<GenericObject|null>(null);
   const memoTask = useMemo(() => line, [line.project]);
@@ -204,7 +218,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
     {internalid:'val_amount',value:{handle:NumberComma}}
   ]
 
-  const DefaultLine:LineItem = {number:'0',date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:claim.internalid + '.0',project:null,task:null,category:null,memo:'',val_amount:'0',file:null}
+  
   /* Props */
   interface LineItem {
     number: string,
@@ -246,19 +260,20 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
       if (data) {
         
         data = data[0]
-        let refDate = data.date.split('/')
-        data.date = new Date(refDate[2],parseInt(refDate[1]) - 1,refDate[0])
+        let refDate = data.date + 'T00:00:00Z'
+        data.date = new Date(refDate)
         data.line.forEach(function (i:GenericObject) {
           i.expense_date = i.date
-          refDate = i.date.split('/')
-          i.date = new Date(refDate[2],parseInt(refDate[1]) - 1,refDate[0])
+          refDate = i.date+ 'T00:00:00Z'
+          i.date = new Date(refDate)
           lineNo = parseInt(i.number)
         })
-        
       }
       else {
-        data = {internalid:'0',date:today,document_number:'To be Generated',employee:{id:BaseObj.user,name:user?.name},line:[]}
-        lineNo += 1
+        data = DefaultHeader
+        setLine(DefaultLine);
+        setShowLine(true);
+        pageInit.current = false;
       }
       
       setClaim(data)
@@ -329,11 +344,13 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
   };
 
   const ExpenseHeader = () => {
+    
     return (
       <FormContainer scheme={scheme}>
+       
         <FormTextInput label="ID " def={claim.internalid} onChange={(text) => {updateMain('internalid', text)}} AddStyle={{StyleRow:{display:'none'}}} scheme={scheme}/>
-        <FormDateInput disabled={true} label='Date ' def={{date:claim.date}} onChange={({date})=>{updateMain('date',date)}} scheme={scheme}/>
-        <FormTextInput disabled={true} label="Document Number " key={claim.document_number} def={claim.document_number} onChange={(text) => {updateMain('document_number', text)}} scheme={scheme}/>
+        {/*<FormDateInput disabled={true} label='Date ' def={{date:claim.date}} onChange={({date})=>{updateMain('date',date)}} scheme={scheme}/>
+        <FormTextInput disabled={true} label="Document Number " key={claim.name} def={claim.name} onChange={(text) => {updateMain('name', text)}} scheme={scheme}/>
         <FormAutoComplete 
           label="Employee "  
           def={claim.employee} 
@@ -343,20 +360,19 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
           LoadObj={{ ...BaseObj, command: "HR : Get Employee Listing",data:{keyword:BaseObj.user}}} 
           AddStyle={{StyleInput:{flex:1,marginRight:0}}}
           scheme={scheme}
-        />
+        />*/}
+        <FormTextInput disabled={true} label="Status " key={claim.status} def={claim.status} onChange={(text) => {updateMain('status', text)}} scheme={scheme}/>
         
         <FlatList
           style={[Form.container,{paddingHorizontal:0}]}
           data={claim.line}
           stickyHeaderIndices={[0]}
           ListHeaderComponent={
-                <View style={[ListHeader.container,{marginTop:20,flexDirection:'row',backgroundColor:Theme.backgroundReverse}]}>
+                <TouchableOpacity onPress={() => {setLine(DefaultLine);setShowLine(true)}} style={[ListHeader.container,{marginTop:20,flexDirection:'row',backgroundColor:Theme.backgroundReverse}]}>
                     <Ionicons name="attach" style={[CategoryButton.icon,Listing.text,{flex:-1,fontSize:23,color:Theme.backgroundReverse}]} />
                     <Text style={[ListHeader.text,{fontSize:18,flex:1}]}>Line Items</Text>
-                    <TouchableOpacity style={{flex:-1}}  onPress={() => {setLine(DefaultLine);setShowLine(true)}}>
-                      <Ionicons name="add" style={[CategoryButton.icon,Listing.text,{fontSize:23,color:Theme.textReverse}]} />     
-                    </TouchableOpacity>                     
-                </View>
+                    <Ionicons name="add" style={[CategoryButton.icon,Listing.text,{fontSize:23,color:Theme.textReverse,flex:-1}]} />     
+                </TouchableOpacity> 
             }
           keyExtractor={(item) => item.internalid}
           renderItem={({ item }) => {
@@ -366,7 +382,25 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
           }}
           
         />
-        {claim.line.length > 0 && (<FormSubmit onPress={()=>{}} scheme={scheme}/>)}
+        {/*Button */}
+       <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10,flex:-1}}>
+        {(claim.status == 'Open') && (
+          <>
+          
+          <TouchableOpacity onPress={() => {}} style={{ backgroundColor:Theme.backgroundReverse,width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Save</Text>
+          </TouchableOpacity>
+          
+          {claim.line.length > 0 && (
+            <TouchableOpacity onPress={() => {}} style={{ backgroundColor:'#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+              <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit</Text>
+            </TouchableOpacity>
+          )}
+          </>
+          )
+        }       
+        </View>
+         
       </FormContainer>
     )
   }
@@ -381,7 +415,8 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
             .includes(keyword)
         )
       );
-    }
+    };
+    
     return (
       <FormContainer scheme={scheme}>
         <FormTextInput label="ID " def={line.internalid} onChange={(text) => updateLine('internalid', text)} AddStyle={{StyleRow:{display:'none'}}} scheme={scheme}/>
@@ -445,10 +480,10 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
             {!isWeb ? (
               <>
               <View style={[Header.container,{flexDirection:'row'}]}>
-                  <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {if (showLine) {setLine(DefaultLine);setShowLine(false);} else {router.replace({pathname:pathname as any})}}}>
+                  <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {if (showLine) {setLine(DefaultLine);setShowLine(false);} else {router.replace({pathname:pathname as any,params: {category: 'expense'}})}}}>
                       <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
                   </TouchableOpacity>
-                  <Text style={[Header.text,{flex:1,width:'auto'}]}> {showLine ? ('Line : ' + line.number) : 'Expense Claim'}</Text>
+                  <Text style={[Header.text,{flex:1,width:'auto'}]}> {showLine ? ('Line : ' + line.number) : claim.name}</Text>
               </View>
               {showLine ? (<ExpenseLine />):(<ExpenseHeader />)}
               </>
@@ -469,7 +504,7 @@ export const ExpenseClaim = ({ category, id, user,BaseObj,scheme}: PageProps) =>
 
   switch (category) {
     case 'submit-expense':
-        return <ApplyClaim category={category} id={id} user={user} BaseObj={BaseObj} scheme={scheme??'light'} />
+        return <ApplyClaim category={category} id={id??'0'} user={user} BaseObj={BaseObj} scheme={scheme??'light'} />
     default :
         return <ExpenseMain user={user} BaseObj={BaseObj} scheme={scheme??'light'}  />
   }

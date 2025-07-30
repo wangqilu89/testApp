@@ -2,6 +2,7 @@ import { Platform,Dimensions } from 'react-native';
 import { useState,useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { GenericObject } from '@/types';
 
 const { SERVER_URL, RESTLET,REACT_ENV,USER_ID} = Constants.expoConfig?.extra || {};
 
@@ -101,7 +102,7 @@ const GetWeekDates = (t:string,d:Date) => {
     e.setDate(e.getDate() - e.getDay());
   }
   else if (t === 'end') {
-    e.setDate(e.getDate() - e.getDay() + 7)
+    e.setDate(e.getDate() - e.getDay() + 6)
   }
   return e
 }
@@ -109,6 +110,14 @@ const GetWeekDates = (t:string,d:Date) => {
 const DateCompare = (D1:Date,D2:Date) => {
   return ((D1>D2)?1:((D2>D1)?2:0))
 
+}
+
+const GetTotal = (list:GenericObject[],field:string) => {
+  let Total = 0
+  list.forEach((item) => {
+    Total += isNaN(Number(item[field])) ? 0 : Number(item[field]);
+  })
+  return Total
 }
 
 export {
@@ -124,5 +133,6 @@ export {
     addOpacity,
     useWebCheck,
     GetWeekDates,
-    DateCompare
+    DateCompare,
+    GetTotal
 };

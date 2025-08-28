@@ -1,5 +1,6 @@
 
 import { View, Text, TouchableOpacity, FlatList, Alert,Linking} from 'react-native';
+import { usePrompt } from '@/components/AlertModal';
 import { useMemo} from 'react';
 import { useRouter, useLocalSearchParams,usePathname} from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; 
@@ -29,7 +30,7 @@ function ApprovalCategoryScreen({ category,user,BaseObj,scheme}:PageProps) {
   const router = useRouter();
   const isWeb = useWebCheck(); // Only "true web" if wide
   const {Form,Listing,Page,Header,Theme,CategoryButton} = ThemedStyles(scheme)
-  
+  const { ShowPrompt } = usePrompt();
 
   const { list, displayList,loading, search,setSearch,LoadMore,expandedKeys,HandleExpand,HandleSelect,selectedKeys,HandleSelectAll,selectAll,HandleAction,LoadAll} = useListPost(((category ?? 'index') === 'index') ? 
     {}:
@@ -100,6 +101,34 @@ function ApprovalCategoryScreen({ category,user,BaseObj,scheme}:PageProps) {
     input:{visible:true,label:'Please type in reason'}
   }
 
+  const ButtonAction = async (action:string,command:string,refresh:boolean,PromptObj:GenericObject) => {
+    if (selectedKeys.length === 0) {
+      ShowPrompt({msg:"Please select at least one record."});
+      return;
+    }
+    else {
+      let result:GenericObject
+      let proceed:boolean
+      do {
+        proceed = true
+        result = await ShowPrompt(PromptObj as any)
+        proceed = (!result.value && result.confirmed && PromptObj.input.visible)?false:true
+      } while (!proceed)
+      if (result.confirmed) {
+        const itemcmd = command.split(':')[1].trim()
+        let data:GenericObject[] = []
+        selectedKeys.forEach((id:string) => {
+          const item = list.find((i: GenericObject) => i.internalid === id);
+          if (item) {
+            data.push({internalid:id,command:itemcmd,reason:result.value,transtype:item.transtype})
+          }
+        })
+        const response = await HandleAction(action,command,refresh,data)
+      }
+      
+    }
+  }
+
   if (!category || category == 'index') {
     return (
       <MainScreen scheme={scheme}/>
@@ -150,10 +179,11 @@ function ApprovalCategoryScreen({ category,user,BaseObj,scheme}:PageProps) {
               {/*Button */}
               {selectedKeys.length > 0 ? (
                 <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10,flex:-1}}>
-                  <TouchableOpacity onPress={() => HandleAction('Approve',ApproveObj,true)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                  
+                  <TouchableOpacity onPress={() => ButtonAction('Approve',`Approve : Approve ${ProperCase(category)}`,true,ApproveObj)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Approve Selected</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => HandleAction('Reject',RejectObj,true)} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                  <TouchableOpacity onPress={() => ButtonAction('Reject',`Approve : Reject ${ProperCase(category)}`,true,RejectObj)} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                       <Text style={{ color: 'white', fontWeight: 'bold' }}>Reject Selected</Text>
                   </TouchableOpacity>
                   

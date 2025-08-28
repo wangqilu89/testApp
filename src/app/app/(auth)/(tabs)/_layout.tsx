@@ -33,7 +33,8 @@ const MobileTabs = () => {
         <Tabs.Screen name="home" options={{ title: 'Home',tabBarIcon:({ color, size }) => (<Ionicons name="home" color={color} size={size} />)}} />
         <Tabs.Screen name="hr/index" options={{href:'/hr',title: 'HR',tabBarIcon:({ color, size }) => (<Ionicons name="person" color={color} size={size} />) }} />
         <Tabs.Screen name="approve/index" options={{href:'/approve',title: 'Approve',tabBarIcon:({ color, size }) => (<Ionicons name="checkbox" color={color} size={size} />) }} />
-        <Tabs.Screen name="resource/index" options={{href:'/resource',title: 'Resource',tabBarIcon:({ color, size }) => (<Ionicons name="people" color={color} size={size} />) }} />
+        <Tabs.Screen name="resource/index" options={{href:null}} />
+        {/*<Tabs.Screen name="resource/index" options={{href:'/resource',title: 'Resource',tabBarIcon:({ color, size }) => (<Ionicons name="people" color={color} size={size} />) }} />*/}
         <Tabs.Screen name="project/index" options={{href:'/project',title: 'More',tabBarIcon:({ color, size }) => (<Ionicons name="ellipsis-horizontal" color={color} size={size} />)}} />
         <Tabs.Screen name="hr/_claim" options={{href:null}} />
         <Tabs.Screen name="hr/_leave" options={{href:null}} />

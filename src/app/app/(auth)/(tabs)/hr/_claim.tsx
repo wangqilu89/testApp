@@ -22,7 +22,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
   const { Page, Header, Listing, Form, CategoryButton, Theme,StatusColors } = ThemedStyles(scheme);
   const isWeb = useWebCheck();
 
-  const { list, displayList,expandedKeys, search,setSearch, LoadMore,LoadAll} = useListFilter({
+  const { list, displayList,expandedKeys, search,setSearch, LoadMore,LoadAll,HandleSelect,selectedKeys,HandleSelectAll,selectAll} = useListFilter({
     LoadObj:{...BaseObj,command:'HR : Get Expense List' },
     SearchFunction: (i, keyword) => {
       return i.flatMap((j) => {
@@ -49,7 +49,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
   
   const ColumnInfo = ({columns,index,item,expanded}: RowProps) => {
     return (
-        <View key={index} style={{flex:1,flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index == '0'?1:0}}>
+        <View key={index} style={{flex:1,flexDirection:'row',marginLeft:((item?.status??'0') === '0')?0:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index == '0'?1:0}}>
             <View style={[{width:150},columns?.format?.StyleContainer]}>
               <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'},columns?.format?.StyleLabel]}>
                 {columns?.name??ProperCase(columns.internalid.replace('val_',''))}
@@ -64,7 +64,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
     )
   }
 
-  const RowInfo = ({expanded,item,columns}:PageInfoRowProps) => {
+  const RowInfo = ({selected,expanded,item,columns}:PageInfoRowProps) => {
     
     const DocColor = (StatusColors[item?.status]??Theme.text)
     const ExpenseLine = <ScrollView>
@@ -114,19 +114,24 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
     
     return (
       <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+         {((item?.status??'0') === '0') && (
+          <TouchableOpacity style={{alignItems:'flex-start',flexDirection:'column'}} onPress={() => HandleSelect(item.internalid)}>
+            <Text style={[Listing.text,{fontSize:15}]}>{selected ? '☑️' : '⬜'}</Text>
+          </TouchableOpacity>
+        )}
+       
         <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:30,marginRight:30}} onPress={ShowExpenseLines}>
-        
-            {Array.isArray(columns) ?
-              columns.map((colName, index) => {
-                let finalCol = colName
-                if (finalCol.internalid == 'name') {
-                  finalCol = {...colName,value:{format:{StyleLabel:{color:DocColor}}}}
-                }
-                return (<ColumnInfo columns={finalCol} index={index} item={item} expanded={expanded}/>)
-              })
-              :<></>
-            }
-        </TouchableOpacity>
+          {Array.isArray(columns) ?
+                columns.map((colName, index) => {
+                  let finalCol = colName
+                  if (finalCol.internalid == 'name') {
+                    finalCol = {...colName,value:{format:{StyleLabel:{color:DocColor}}}}
+                  }
+                  return (<ColumnInfo columns={finalCol} index={index} item={item} expanded={expanded}/>)
+                })
+                :<></>
+              }
+        </TouchableOpacity>   
       </View>
     );
   };
@@ -157,7 +162,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
                     keyExtractor={(item) => item.internalid}
                     renderItem={({ item }) => {
                         return (
-                          <RowInfo key={item.internalid} expanded={expandedKeys.includes(item.internalid)} item={item} columns={COLUMN_CONFIG['header']} selected={false} />
+                          <RowInfo selected={selectedKeys.includes(item.internalid)} key={item.internalid} expanded={expandedKeys.includes(item.internalid)} item={item} columns={COLUMN_CONFIG['header']} />
                         )
                     }}
                     onEndReached={() => {
@@ -172,6 +177,14 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
                   <Text style={{fontWeight:'bold'}}>Show All</Text>
                 </TouchableOpacity>
                 )}
+
+                {(selectedKeys.length > 0) && (
+                  /*<TouchableOpacity onPress={() => ButtonAction('Approve',`Approve : Approve ${ProperCase(category)}`,true,ApproveObj)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Claims</Text>
+                  </TouchableOpacity>*/
+                  <></>
+                )}
+
             </View>
       ) : (!visibility && 
           <View style={{flex:1,flexDirection:'column',width:'100%'}}>
@@ -208,8 +221,21 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
   const memoTask = useMemo(() => line, [line.project]);
 
   
-  const { ShowLoading,HideLoading} = usePrompt();
+  const { ShowLoading,HideLoading,ShowPrompt} = usePrompt();
   
+  const HandleSubmit = async () => {
+    ShowLoading({msg:'Loading...'});
+    const NewObj = {...BaseObj,command:'HR : Submit Claim',data:claim}
+    const final = await FetchData(NewObj);
+    const ConfirmObj = {
+        msg:'Expense Claim Saved',
+        icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},
+        cancel:{visible:false}
+      };
+    HideLoading({confirmed: true, value: ''})
+    let result = await ShowPrompt(ConfirmObj)
+    router.replace({ pathname:pathname as any,params: { category: 'expense' } })
+  }
   
   const COLUMN_CONFIG: PageInfoColConfig=[
     {internalid:'number'},

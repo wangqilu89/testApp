@@ -15,11 +15,13 @@ import {ThemedStyles} from '@/styles';
 import { GenericObject,PageInfoColConfig,PageInfoRowProps} from '@/types';  
 import { SearchField } from '@/components/SearchField';
 import { PageProps } from '@/types';
+
   
   interface LeaveProps extends PageProps {
     leave?:string
     today?:Date
   }
+
   const LeaveMain = ({user,BaseObj,scheme}: LeaveProps) => {
     const {Page,Header,CategoryButton,Theme} = ThemedStyles(scheme);
     const pathname = usePathname();
@@ -28,6 +30,7 @@ import { PageProps } from '@/types';
     const tabs : string[] = ['balance','application']
     const [activeTab, setActiveTab] = useState<string>('balance');
     const isWeb = useWebCheck();
+    
   
     return (
       <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
@@ -200,6 +203,7 @@ import { PageProps } from '@/types';
   }
   
   const ApplyLeave = ({ id, user,BaseObj,scheme,leave}: LeaveProps) => {
+    const { ShowLoading,HideLoading} = usePrompt();
     const { Page, Header, Listing, Form, CategoryButton, Theme } = ThemedStyles(scheme);
     const isWeb = useWebCheck();
     const router = useRouter();
@@ -319,7 +323,19 @@ import { PageProps } from '@/types';
       setYear(YearStr);
     }
 
-
+    const HandleSubmit = async () => {
+      ShowLoading({msg:'Loading...'});
+      const NewObj = {...BaseObj,command:'HR : Submit Leave',data:apply}
+      const final = await FetchData(NewObj);
+      const ConfirmObj = {
+          msg:'Leave Request Submitted',
+          icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},
+          cancel:{visible:false}
+        };
+      HideLoading({confirmed: true, value: ''})
+      let result = await ShowPrompt(ConfirmObj)
+      router.replace({ pathname:pathname as any,params: { category: 'leave' } })
+    }
 
 
     useEffect(() => {
@@ -415,7 +431,7 @@ import { PageProps } from '@/types';
         <FormTextInput label="Reason" mandatory={true} key={apply.reason} def={apply.reason} onChange={(text) => updateApply('reason', text)} scheme={scheme} />
         <FormAttachFile label="Attach File " mandatory={apply.leave?.mandatory??false}  def={apply.file} onChange={(file) => {updateApply('file',file)}} scheme={scheme} />
         <View style={{flex:1}} />
-        <FormSubmit onPress={()=>{}} scheme={scheme}/>
+        <FormSubmit onPress={()=> {return HandleSubmit()}} scheme={scheme}/>
       </FormContainer>
       </>
     );

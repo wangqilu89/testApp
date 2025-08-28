@@ -35,6 +35,10 @@ const MobileTabs = () => {
         <Tabs.Screen name="approve/index" options={{href:'/approve',title: 'Approve',tabBarIcon:({ color, size }) => (<Ionicons name="checkbox" color={color} size={size} />) }} />
         <Tabs.Screen name="resource/index" options={{href:'/resource',title: 'Resource',tabBarIcon:({ color, size }) => (<Ionicons name="people" color={color} size={size} />) }} />
         <Tabs.Screen name="project/index" options={{href:'/project',title: 'More',tabBarIcon:({ color, size }) => (<Ionicons name="ellipsis-horizontal" color={color} size={size} />)}} />
+        <Tabs.Screen name="hr/_claim" options={{href:null}} />
+        <Tabs.Screen name="hr/_leave" options={{href:null}} />
+        <Tabs.Screen name="hr/_payslip" options={{href:null }} />
+        <Tabs.Screen name="hr/_timesheet" options={{href:null}} />
         {/* ❗️Hide dynamic subpages from bottom tabs */}
         <Tabs.Screen name="index" options={{ href: null}} />
       </Tabs>

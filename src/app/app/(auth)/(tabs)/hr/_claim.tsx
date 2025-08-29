@@ -213,9 +213,11 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
                 )}
 
                 {(selectedKeys.length > 0) && (
-                  <TouchableOpacity onPress={() => ButtonAction('Submit','HR : Submit Expense Claim',true,PromptObj)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Claims</Text>
-                  </TouchableOpacity>
+                  <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10}}>
+                    <TouchableOpacity onPress={() => ButtonAction('Submit','HR : Submit Expense Claim',true,PromptObj)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                      <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Claims</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
 
             </View>

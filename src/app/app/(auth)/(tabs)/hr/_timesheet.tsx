@@ -42,8 +42,8 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
   const startDate = GetWeekDates('start',today)
   const endDate  = GetWeekDates('end',today)
   const [temp,setTemp] = useState<GenericObject>({date:today,startDate:startDate,endDate:endDate});
-
   
+  const isWeb = useWebCheck();
  
   const toRefresh = useMemo(() => {return temp},[temp.startDate.getTime(),temp.endDate.getTime()])
   const toFilter = useMemo(() => {return temp},[temp.date.getTime()])
@@ -147,6 +147,17 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
 
   return (
     <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
+      {!isWeb && (
+          <View style={[Header.container,{flexDirection:'row'}]}>
+              <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({pathname:pathname as any})}>
+                  <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
+              </TouchableOpacity>
+              <Text style={[Header.text,{flex:1,width:'auto'}]}>Timesheets</Text>
+              <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {}}>
+                  <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30,color:Theme.background}]} />
+              </TouchableOpacity>
+          </View>
+      )}
       <View style={{maxWidth:450,flexDirection:'column',minWidth:0}} >
         <WeekPicker Mode='single' Dates={temp} scheme={scheme} Change={(s) => {UpdateTemp(s)}} StatusMap={statusMap}/>
       </View>

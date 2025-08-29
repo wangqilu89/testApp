@@ -45,6 +45,7 @@ const useListFilter = ( options: UseListFilterOptions) => {
     setSelectedKeys((prev) => {
         const isSelected = prev.includes(key);
         const newSelectedIds = isSelected ? prev.filter((i) => i !== key) : [...prev, key];
+        console.log('Selected',newSelectedIds)
         return newSelectedIds;
     });
     

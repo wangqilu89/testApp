@@ -5,7 +5,7 @@ import { useWebCheck,FetchData,ProperCase,NumberComma} from '@/services'; // �
 import { NoRecords,} from '@/services'; // 👈 Common Screens
 import {FormContainer,FormSubmit,FormDateInput,FormTextInput,FormNumericInput,FormAutoComplete,FormAttachFile} from '@/services';
 import { usePrompt } from '@/components/AlertModal';
-import { useListFilter } from '@/hooks/useListFilter'
+import { useListPost } from '@/hooks/useListPost'
 import { Ionicons } from '@expo/vector-icons'; 
 import {ThemedStyles} from '@/styles';
 import { GenericObject,MenuOption,PageProps, User,PageInfoColConfig,PageInfoRowProps,PageInfoColProps} from '@/types';
@@ -22,7 +22,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
   const { Page, Header, Listing, Form, CategoryButton, Theme,StatusColors } = ThemedStyles(scheme);
   const isWeb = useWebCheck();
 
-  const { list, displayList,expandedKeys, search,setSearch, LoadMore,LoadAll,HandleSelect,selectedKeys,HandleSelectAll,selectAll} = useListFilter({
+  const { list, displayList,expandedKeys, search,setSearch, LoadMore,LoadAll,HandleSelect,selectedKeys,HandleSelectAll,selectAll,HandleAction} = useListPost({
     LoadObj:{...BaseObj,command:'HR : Get Expense List' },
     SearchFunction: (i, keyword) => {
       return i.flatMap((j) => {
@@ -49,7 +49,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
   
   const ColumnInfo = ({columns,index,item,expanded}: RowProps) => {
     return (
-        <View key={index} style={{flex:1,flexDirection:'row',marginLeft:((item?.status??'0') === '0')?0:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index == '0'?1:0}}>
+        <View key={index} style={{flex:1,flexDirection:'row',marginLeft:15,marginRight:15,paddingHorizontal:7,paddingVertical:3,borderBottomWidth:index == '0'?1:0}}>
             <View style={[{width:150},columns?.format?.StyleContainer]}>
               <Text style={[Listing.text,{fontSize:14,fontWeight:'bold'},columns?.format?.StyleLabel]}>
                 {columns?.name??ProperCase(columns.internalid.replace('val_',''))}
@@ -63,6 +63,40 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
         </View>
     )
   }
+
+  const ButtonAction = async (action:string,command:string,refresh:boolean,PromptObj:GenericObject) => {
+    if (selectedKeys.length === 0) {
+      ShowPrompt({msg:"Please select at least one record."});
+      return;
+    }
+    else {
+      let result:GenericObject
+      let proceed:boolean
+      do {
+        proceed = true
+        result = await ShowPrompt(PromptObj as any)
+        proceed = (!result.value && result.confirmed && PromptObj.input.visible)?false:true
+      } while (!proceed)
+      if (result.confirmed) {
+        const itemcmd = command.split(':')[1].trim()
+        let data:GenericObject[] = []
+        selectedKeys.forEach((id:string) => {
+          const item = list.find((i: GenericObject) => i.internalid === id);
+          if (item) {
+            data.push({internalid:id,command:itemcmd,reason:result.value,transtype:item.transtype})
+          }
+        })
+        const response = await HandleAction(action,command,refresh,data)
+      }
+      
+    }
+  }
+
+  const PromptObj = {
+      msg: selectedKeys.length + ' claims will be submited.',
+      icon:{label:<Ionicons name="help-outline"style={{fontSize:50,color:'orange'}}/>,visible:true},
+      input:{visible:false}
+    }
 
   const RowInfo = ({selected,expanded,item,columns}:PageInfoRowProps) => {
     
@@ -113,14 +147,14 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
     }
     
     return (
-      <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+      <View style={{backgroundColor:Theme.containerBackground,flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
          {((item?.status??'0') === '0') && (
-          <TouchableOpacity style={{alignItems:'flex-start',flexDirection:'column'}} onPress={() => HandleSelect(item.internalid)}>
+          <TouchableOpacity style={{alignItems:'flex-start',flexDirection:'column',height:'100%'}} onPress={() => HandleSelect(item.internalid)}>
             <Text style={[Listing.text,{fontSize:15}]}>{selected ? '☑️' : '⬜'}</Text>
           </TouchableOpacity>
         )}
        
-        <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:30,marginRight:30}} onPress={ShowExpenseLines}>
+        <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:((item?.status??'0') === '0')?15:30,marginRight:30}} onPress={ShowExpenseLines}>
           {Array.isArray(columns) ?
                 columns.map((colName, index) => {
                   let finalCol = colName
@@ -179,10 +213,9 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
                 )}
 
                 {(selectedKeys.length > 0) && (
-                  /*<TouchableOpacity onPress={() => ButtonAction('Approve',`Approve : Approve ${ProperCase(category)}`,true,ApproveObj)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                  <TouchableOpacity onPress={() => ButtonAction('Submit','HR : Submit Expense Claim',true,PromptObj)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Claims</Text>
-                  </TouchableOpacity>*/
-                  <></>
+                  </TouchableOpacity>
                 )}
 
             </View>

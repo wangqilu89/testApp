@@ -18,6 +18,9 @@ require('dotenv').config();
 
 const app = express();
 const PORT = 5000;
+var bodyParser = require('body-parser');
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
 
 
 //Start Test Environment

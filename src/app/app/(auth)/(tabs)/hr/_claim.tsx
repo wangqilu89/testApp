@@ -262,6 +262,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
     ShowLoading({msg:'Loading...'});
     const NewObj = {...BaseObj,command:'HR : Save Claim',data:claim}
     const final = await FetchData(NewObj);
+    console.log(final)
     const ConfirmObj = {
         msg:'Expense Claim Saved',
         icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},

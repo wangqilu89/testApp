@@ -260,7 +260,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
   
   const HandleSubmit = async () => {
     ShowLoading({msg:'Loading...'});
-    const NewObj = {...BaseObj,command:'HR : Submit Claim',data:claim}
+    const NewObj = {...BaseObj,command:'HR : Save Claim',data:claim}
     const final = await FetchData(NewObj);
     const ConfirmObj = {
         msg:'Expense Claim Saved',

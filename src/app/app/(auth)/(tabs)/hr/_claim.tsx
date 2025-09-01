@@ -269,8 +269,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
   };
   const RejectObj = {
     msg:'Do you want to delete ' + selectedKeys.length + ' items?',
-    icon:{label:<Ionicons name="help-outline"style={{fontSize:50,color:'orange'}}/>,visible:true},
-    input:{visible:true,label:'Please type in reason'}
+    icon:{label:<Ionicons name="help-outline"style={{fontSize:50,color:'orange'}}/>,visible:true}
   }
   const ConfirmObj = {
     msg:'Expense Claim Saved',

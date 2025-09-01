@@ -44,11 +44,12 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
   const [temp,setTemp] = useState<GenericObject>({date:today,startDate:startDate,endDate:endDate});
   
   const isWeb = useWebCheck();
- 
+  const { ShowLoading,HideLoading,ShowPrompt} = usePrompt();
+
   const toRefresh = useMemo(() => {return temp},[temp.startDate.getTime(),temp.endDate.getTime()])
   const toFilter = useMemo(() => {return temp},[temp.date.getTime()])
 
-  const { list, displayList,setSearch,UpdateLoad,LoadAll,LoadMore,expandedKeys,HandleExpand,loading} = useListFilter({
+  const { list, displayList,setSearch,UpdateLoad,LoadAll,LoadMore,expandedKeys,HandleExpand,loading,selectedKeys,HandleSelect} = useListFilter({
     LoadObj:null,
     SearchFunction: (l, keyword) => {
       return l.filter((i: GenericObject) =>
@@ -64,8 +65,50 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
     {internalid:'status'},
     {internalid:'val_duration',value:{handle:NumberComma}}
   ]
- 
-  const RowInfo = ({expanded,item,columns}:PageInfoRowProps) => {
+  const RejectObj = {
+    msg:'Do you want to delete ' + selectedKeys.length + ' items?',
+    icon:{label:<Ionicons name="help-outline"style={{fontSize:50,color:'orange'}}/>,visible:true}
+  }
+  const ConfirmObj = {
+    msg:'Timesheet Submitted',
+    icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},
+    cancel:{visible:false}
+  };
+
+  const ButtonAction = async (action:string) => {
+    let NewObj :GenericObject = {}
+
+    if (action != 'submit') {
+      let result:GenericObject
+      let proceed:boolean
+      do {
+        proceed = true
+        result = await ShowPrompt(RejectObj as any)
+        proceed = (!result.value && result.confirmed)?false:true
+      } while (!proceed)
+      if (result.confirmed) {
+        const data :GenericObject[] = []
+        selectedKeys.forEach((id:string) => {
+          data.push({internalid:id,transtype:'timebill',command:'Delete Timebill'})
+        })
+        NewObj = {...BaseObj,command:'HR : Delete Timebill',data:data}
+        
+       }
+      
+    }
+    else {
+      NewObj = {...BaseObj,command:'HR : Submit Timesheet',data:temp}
+    }
+    if (NewObj) {
+      ShowLoading({msg:'Loading...'});
+      const final = await FetchData(NewObj);
+      HideLoading({confirmed: true, value: ''})
+      let result = await ShowPrompt(ConfirmObj)
+      UpdateLoad({...BaseObj,command: 'HR : Get Timebill List',data: temp})
+    }
+  }
+
+  const RowInfo = ({expanded,item,columns,selected}:PageInfoRowProps) => {
     const newCol = useMemo(() => {
       return Array.isArray(columns)?
          ((columns.length > 3 && !expanded)?
@@ -77,6 +120,9 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
     const RowStatusVal = ((RowStatus === 'Open')?'3':((RowStatus === 'Rejected')?'3':((RowStatus === 'Approved')?'2':'1')))
     return (
       <View style={{backgroundColor:'white',flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+        <TouchableOpacity disabled={RowStatusVal != '3'} style={{flexDirection:'row',alignItems:'flex-start',height:'100%'}} onPress={() => HandleSelect(item.internalid)}>
+          <Text style={[Listing.text,{fontSize:15,color:RowStatusVal != '3'?'white':Theme.text}]}>{selected ? '☑️' : '⬜'}</Text>
+        </TouchableOpacity>
         <TouchableOpacity disabled={RowStatusVal != '3'} style={{flexDirection:'column',flex:1}} onPress={() => {return router.replace({ pathname:pathname as any,params: {category: 'submit-time',id:item.internalid,date:item.date} })} }>
             {newCol.map((colName, index) => {
               
@@ -171,7 +217,7 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
                   
                   renderItem={({ item }) => {
                     return (
-                      <RowInfo expanded={expandedKeys.includes(item.internalid)} item={item} columns={COLUMN_CONFIG} />
+                      <RowInfo expanded={expandedKeys.includes(item.internalid)} item={item} columns={COLUMN_CONFIG} selected={selectedKeys.includes(item.internalid)} />
                     )
                   }}
                   onEndReached={() => {
@@ -187,21 +233,25 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
       </View>
        {/*Button */}
        <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10,flex:-1}}>
-        {(mainStatus == 'Open') && (
+        
           <>
-          {(DateCompare(temp.date,temp.startDate) <= 1 && DateCompare(temp.endDate,temp.date) <= 1) && 
+          {(mainStatus == 'Open' && selectedKeys.length > 0) && (
+            <TouchableOpacity onPress={() => {ButtonAction('Delete')}} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+              <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Entries</Text>
+            </TouchableOpacity>
+          )}
+          {(mainStatus == 'Open' && selectedKeys.length == 0 && DateCompare(temp.date,temp.startDate) <= 1 && DateCompare(temp.endDate,temp.date) <= 1) && 
           (<TouchableOpacity onPress={() => router.replace({ pathname:pathname as any,params: {category: 'submit-time',id:0,date:temp.date.toISOString().split('T')[0]} })} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
             <Text style={{ color: 'white', fontWeight: 'bold' }}>Add Time</Text>
           </TouchableOpacity>
           )}
-          {(GetTotal(list,'val_duration') >= 40) && (
-            <TouchableOpacity onPress={() => {}} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+          {(mainStatus == 'Open' && selectedKeys.length == 0 && GetTotal(list,'val_duration') >= 40) && (
+            <TouchableOpacity onPress={() => {ButtonAction('Submit')}} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
               <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Timesheet</Text>
             </TouchableOpacity>
           )}
           </>
-          )
-        }       
+                
         </View>
     </View>
     

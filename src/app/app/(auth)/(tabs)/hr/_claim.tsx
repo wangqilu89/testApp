@@ -239,7 +239,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
   const [currentLine, setCurrentLine] = useState(0);
   const today = new Date()
   const DefaultHeader =  {internalid:(id??'0').toString(),status:'Open',date:today,name:'To be Generated',employee:{id:BaseObj.user,name:user?.name},line:[]}
-  const DefaultLine:LineItem = {number:(currentLine + 1).toString(),date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:(id??'0') + '.' + (currentLine + 1),project:null,task:null,category:null,memo:'',val_amount:'0',file:null}
+  const DefaultLine:LineItem = {number:(currentLine + 1).toString(),date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:(id??'0') + '.' + (currentLine + 1),project:null,task:null,category:null,memo:'',val_amount:'0',file:null,edited:'F'}
   
   /*Declarations */
   const { Page, Header, Listing, Form, ListHeader, CategoryButton, Theme } = ThemedStyles(scheme);
@@ -251,26 +251,65 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
   
   const [showLine,setShowLine]= useState(false);
   const [claim,setClaim] = useState<{internalid:string,date:Date,name:string,status:string,employee:GenericObject,line:GenericObject[]}>(DefaultHeader);
-  const [line,setLine] = useState<LineItem>({number:'0',date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:claim.internalid + '.0',project:null,task:null,category:null,memo:'',val_amount:'0',file:null});
+  const [line,setLine] = useState<LineItem>({number:'0',date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:claim.internalid + '.0',project:null,task:null,category:null,memo:'',val_amount:'0',file:null,edited:'F'});
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [lineTask,setLineTask] = useState<GenericObject|null>(null);
   const memoTask = useMemo(() => line, [line.project]);
 
   
   const { ShowLoading,HideLoading,ShowPrompt} = usePrompt();
   
-  const HandleSubmit = async () => {
-    ShowLoading({msg:'Loading...'});
-    const NewObj = {...BaseObj,command:'HR : Save Claim',data:claim}
-    const final = await FetchData(NewObj);
-    console.log(final)
-    const ConfirmObj = {
-        msg:'Expense Claim Saved',
-        icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},
-        cancel:{visible:false}
-      };
-    HideLoading({confirmed: true, value: ''})
-    let result = await ShowPrompt(ConfirmObj)
-    router.replace({ pathname:pathname as any,params: { category: 'expense' } })
+  const HandleSelect = (key: string) => {
+    setSelectedKeys((prev) => {
+        const isSelected = prev.includes(key);
+        const newSelectedIds = isSelected ? prev.filter((i) => i !== key) : [...prev, key];
+        return newSelectedIds;
+    });
+    
+  };
+  const RejectObj = {
+    msg:'Do you want to delete ' + selectedKeys.length + ' items?',
+    icon:{label:<Ionicons name="help-outline"style={{fontSize:50,color:'orange'}}/>,visible:true},
+    input:{visible:true,label:'Please type in reason'}
+  }
+  const ConfirmObj = {
+    msg:'Expense Claim Saved',
+    icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},
+    cancel:{visible:false}
+  };
+
+  const ButtonAction = async (action:string) => {
+    if (action === 'submit') {
+      ShowLoading({msg:'Loading...'});
+      const NewObj = {...BaseObj,command:'HR : Save Claim',data:claim}
+      const final = await FetchData(NewObj);
+      HideLoading({confirmed: true, value: ''})
+      let result = await ShowPrompt(ConfirmObj)
+      router.replace({ pathname:pathname as any,params: { category: 'expense' } })
+    }
+    else {
+      let result:GenericObject
+      let proceed:boolean
+      
+      do {
+        proceed = true
+        result = await ShowPrompt(RejectObj as any)
+        proceed = (!result.value && result.confirmed)?false:true
+      } while (!proceed)
+
+      if (result.confirmed) {
+        const newClaim = JSON.parse(JSON.stringify(claim));
+        selectedKeys.forEach(function (internalid) {
+          const idx = newClaim.line.findIndex((i: GenericObject) => i.internalid === internalid);
+          if (idx !== -1) {
+            newClaim.line[idx].edited = 'D';
+          }
+        })
+        setClaim(newClaim)
+      
+      }
+      
+    }
   }
   
   const COLUMN_CONFIG: PageInfoColConfig=[
@@ -292,7 +331,8 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
     category: GenericObject|null,
     memo: string,
     val_amount: string,
-    file: any
+    file: any,
+    edited:string
   };
   
   interface ColProps extends Omit<PageInfoRowProps,'columns'> {
@@ -391,9 +431,12 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
         </View>
     )
   }
-  const RowInfo = ({item,columns}:PageInfoRowProps) => {
+  const RowInfo = ({item,columns,selected}:PageInfoRowProps) => {
     return (
-      <View style={{backgroundColor:Theme.containerBackground,flexDirection:'column',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+      <View style={{backgroundColor:Theme.containerBackground,flexDirection:'row',alignItems:'flex-start',width:'100%',marginTop:5,marginBottom:5,padding:8}}>
+        <TouchableOpacity style={{alignItems:'flex-start',flexDirection:'column',height:'100%'}} onPress={() => HandleSelect(item.internalid)}>
+          <Text style={[Listing.text,{fontSize:15}]}>{selected ? '☑️' : '⬜'}</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={{flex: 1,alignSelf: 'stretch',flexDirection:'column',marginLeft:30,marginRight:30}} onPress={() => {setLine(item as LineItem);setShowLine(true)}}>
             {Array.isArray(columns)?
               columns.map((colName, index) => (
@@ -427,7 +470,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
         
         <FlatList
           style={[Form.container,{paddingHorizontal:0}]}
-          data={claim.line}
+          data={claim.line.filter((item:GenericObject)=> {return item.edited != 'D'})}
           stickyHeaderIndices={[0]}
           ListHeaderComponent={
                 <TouchableOpacity onPress={() => {setLine(DefaultLine);setShowLine(true)}} style={[ListHeader.container,{marginTop:20,flexDirection:'row',backgroundColor:Theme.backgroundReverse}]}>
@@ -439,7 +482,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
           keyExtractor={(item) => item.internalid}
           renderItem={({ item }) => {
             return (
-              <RowInfo item={item} columns={COLUMN_CONFIG} />
+              <RowInfo item={item} columns={COLUMN_CONFIG} selected={selectedKeys.includes(item.internalid)} />
             )
           }}
           
@@ -448,16 +491,25 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
        <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10,flex:-1}}>
         {(claim.status == 'Open') && (
           <>
-          
-          <TouchableOpacity onPress={() => {setLine(DefaultLine);setShowLine(true)}} style={{ backgroundColor:Theme.backgroundReverse,width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Add Item</Text>
+          {(selectedKeys.length > 0) && (
+          <TouchableOpacity onPress={() => ButtonAction('reject')} style={{ backgroundColor:'#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Lines</Text>
           </TouchableOpacity>
-          
-          {claim.line.length > 0 && (
-            <TouchableOpacity onPress={() => {HandleSubmit()}} style={{ backgroundColor:'#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-              <Text style={{ color: 'white', fontWeight: 'bold' }}>Save</Text>
+          )}
+
+
+          {(selectedKeys.length == 0) && (
+            <TouchableOpacity onPress={() => {setLine(DefaultLine);setShowLine(true)}} style={{ backgroundColor:Theme.backgroundReverse,width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+              <Text style={{ color: 'white', fontWeight: 'bold' }}>Add Item</Text>
             </TouchableOpacity>
           )}
+          
+            {(selectedKeys.length == 0 && claim.line.length > 0) && (
+              <TouchableOpacity onPress={() => {ButtonAction('submit')}} style={{ backgroundColor:'#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Save</Text>
+              </TouchableOpacity>
+            )}
+          
           </>
           )
         }       
@@ -524,7 +576,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
         <FormNumericInput label="Value " mandatory={true} def={line.val_amount} onChange={(text) => updateLine('val_amount', text)} scheme={scheme} />
         <FormAttachFile label="Attach File " def={line.file} onChange={(file) => {updateLine('file',file)}} scheme={scheme} />
         <View style={{flex:1}} />
-        <FormSubmit label={currentLine == parseInt(line.number)?'Add':'Update'} onPress={()=>{submitLine(line);setShowLine(false);}} scheme={scheme}/>
+        <FormSubmit label={currentLine == parseInt(line.number)?'Add':'Update'} onPress={()=>{updateLine('edited','T');submitLine(line);setShowLine(false);}} scheme={scheme}/>
       </FormContainer>
     )
   }

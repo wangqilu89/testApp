@@ -28,7 +28,7 @@ interface TimeData {
   status: GenericObject | null,
   memo: string
 }
-
+type TimeDataPayload = Omit<TimeData, 'date'> & { date: string };
 
 const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
   
@@ -69,12 +69,15 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
     msg:'Do you want to delete ' + selectedKeys.length + ' items?',
     icon:{label:<Ionicons name="help-outline"style={{fontSize:50,color:'orange'}}/>,visible:true}
   }
-  const ConfirmObj = {
-    msg:'Timesheet Submitted',
-    icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},
-    cancel:{visible:false}
+  const ConfirmObj = (action:string) => {
+    const finalStr = (action == 'submit')?'Submitted':'Deleted'
+    return {
+      msg:'Timesheet ' + finalStr,
+      icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},
+      cancel:{visible:false}
+    }
   };
-
+  
   const ButtonAction = async (action:string) => {
     let NewObj :GenericObject = {}
 
@@ -103,7 +106,7 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
       ShowLoading({msg:'Loading...'});
       const final = await FetchData(NewObj);
       HideLoading({confirmed: true, value: ''})
-      let result = await ShowPrompt(ConfirmObj)
+      let result = await ShowPrompt(ConfirmObj(action))
       UpdateLoad({...BaseObj,command: 'HR : Get Timebill List',data: temp})
     }
   }
@@ -234,7 +237,7 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
        {/*Button */}
        <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10,flex:-1}}>
         
-          <>
+          
           {(mainStatus == 'Open' && selectedKeys.length > 0) && (
             <TouchableOpacity onPress={() => {ButtonAction('Delete')}} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
               <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Entries</Text>
@@ -250,7 +253,7 @@ const TimesheetMain = ({BaseObj,scheme,date}: TimesheetProps) =>{
               <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Timesheet</Text>
             </TouchableOpacity>
           )}
-          </>
+          
                 
         </View>
     </View>
@@ -308,6 +311,19 @@ const SubmitTime = ({ id='0', user,BaseObj,scheme,date}:TimesheetProps) => {
       )
     );
   };
+
+  const { ShowLoading,HideLoading} = usePrompt();
+  
+  const ButtonAction = async () => {
+    const DataObj:TimeDataPayload = {...data,date:data.date.toISOString().split('T')[0]}
+    const NewObj = {...BaseObj,command:'HR : Save Timebill',data:DataObj}
+    ShowLoading({msg:'Loading...'});
+    const final = await FetchData(NewObj);
+    HideLoading({confirmed: true, value: ''})
+    
+    router.replace({ pathname:pathname as any,params: { category: 'timesheet' } })
+      
+  }
 
   useEffect(() => {
     setTaskLoad(data.project?{ ...BaseObj, command: "HR : Get task Listing",data:{project:data.project}}:null)
@@ -402,7 +418,7 @@ const SubmitTime = ({ id='0', user,BaseObj,scheme,date}:TimesheetProps) => {
               scheme={scheme} 
           />
         <View style={{flex:1}} />
-        <FormSubmit onPress={()=>{}} scheme={scheme}/>
+        <FormSubmit onPress={()=>{ButtonAction()}}  label={'Save'} scheme={scheme}/>
       </FormContainer>
     </View>
   );

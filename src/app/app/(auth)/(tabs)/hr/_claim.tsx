@@ -250,7 +250,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
   const isWeb = useWebCheck(); 
   
   const [showLine,setShowLine]= useState(false);
-  const [claim,setClaim] = useState<{internalid:string,date:Date,name:string,status:string,employee:GenericObject,line:GenericObject[]}>(DefaultHeader);
+  const [claim,setClaim] = useState<ExpenseReport>(DefaultHeader);
   const [line,setLine] = useState<LineItem>({number:'0',date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:claim.internalid + '.0',project:null,task:null,category:null,memo:'',val_amount:'0',file:null,edited:'F'});
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [lineTask,setLineTask] = useState<GenericObject|null>(null);
@@ -279,8 +279,13 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
 
   const ButtonAction = async (action:string) => {
     if (action === 'submit') {
+      const LinePayload:GenericObject[] = []
+      claim.line.forEach((item:GenericObject)=> {
+        LinePayload.push({...item,date:item.date.toISOString().split('T')[0]})
+      })
+      const newClaim:ExpensePayload = {...claim,line:LinePayload,date:claim.date.toISOString().split('T')[0]}
       ShowLoading({msg:'Loading...'});
-      const NewObj = {...BaseObj,command:'HR : Save Claim',data:claim}
+      const NewObj = {...BaseObj,command:'HR : Save Claim',data:newClaim}
       const final = await FetchData(NewObj);
       HideLoading({confirmed: true, value: ''})
       let result = await ShowPrompt(ConfirmObj)
@@ -297,7 +302,8 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
       } while (!proceed)
 
       if (result.confirmed) {
-        const newClaim = JSON.parse(JSON.stringify(claim));
+        
+        const newClaim = {...claim}
         selectedKeys.forEach(function (internalid) {
           const idx = newClaim.line.findIndex((i: GenericObject) => i.internalid === internalid);
           if (idx !== -1) {
@@ -334,6 +340,17 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
     edited:string
   };
   
+  interface ExpenseReport {
+    internalid:string,
+    date:Date,
+    name:string,
+    status:string,
+    employee:GenericObject,
+    line:GenericObject[]
+  }
+  interface ExpensePayload extends Omit<ExpenseReport,'date'> {
+    'date': string
+  }
   interface ColProps extends Omit<PageInfoRowProps,'columns'> {
     'columns': PageInfoColProps
   }

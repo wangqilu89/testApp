@@ -117,10 +117,12 @@ function ApprovalCategoryScreen({ category,user,BaseObj,scheme}:PageProps) {
       if (result.confirmed) {
         const itemcmd = command.split(':')[1].trim()
         let data:GenericObject[] = []
-        selectedKeys.forEach((id:string) => {
-          const item = list.find((i: GenericObject) => i.internalid === id);
+        selectedKeys.forEach((ids:string) => {
+          const item = list.find((i: GenericObject) => i.internalid === ids);
           if (item) {
-            data.push({internalid:id,command:itemcmd,reason:result.value,transtype:item.transtype})
+            ids.split(',').forEach((id:string) => {
+              data.push({internalid:id,command:itemcmd,reason:result.value,transtype:item.transtype})
+            })
           }
         })
         const response = await HandleAction(action,command,refresh,data)

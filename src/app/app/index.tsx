@@ -18,6 +18,8 @@ export default function IndexScreen() {
       const platform = (Platform.OS === 'web' ? 'web' : 'mobile');
       console.log('SERVERURL:' + SERVER_URL)
       let authUrl = SERVER_URL + `/auth/start?platform=${platform}`
+
+      
       if (Platform.OS === 'web') {
         // ✅ Web: full page redirect
         const origin = location.origin

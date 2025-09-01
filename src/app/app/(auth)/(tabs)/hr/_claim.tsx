@@ -448,13 +448,13 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
         {(claim.status == 'Open') && (
           <>
           
-          <TouchableOpacity onPress={() => {}} style={{ backgroundColor:Theme.backgroundReverse,width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Save</Text>
+          <TouchableOpacity onPress={() => {setLine(DefaultLine);setShowLine(true)}} style={{ backgroundColor:Theme.backgroundReverse,width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Add Item</Text>
           </TouchableOpacity>
           
           {claim.line.length > 0 && (
-            <TouchableOpacity onPress={() => {}} style={{ backgroundColor:'#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
-              <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit</Text>
+            <TouchableOpacity onPress={() => {HandleSubmit()}} style={{ backgroundColor:'#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+              <Text style={{ color: 'white', fontWeight: 'bold' }}>Save</Text>
             </TouchableOpacity>
           )}
           </>

@@ -3,12 +3,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SERVER_URL,postFunc,RESTLET,REACT_ENV,USER_ID} from '@/services/_common';
 import { useRouter} from 'expo-router';
 import { usePrompt } from '@/components/AlertModal';
-
+import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 import { UserContextType,User } from '@/types';
 import { useColorScheme} from 'react-native';
+import { Linking } from 'react-native';
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
+const redirectUri = 'myapp://auth/callback';
+const platform = (Platform.OS === 'web' ? 'web' : 'mobile');
+let authUrl = SERVER_URL + `/auth/start?platform=${platform}`
 
 const getConnectSid = async (url: string) => {
     try {
@@ -49,7 +53,20 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
     setUser(null);
     await AsyncStorage.multiRemove(['userSession', 'connect.sid']);
-    router.replace('/'); 
+    if (Platform.OS === 'web') {
+      // ✅ Web: full page redirect
+      const origin = location.origin
+      authUrl += `&origin=${encodeURIComponent(origin)}`
+      location.href = authUrl;
+      return;
+    } 
+    else {
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+      if (result) {
+        router.replace('/home');
+      }
+
+    }
   };
 
   const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'}),[user]);
@@ -112,6 +129,9 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     </UserContext.Provider>
   );
 }
+
+
+
 
 const useUser = () => {
   const context = useContext(UserContext);

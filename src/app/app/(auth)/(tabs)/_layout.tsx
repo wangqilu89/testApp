@@ -13,8 +13,20 @@ import { GenericObject,MenuOption } from '@/types';
 
 const WebData:MenuOption[] = [
   {internalid:'1',name:'Home',navigate:'/home'},
-  {internalid:'2',name:'Approve',details:[{ internalid: '2.1', name: 'Timesheets',navigate:'/approve?category=timesheet'},{ internalid: '2.2', name: 'Expense Claims',navigate:'/approve?category=expense'},{ internalid: '2.3', name: 'Leaves' ,navigate:'/approve?category=leave'}, { internalid: '2.4', name: 'Invoices' ,navigate:'/approve?category=invoice'},{ internalid: '2.5', name: 'Lost Clients' ,navigate:'/approve?category=lost'}]},
-  {internalid:'3',name:'HR',details:[{ internalid: '3.1', name: 'Key Information',navigate:'/hr?category=personal'},{ internalid: '3.2', name: 'Leaves',navigate:'/hr?category=leave'},{ internalid: '3.3', name: 'Claims Listing' ,navigate:'/hr?category=expense'},{ internalid: '3.4', name: 'Submit Claims' ,navigate:'/hr?category=submit-expense'}, { internalid: '3.5', name: 'Pay Slip' ,navigate:'/hr?category=payslip'}]}
+  {internalid:'2',name:'Approve',details:[
+    { internalid: '2.1', name: 'Timesheets',navigate:'/approve?category=timesheet'},
+    { internalid: '2.2', name: 'Expense Claims',navigate:'/approve?category=expense'},
+    { internalid: '2.3', name: 'Leaves' ,navigate:'/approve?category=leave'}, 
+    { internalid: '2.4', name: 'Invoices' ,navigate:'/approve?category=invoice'},
+    { internalid: '2.5', name: 'Lost Clients' ,navigate:'/approve?category=lost'}
+  ]},
+  {internalid:'3',name:'HR',details:[
+    { internalid: '3.1', name: 'Key Information',navigate:'/hr?category=personal'},
+    { internalid: '3.2', name: 'Leaves',navigate:'/hr?category=leave'},
+    { internalid: '3.3', name: 'Claims Listing' ,navigate:'/hr?category=expense'},
+    { internalid: '3.4', name: 'Timesheets' ,navigate:'/hr?category=timesheet'}, 
+    { internalid: '3.5', name: 'Pay Slip' ,navigate:'/hr?category=payslip'}
+  ]}
 ]
 
 

@@ -6,8 +6,9 @@ import { WebView } from 'react-native-webview';
 import {ThemedStyles} from '@/styles';
 import { GenericObject, KeyStyles, MenuOption,PageInfoColConfig,PageInfoRowProps } from '@/types';
 import { useListFilter } from '@/hooks/useListFilter';
-import { ProperCase } from '@/services';
+import { ProperCase, useWebCheck  } from '@/services';
 import { SearchField } from '@/components/SearchField';
+
 
 
 const MainPage = ({redirect,title,pages,scheme}:{redirect:string;title:string,pages:MenuOption[],scheme:'light'|'dark'|undefined}) => {
@@ -16,10 +17,10 @@ const MainPage = ({redirect,title,pages,scheme}:{redirect:string;title:string,pa
   const handlePress = (id: string) => {
     router.push(`/${redirect}?category=${id}` as any); // 👈 Route to dynamic approval page
   };
-
+  const isWeb = useWebCheck(); // Only "true web" if wide
   return (
     <View style={[Page.container]}>
-      <View style={[Header.container]}><Text style={[Header.text]}>{title}</Text></View>
+      {isWeb && (<View style={[Header.container]}><Text style={[Header.text]}>{title}</Text></View>)}
       <FlatList style={[Page.listContainer]} data={pages} keyExtractor={(item) => item.internalid} 
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => handlePress(item.internalid)} style={[CategoryButton.container]}>

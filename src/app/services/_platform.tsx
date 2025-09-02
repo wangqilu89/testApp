@@ -20,7 +20,7 @@ const MainPage = ({redirect,title,pages,scheme}:{redirect:string;title:string,pa
   const isWeb = useWebCheck(); // Only "true web" if wide
   return (
     <View style={[Page.container]}>
-      {isWeb && (<View style={[Header.container]}><Text style={[Header.text]}>{title}</Text></View>)}
+      {!isWeb && (<View style={[Header.container]}><Text style={[Header.text]}>{title}</Text></View>)}
       <FlatList style={[Page.listContainer]} data={pages} keyExtractor={(item) => item.internalid} 
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => handlePress(item.internalid)} style={[CategoryButton.container]}>

@@ -304,7 +304,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
       if (result.confirmed) {
         
         
-        const newLine = [...claim.line]
+        const newLine = claim.line.map(item => ({ ...item }))
         selectedKeys.forEach(function (internalid) {
           const idx =  newLine.findIndex((i: GenericObject) => i.internalid === internalid);
           if (idx !== -1) {

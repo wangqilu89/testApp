@@ -303,14 +303,15 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
 
       if (result.confirmed) {
         
-        const newClaim = {...claim}
+        
+        const newLine = [...claim.line]
         selectedKeys.forEach(function (internalid) {
-          const idx = newClaim.line.findIndex((i: GenericObject) => i.internalid === internalid);
+          const idx =  newLine.findIndex((i: GenericObject) => i.internalid === internalid);
           if (idx !== -1) {
-            newClaim.line[idx].edited = 'D';
+            newLine[idx].edited = 'D';
           }
         })
-        setClaim(newClaim)
+        setClaim({...claim,line:newLine})
       
       }
       

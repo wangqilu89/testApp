@@ -14,6 +14,8 @@ export default function IndexScreen() {
 
   useEffect(() => {
     const authenticate = async () => {
+      router.replace('/home');
+      /*
       const redirectUri = 'myapp://auth/callback';
       const platform = (Platform.OS === 'web' ? 'web' : 'mobile');
       console.log('SERVERURL:' + SERVER_URL)
@@ -34,6 +36,7 @@ export default function IndexScreen() {
           router.replace('/'); // fallback back to login
         }
       }
+      */
     };
 
     authenticate();

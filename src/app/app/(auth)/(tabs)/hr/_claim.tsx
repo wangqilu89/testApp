@@ -349,9 +349,11 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
     employee:GenericObject,
     line:GenericObject[]
   }
+  
   interface ExpensePayload extends Omit<ExpenseReport,'date'> {
     'date': string
   }
+  
   interface ColProps extends Omit<PageInfoRowProps,'columns'> {
     'columns': PageInfoColProps
   }
@@ -362,12 +364,14 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
       return {...prev, [key]: value }
     })
   }
+
   const updateMain = (key:keyof typeof claim,value: any) => {
     setClaim((prev) => {
       return {...prev, [key]: value }
     })
     
   }
+
   const loadData = async (id:string|undefined) => {
     ShowLoading({msg:'Loading List...'})
     try {
@@ -608,8 +612,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
 
   return (
       <View style={[Page.container]}>
-            {!isWeb ? (
-              <>
+            <>
               <View style={[Header.container,{flexDirection:'row'}]}>
                   <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {if (showLine) {setLine(DefaultLine);setShowLine(false);} else {router.replace({pathname:pathname as any,params: {category: 'expense'}})}}}>
                       <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
@@ -617,16 +620,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
                   <Text style={[Header.text,{flex:1,width:'auto'}]}> {showLine ? ('Line : ' + line.number) : claim.name}</Text>
               </View>
               {showLine ? (<ExpenseLine />):(<ExpenseHeader />)}
-              </>
-            ) : (
-              <View style={{flexDirection:'column'}}>
-                <ExpenseHeader />
-                {showLine && (<ExpenseLine />)}
-              </View>
-            )
-            
-            
-            }
+            </>
       </View>
   )
 }

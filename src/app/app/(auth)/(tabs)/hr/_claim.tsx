@@ -487,6 +487,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
           AddStyle={{StyleInput:{flex:1,marginRight:0}}}
           scheme={scheme}
         />*/}
+        {isWeb && (<FormTextInput disabled={true} label="Document Number " key={claim.name} def={claim.name} onChange={(text) => {updateMain('name', text)}} scheme={scheme}/>)}
         <FormTextInput disabled={true} label="Status " key={claim.status} def={claim.status} onChange={(text) => {updateMain('status', text)}} scheme={scheme}/>
         
         <FlatList
@@ -613,12 +614,14 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
   return (
       <View style={[Page.container]}>
             <>
-              <View style={[Header.container,{flexDirection:'row'}]}>
+              {!isWeb && (
+                <View style={[Header.container,{flexDirection:'row'}]}>
                   <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {if (showLine) {setLine(DefaultLine);setShowLine(false);} else {router.replace({pathname:pathname as any,params: {category: 'expense'}})}}}>
                       <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
                   </TouchableOpacity>
                   <Text style={[Header.text,{flex:1,width:'auto'}]}> {showLine ? ('Line : ' + line.number) : claim.name}</Text>
-              </View>
+                </View>
+              )}
               {showLine ? (<ExpenseLine />):(<ExpenseHeader />)}
             </>
       </View>

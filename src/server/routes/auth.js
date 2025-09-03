@@ -32,6 +32,7 @@ const handleStatusCheck = async (req) => {
           send: (o) => (code >= 400 ? reject(o) : resolve(o)),
         }),
       };
+      
       try { PostNS(req, resLike); } catch (e) { reject(e); }
     });
 
@@ -84,6 +85,9 @@ module.exports = function authRoutesFactory({ redisClient }) {
         req.session = req.session || {};
         req.session.accessToken = accessToken.trim();
         req.session.accessTokenSecret = accessTokenSecret.trim();
+        req.nsTokens = {tokenId:accessToken.trim(),tokenSecret:accessTokenSecret.trim()}
+       
+        
 
         const nsUser = await handleStatusCheck(req)
         if (!nsUser || !nsUser.id) {

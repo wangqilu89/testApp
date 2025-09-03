@@ -64,7 +64,7 @@ async function PostNS(req, res) {
       ACCESS_TOKEN,
       ACCESS_TOKEN_SECRET,
       OAUTH_CONSUMER_KEY,
-      OAUTH_CONSUMER_SECR
+      OAUTH_CONSUMER_SECRET
     );
 
     //refObj['tokenKey'] = ACCESS_TOKEN;

@@ -32,9 +32,14 @@ async function PostNS(req, res) {
     ACCESS_TOKEN = OAUTH_TOKEN_KEY;
     ACCESS_TOKEN_SECRET = OAUTH_TOKEN_SECRET;
   }
-  else {
+  else if (req.nsTokens?.tokenId && req.nsTokens?.tokenSecret) {
     ACCESS_TOKEN = req.nsTokens.tokenId;
     ACCESS_TOKEN_SECRET = req.nsTokens.tokenSecret;
+  } 
+  else {
+    // fallback legacy session for handshake
+    ACCESS_TOKEN = req.session?.accessToken;
+    ACCESS_TOKEN_SECRET = req.session?.accessTokenSecret;
   }
   
 

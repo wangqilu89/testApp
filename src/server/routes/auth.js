@@ -42,12 +42,6 @@ const handleStatusCheck = async (req) => {
 };
 
 module.exports = function authRoutesFactory({ redisClient }) {
-  
-  
-  
-
-  
-
 
   const router = express.Router();
   // Step 1: Start OAuth

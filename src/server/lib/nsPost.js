@@ -33,8 +33,8 @@ async function PostNS(req, res) {
     ACCESS_TOKEN_SECRET = OAUTH_TOKEN_SECRET;
   }
   else {
-    ACCESS_TOKEN = req.session.accessToken;
-    ACCESS_TOKEN_SECRET = req.session.accessTokenSecret;
+    ACCESS_TOKEN = req.nsTokens.tokenId;
+    ACCESS_TOKEN_SECRET = req.nsTokens.tokenSecret;
   }
   
 

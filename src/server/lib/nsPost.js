@@ -64,7 +64,7 @@ async function PostNS(req, res) {
       ACCESS_TOKEN,
       ACCESS_TOKEN_SECRET,
       OAUTH_CONSUMER_KEY,
-      OAUTH_CONSUMER_SECRET
+      OAUTH_CONSUMER_SECR
     );
 
     //refObj['tokenKey'] = ACCESS_TOKEN;
@@ -79,10 +79,22 @@ async function PostNS(req, res) {
       body: payload,
     });
 
-   
-    const data = await response.json(); // or you can use .json() if you expect JSON always
-    console.log('Response Data',data)
-    return res.send(data);
+    const text = await response.text();
+    let parsed
+    try {
+      parsed = JSON.parse(response.text())
+    }
+    catch {
+      parsed = text;
+    }
+
+    if (!parsed?.success || !parsed.success?.data) {
+      throw new Error('No Data in response')
+    }
+    else {
+      return res.send(parsed.success.data);
+    }
+
   } catch (err) {
     console.error('❌ NetSuite error:', err);
     return res.status(500).json({ error: 'Suitelet call failed', details: err.message });

@@ -82,12 +82,12 @@ async function PostNS(req, res) {
     const text = await response.text();
     let parsed
     try {
-      parsed = JSON.parse(response.text())
+      parsed = JSON.parse(text)
     }
     catch {
       parsed = text;
     }
-
+    
     if (!parsed?.success || !parsed.success?.data) {
       throw new Error('No Data in response')
     }

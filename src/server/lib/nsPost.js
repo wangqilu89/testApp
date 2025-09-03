@@ -25,8 +25,7 @@ function getOAuthHeader(url, method, tokenKey, tokenSecret, consumerKey, consume
 
 
 async function PostNS(req, res) {
-  console.log('request',req)
-  console.log('Response',res)
+  
   const account = req.query.acc || '0';
   let ACCESS_TOKEN = null
   let ACCESS_TOKEN_SECRET = null
@@ -73,11 +72,7 @@ async function PostNS(req, res) {
 
     const payload = JSON.stringify(refObj);
     
-    console.log('basic input',{
-      method: 'POST',
-      headers: oauthHeader,
-      body: payload,
-    })
+    
     const response = await fetch(finalWeb, {
       method: 'POST',
       headers: oauthHeader,
@@ -86,7 +81,7 @@ async function PostNS(req, res) {
 
    
     const data = await response.json(); // or you can use .json() if you expect JSON always
-    
+    console.log('Response Data',data)
     return res.send(data);
   } catch (err) {
     console.error('❌ NetSuite error:', err);

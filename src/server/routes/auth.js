@@ -35,7 +35,7 @@ const handleStatusCheck = async (req) => {
       
       try { PostNS(req, resLike); } catch (e) { reject(e); }
     });
-
+    console.log('Response Data',data)
     return data; // <- nsUser
   } finally {
     req.body = savedBody; // restore no matter what

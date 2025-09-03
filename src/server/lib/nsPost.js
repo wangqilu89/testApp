@@ -84,8 +84,9 @@ async function PostNS(req, res) {
       body: payload,
     });
 
-    console.log('final response',response)
+   
     const data = await response.json(); // or you can use .json() if you expect JSON always
+    
     return res.send(data);
   } catch (err) {
     console.error('❌ NetSuite error:', err);

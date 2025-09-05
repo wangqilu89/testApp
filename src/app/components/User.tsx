@@ -80,7 +80,14 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send'}),[user]);
-  
+  const safeAlert = (title: string, msg: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // RN Alert can be flaky on web; use window.alert for debugging
+      window.alert(`${title}: ${msg}`);
+    } else {
+      Alert.alert(title, msg);
+    }
+  };
   
   
   // ---- initial bootstrap on mount (no infinite loops) ----
@@ -163,9 +170,12 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
     const Init = async() => {
       const initialUrl = await Linking.getInitialURL();
-      Alert.alert('Code 1',getQueryParam(location.href,'code') || '')
-      Alert.alert('Code 2',getQueryParam(initialUrl || '','code') || '')
-     
+      safeAlert('Code 1 (web href)', getQueryParam(window.location.href,'code') || '')
+      safeAlert('Code 2 (initialurl)',getQueryParam(initialUrl || '','code') || '')
+      const sub = Linking.addEventListener('url', ({ url }) => {
+        const code3 = getQueryParam(url, 'code') || '';
+        safeAlert('Code 3 (event)', code3);
+      });
       
       /*
       const code = await GetCode()

@@ -90,12 +90,12 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       ShowLoading({ msg: 'Checking authentication…' });
       try {
         const cached = await ReadUser();
-        if (mounted && cached?.id) setUser(cached);
+        if (cached?.id) setUser(cached);
   
         // Try status with whatever access token is in memory (maybe none yet)
         try {
           const status = await postFunc<User>('/auth/status', {}, 'POST');
-          if (mounted && status?.id) {
+          if (status?.id) {
             await SaveUser(status);
             setUser(status);
             return;
@@ -106,7 +106,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         const newAccess = await RefreshAccessToken();
         if (newAccess) {
           const status = await postFunc<User>('/auth/status', {}, 'POST');
-          if (mounted && status?.id) {
+          if (status?.id) {
             await SaveUser(status);
             setUser(status);
             return;
@@ -163,7 +163,9 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
     const Init = async() => {
       const initialUrl = await Linking.getInitialURL();
-      console.log('URL',initialUrl)
+      console.log('Code 1',getQueryParam(location.href,'code'))
+      console.log('Code 2',getQueryParam(initialUrl|| '','code'))
+      
       /*
       const code = await GetCode()
       console.log('code',code)
@@ -175,10 +177,10 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       }
       */
     }
-    let mounted = true;
+    
     Init()
 
-    return () => { mounted = false; };
+    
   }, [router]);
 
   return (

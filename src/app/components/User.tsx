@@ -138,7 +138,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // 4) Not logged in -> start OAuth
-        console.log('4','URL  ' + `${AUTH_START}&origin=${encodeURIComponent(origin)}`)
+        console.log('4' + Platform.OS,'URL  ' + `${AUTH_START}&origin=${encodeURIComponent(origin)}`)
         if (Platform.OS === 'web') {
           const origin = location.origin;
           const url = `${AUTH_START}&origin=${encodeURIComponent(origin)}`;

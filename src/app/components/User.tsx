@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect,useMemo } from 'react';
 
 import { SERVER_URL,postFunc,RESTLET,REACT_ENV,USER_ID} from '@/services/_common';
-import { useRouter,useLocalSearchParams} from 'expo-router';
+import { useRouter} from 'expo-router';
 import { usePrompt } from '@/components/AlertModal';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
@@ -24,7 +24,18 @@ const getQueryParam = (url: string, name: string): string | null => {
   return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
 }
 
-const GetCode = () : Promise <string|null> => {
+const GetCode = async () : Promise <string|null> => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const p = new URLSearchParams(window.location.search);
+    return p.get('code');
+  }
+
+  // Native: check initial URL first
+  const initial = await Linking.getInitialURL();
+  if (initial) {
+    const c = getQueryParam(initial, 'code');
+    if (c) return c;
+  }
   return new Promise((resolve)=> {
     const sub = Linking.addEventListener('url', ({ url }) => {
       const code = getQueryParam(url, 'code');

@@ -162,7 +162,9 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
     const Init = async() => {
-      console.log('URL',location)
+      const initialUrl = await Linking.getInitialURL();
+      console.log('URL',initialUrl)
+      /*
       const code = await GetCode()
       console.log('code',code)
       if (code) {
@@ -171,6 +173,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       else {
         //await BootStrap();
       }
+      */
     }
     let mounted = true;
     Init()

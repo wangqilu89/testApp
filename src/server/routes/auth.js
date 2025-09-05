@@ -116,9 +116,25 @@ module.exports = function authRoutesFactory({ redisClient }) {
             REFRESH_TTL_S,
             JSON.stringify({ userId, tenantId })
         );
+        const code = crypto.randomBytes(24).toString('base64url');
+        await redisClient.setEx(
+          keyLoginCode(code),
+          180, // 3 minutes
+          JSON.stringify({
+            accessToken: accessTokenJWT,
+            refreshToken,
+            user: { id: userId, tenantId },
+          })
+        );
 
-
-
+        if (platform === 'mobile') {
+          return res.redirect(`myapp://home?code=${encodeURIComponent(code)}`);
+        }
+        else {
+          return res.redirect(`${origin}/home?code=${encodeURIComponent(code)}`);
+        }
+          
+        /*
         if (platform === 'mobile') {
           // For mobile, we don’t want to put tokens on the URL.
           // Create a short-lived one-time code the app can exchange.
@@ -146,7 +162,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
 
           return res.redirect(`${origin}/home`);
         }
-        
+        */
       }
     );
     }

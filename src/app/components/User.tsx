@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect,useMemo } from 'react';
 
 import { SERVER_URL,postFunc,RESTLET,REACT_ENV,USER_ID} from '@/services/_common';
-import { useRouter} from 'expo-router';
+import { useRouter,useLocalSearchParams} from 'expo-router';
 import { usePrompt } from '@/components/AlertModal';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
@@ -10,6 +10,7 @@ import { UserContextType,User } from '@/types';
 import { useColorScheme} from 'react-native';
 import { REDIRECT_URI,SetRefreshToken,RefreshAccessToken,SetMemAccessToken,SaveUser,ReadUser} from './AuthState';
 import { exchangeOneTimeCode,serverLogout } from './AuthClient';
+
 
 
 
@@ -99,9 +100,8 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 */
   // ---- initial bootstrap on mount (no infinite loops) ----
   useEffect(() => {
-    let mounted = true;
-  
-    const bootstrap = async () => {
+    const BootStrap = async () => {
+      console.log('Mounting');
       ShowLoading({ msg: 'Checking authentication…' });
       try {
         const cached = await ReadUser();
@@ -128,7 +128,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
         console.log('Not login')
-        //await OpenAuth()
+        await OpenAuth()
         // Not logged in: DO NOTHING (no redirect/loop). Show your “Log in” UI.
         // You can call `openAuth()` from a button (see below).
         
@@ -138,8 +138,49 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         
       }
     };
-  
-    bootstrap();
+    const LoadUser = async(code:string) => {
+      console.log('Load User');
+      ShowLoading({ msg: 'Finishing sign-in…' });
+      try {
+        const data = await exchangeOneTimeCode(code);
+        if (data?.accessToken && data?.refreshToken) {
+          SetMemAccessToken(data.accessToken);
+          await SetRefreshToken(data.refreshToken);
+          if (data.user) {
+            await SaveUser(data.user);
+            setUser(data.user);
+          } else {
+            // Optionally verify via /auth/status
+            const status = await postFunc<User>('/auth/status', { method: 'POST' });
+            await SaveUser(status);
+            setUser(status);
+          }
+          router.replace('/home');
+        } else {
+          // fallback
+          await serverLogout();
+          router.replace('/');
+        }
+      } catch (e) {
+        console.warn('Exchange failed', e);
+        await serverLogout();
+        router.replace('/');
+      } finally {
+        HideLoading({ confirmed: true, value: '' });
+      }
+    }
+
+    let mounted = true;
+
+    const {code=null} = useLocalSearchParams<Partial<{ code:string}>>();
+    
+    if (code) {
+      LoadUser(code)
+    }
+    else {
+      BootStrap();
+    }
+    
     return () => { mounted = false; };
   }, []);
 

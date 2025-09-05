@@ -33,7 +33,8 @@ const OpenAuth = async () => {
     await WebBrowser.openAuthSessionAsync(AUTH_START, REDIRECT_URI);
   }
 };
-  
+
+
 const UserProvider = ({ children }: { children: React.ReactNode }) => {
   
   const { ShowLoading, HideLoading } = usePrompt();
@@ -57,7 +58,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send'}),[user]);
-
+  const {code=null} = useLocalSearchParams<Partial<{ code:string}>>();
   
   /*
   useEffect(() => {
@@ -151,7 +152,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(data.user);
           } else {
             // Optionally verify via /auth/status
-            const status = await postFunc<User>('/auth/status', { method: 'POST' });
+            const status = await postFunc<User>('/auth/status', {},'POST');
             await SaveUser(status);
             setUser(status);
           }
@@ -172,7 +173,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     let mounted = true;
 
-    const {code=null} = useLocalSearchParams<Partial<{ code:string}>>();
+    
     
     if (code) {
       LoadUser(code)

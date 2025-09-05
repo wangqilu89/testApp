@@ -144,28 +144,33 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       ShowLoading({ msg: 'Finishing sign-in…' });
       try {
         const data = await exchangeOneTimeCode(code);
+        console.log('Exchanged Data',data)
         if (data?.accessToken && data?.refreshToken) {
           SetMemAccessToken(data.accessToken);
           await SetRefreshToken(data.refreshToken);
           if (data.user) {
             await SaveUser(data.user);
             setUser(data.user);
-          } else {
+          } 
+          else {
             // Optionally verify via /auth/status
             const status = await postFunc<User>('/auth/status', {},'POST');
             await SaveUser(status);
             setUser(status);
           }
-          router.replace('/home');
-        } else {
+          
+          //router.replace('/home');
+        } 
+        else {
           // fallback
-          await serverLogout();
-          router.replace('/');
+          console.log('Failed User')
+          //await serverLogout();
+          
         }
       } catch (e) {
         console.warn('Exchange failed', e);
-        await serverLogout();
-        router.replace('/');
+        //await serverLogout();
+       
       } finally {
         HideLoading({ confirmed: true, value: '' });
       }

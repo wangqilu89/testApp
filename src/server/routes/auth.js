@@ -176,8 +176,10 @@ module.exports = function authRoutesFactory({ redisClient }) {
   //    POST /auth/exchange { code }
   router.post('/exchange', async (req, res) => {
     const { code } = req.body || {};
+    console.log('Exchange Code',code)
     if (!code) return res.status(400).json({ error: 'Missing code' });
     const data = await redisClient.getDel(keyLoginCode(code)); // get & delete
+    console.log('Exchange Data',data)
     if (!data) return res.status(410).json({ error: 'Code expired or invalid' });
     const parsed = JSON.parse(data);
     return res.json(parsed);

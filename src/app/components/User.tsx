@@ -82,45 +82,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send'}),[user]);
   
   
-  /*
-  useEffect(() => {
-    const sub = Linking.addEventListener('url', async ({ url }) => {
-      const code = getQueryParam(url, 'code');
-      if (!code) return;
-
-      ShowLoading({ msg: 'Finishing sign-in…' });
-      try {
-        const data = await exchangeOneTimeCode(code);
-        if (data?.accessToken && data?.refreshToken) {
-          SetMemAccessToken(data.accessToken);
-          await SetRefreshToken(data.refreshToken);
-          if (data.user) {
-            await SaveUser(data.user);
-            setUser(data.user);
-          } else {
-            // Optionally verify via /auth/status
-            const status = await postFunc<User>('/auth/status', { method: 'POST' });
-            await SaveUser(status);
-            setUser(status);
-          }
-          router.replace('/home');
-        } else {
-          // fallback
-          await serverLogout();
-          router.replace('/');
-        }
-      } catch (e) {
-        console.warn('Exchange failed', e);
-        await serverLogout();
-        router.replace('/');
-      } finally {
-        HideLoading({ confirmed: true, value: '' });
-      }
-    });
-
-    return () => sub.remove();
-  }, [router, ShowLoading, HideLoading]);
-*/
+  
   // ---- initial bootstrap on mount (no infinite loops) ----
   useEffect(() => {
     const BootStrap = async () => {
@@ -206,7 +168,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         await LoadUser(code)
       }
       else {
-        await BootStrap();
+        //await BootStrap();
       }
     }
     let mounted = true;

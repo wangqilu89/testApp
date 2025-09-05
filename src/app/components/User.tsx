@@ -179,7 +179,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     Init()
 
     return () => { mounted = false; };
-  }, []);
+  }, [router]);
 
   return (
     <UserContext.Provider value={{ BaseObj,ColorScheme,user, login, logout }}>

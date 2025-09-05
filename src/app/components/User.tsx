@@ -7,7 +7,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import { UserContextType,User } from '@/types';
-import { useColorScheme} from 'react-native';
+import { useColorScheme,Alert} from 'react-native';
 import { REDIRECT_URI,SetRefreshToken,RefreshAccessToken,SetMemAccessToken,SaveUser,ReadUser} from './AuthState';
 import { exchangeOneTimeCode,serverLogout } from './AuthClient';
 
@@ -163,8 +163,9 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
     const Init = async() => {
       const initialUrl = await Linking.getInitialURL();
-      console.log('Code 1',getQueryParam(location.href,'code'))
-      console.log('Code 2',getQueryParam(initialUrl|| '','code'))
+      Alert.alert('Code 1',getQueryParam(location.href,'code') || '')
+      Alert.alert('Code 2',getQueryParam(initialUrl || '','code') || '')
+     
       
       /*
       const code = await GetCode()

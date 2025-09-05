@@ -127,7 +127,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
             return;
           }
         }
-  
+        await OpenAuth()
         // Not logged in: DO NOTHING (no redirect/loop). Show your “Log in” UI.
         // You can call `openAuth()` from a button (see below).
         setUser(null);

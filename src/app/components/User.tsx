@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect,useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect,useMemo,startTransition } from 'react';
 
 import { SERVER_URL,postFunc,RESTLET,REACT_ENV,USER_ID} from '@/services/_common';
 import { useRouter} from 'expo-router';
@@ -170,7 +170,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         HideLoading({ confirmed: true, value: '' });
       }
     }
-    const Init = async() => {
+    const Init = async () => {
       const code = await GetCode()
       console.log('code',code)
       safeAlert('Code',code || '')
@@ -190,7 +190,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     Init()
 
     
-  }, [router]);
+  }, []);
 
   return (
     <UserContext.Provider value={{ BaseObj,ColorScheme,user, login, logout }}>

@@ -41,7 +41,7 @@ const GetCode = async () => {
             sub.remove();
             resolve(url)
           })
-          setTimeout(() => { try { sub.remove(); } catch {} resolve(''); }, 5000);
+          setTimeout(() => { try { sub.remove(); } catch {} resolve(''); }, 3000);
         })
       break;
     }
@@ -129,7 +129,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
         console.log('Not login')
-        //await logout()
+        await OpenAuth()
         
       } 
       finally {
@@ -164,7 +164,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         else {
           // fallback
           console.log('Failed User')
-          //await serverLogout();
+          await serverLogout();
           
         }
        
@@ -178,15 +178,16 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const Init = async () => {
+      ShowLoading({ msg: 'Checking authentication…' });
       const code = await GetCode()
+      HideLoading({ confirmed: true, value: '' });
       if (code) {
         await LoadUser(code)
       }
       else {
         await BootStrap()
       }
-      //console.log('code',code)
-      //safeAlert('Code',code || '')
+      
     }
     
     Init()

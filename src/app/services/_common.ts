@@ -1,26 +1,58 @@
 import { Platform,Dimensions } from 'react-native';
 import { useState,useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import Constants from 'expo-constants';
 import { GenericObject } from '@/types';
+
+import { GetMemAccessToken,RefreshAccessToken } from '@/components/AuthState';
+
 
 const { SERVER_URL, RESTLET,REACT_ENV,USER_ID} = Constants.expoConfig?.extra || {};
 
 
-const postFunc = async (URL:string,payload: object = {},method:string="POST") => {
-    try {
-      
-      method = method.toUpperCase()
-      const options = await GetPostOptions(payload,method);
-      const response = await fetch(URL,options);
-      const data = await response.json();
-      //console.log(data)
-      return data.success.data;
-    } catch (error) {
-      console.error('Error calling API:', error);
-      throw error;
+const postFunc = async <T = any>(path: string, payload:object,method:string = "POST",absolute: boolean = false ) : Promise<T> => {
+  method = method.toUpperCase()
+  const url = absolute ? path : `${SERVER_URL}${path}`;
+  let {options:opts,headers} = await GetPostOptions(payload,method)
+  let res = await fetch(url, opts);
+  if (res.status === 401) {
+    const newAccess = await RefreshAccessToken();
+    if (newAccess) {
+      headers.set('Authorization', `Bearer ${newAccess}`);
+      opts = { ...opts, headers }
+      res = await fetch(url, opts);
     }
-};
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return text as T; }
+}
+
+const GetPostOptions = async (payload:object,method:string) => {
+    const headers = new Headers({})
+    headers.set('Accept', 'application/json');
+    headers.set('Content-Type', 'application/json');
+    const accessTokenInMem = GetMemAccessToken()
+    if (accessTokenInMem) {
+        headers.set('Authorization', `Bearer ${accessTokenInMem}`);
+    }
+    
+    const options: RequestInit = {
+        method: method,
+        headers
+    };
+    if (Object.keys(payload).length > 0 && method != 'GET') {
+        options.body = JSON.stringify(payload);
+    }
+    
+    return {options,headers};
+    
+}
+
+
 const FetchData = async (o:Record<string, any>) => {
   o.restlet ??= RESTLET;
   o.user ??= USER_ID;
@@ -35,26 +67,8 @@ const FetchData = async (o:Record<string, any>) => {
   } 
   
 };
-  
-const GetPostOptions = async (payload:object,method:string) => {
-    const sid = await AsyncStorage.getItem('connect.sid');
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(sid ? { Cookie: `connect.sid=${sid}` } : {}),
-    };
-    
-    const options: RequestInit = {
-      method: method,
-      credentials:'include',
-      headers,
-    };
 
-    if (Object.keys(payload).length > 0 && method != 'GET') {
-      options.body = JSON.stringify(payload);
-    }
-  
-    return options;
-}
+
 
 const ProperCase = (str:string|number) => {
   

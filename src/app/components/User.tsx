@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect,useMemo } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { SERVER_URL,postFunc,RESTLET,REACT_ENV,USER_ID} from '@/services/_common';
 import { useRouter} from 'expo-router';
 import { usePrompt } from '@/components/AlertModal';
@@ -8,7 +8,8 @@ import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import { UserContextType,User } from '@/types';
 import { useColorScheme} from 'react-native';
-import { REDIRECT_URI,apiFetch,exchangeOneTimeCode,refreshAccessToken,setAccessTokenInMem,setRefreshToken,serverLogout,saveUser,readUser } from './AuthClient';
+import { REDIRECT_URI,SetRefreshToken,RefreshAccessToken,SetMemAccessToken,SaveUser,ReadUser} from './AuthState';
+import { exchangeOneTimeCode,serverLogout } from './AuthClient';
 
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -21,22 +22,6 @@ const getQueryParam = (url: string, name: string): string | null => {
   return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
 }
 
-const getConnectSid = async (url: string) => {
-    try {
-      if (Platform.OS === 'web') {
-        const match = document.cookie.match(new RegExp('(^| )connect.sid=([^;]+)'));
-        return match ? match[2] : null;
-      } 
-      else {
-        const CookieManager = (await import('@react-native-cookies/cookies')).default;
-        const cookies = await CookieManager.get(url);
-        return cookies['connect.sid']?.value ?? null;
-      }
-    } catch (e) {
-      console.error('Error getting cookies: ', e);
-      return null;
-    }
-};
   
 const UserProvider = ({ children }: { children: React.ReactNode }) => {
   
@@ -50,7 +35,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   
   const login = async (userData: User) => {
     setUser(userData);
-    await saveUser(userData);
+    await SaveUser(userData);
   };
 
   const logout = async () => {
@@ -83,15 +68,15 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const data = await exchangeOneTimeCode(code);
         if (data?.accessToken && data?.refreshToken) {
-          setAccessTokenInMem(data.accessToken);
-          await setRefreshToken(data.refreshToken);
+          SetMemAccessToken(data.accessToken);
+          await SetRefreshToken(data.refreshToken);
           if (data.user) {
-            await saveUser(data.user);
+            await SaveUser(data.user);
             setUser(data.user);
           } else {
             // Optionally verify via /auth/status
-            const status = await apiFetch<User>('/auth/status', { method: 'POST' });
-            await saveUser(status);
+            const status = await postFunc<User>('/auth/status', { method: 'POST' });
+            await SaveUser(status);
             setUser(status);
           }
           router.replace('/home');
@@ -121,14 +106,14 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
       try {
         // 1) If we already persisted a user (from a past session), set it optimistically
-        const cached = await readUser();
+        const cached = await ReadUser();
         if (mounted && cached?.id) setUser(cached);
 
         // 2) Try status with whatever access token we have (maybe none yet)
         try {
-          const status = await apiFetch<User>('/auth/status', { method: 'POST' });
+          const status = await postFunc<User>('/auth/status', { method: 'POST' });
           if (mounted && status?.id) {
-            await saveUser(status);
+            await SaveUser(status);
             setUser(status);
             HideLoading({ confirmed: true, value: '' });
             return;
@@ -138,11 +123,11 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // 3) Try refresh to obtain a new access token and then status
-        const newAccess = await refreshAccessToken();
+        const newAccess = await RefreshAccessToken();
         if (newAccess) {
-          const status = await apiFetch<User>('/auth/status', { method: 'POST' });
+          const status = await postFunc<User>('/auth/status', { method: 'POST' });
           if (mounted && status?.id) {
-            await saveUser(status);
+            await SaveUser(status);
             setUser(status);
             HideLoading({ confirmed: true, value: '' });
             return;

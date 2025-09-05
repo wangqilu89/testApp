@@ -94,6 +94,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   
   // ---- initial bootstrap on mount (no infinite loops) ----
   useEffect(() => {
+    /*
     const BootStrap = async () => {
       console.log('Mounting');
       ShowLoading({ msg: 'Checking authentication…' });
@@ -170,21 +171,12 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         HideLoading({ confirmed: true, value: '' });
       }
     }
+      */
     const Init = async () => {
       const code = await GetCode()
       console.log('code',code)
       safeAlert('Code',code || '')
-      
-      /*
-      const code = await GetCode()
-      console.log('code',code)
-      if (code) {
-        await LoadUser(code)
-      }
-      else {
-        //await BootStrap();
-      }
-      */
+
     }
     
     Init()

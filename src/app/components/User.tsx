@@ -145,7 +145,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const data = await exchangeOneTimeCode(code);
         console.log('Exchanged Data',data)
-        /*
+        
         if (data?.accessToken && data?.refreshToken) {
           SetMemAccessToken(data.accessToken);
           await SetRefreshToken(data.refreshToken);
@@ -168,7 +168,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
           //await serverLogout();
           
         }
-        */
+       
       } catch (e) {
         console.warn('Exchange failed', e);
         //await serverLogout();
@@ -179,7 +179,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     let mounted = true;
-
+    console.log('Code',code)
     
     
     if (code) {

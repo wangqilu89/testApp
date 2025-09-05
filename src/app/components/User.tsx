@@ -25,8 +25,8 @@ const getQueryParam = (url: string, name: string): string | null => {
 }
 
 const GetCode = async () : Promise <string|null> => {
-  if (platform === 'web') {
-    return getQueryParam(location.href,'code')
+  if (platform === 'web' && typeof window != 'undefined') {
+    return getQueryParam(window.location.href,'code')
     
   }
 

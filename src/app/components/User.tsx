@@ -36,7 +36,13 @@ const GetCode = async () => {
         weburl = await Linking.getInitialURL();
       break;
       case 2:
-        weburl = await new Promise<string>((resolve) => Linking.addEventListener('url', ({ url }) => {resolve(url)}))
+        weburl = await new Promise<string>((resolve) => {
+          const sub = Linking.addEventListener('url', ({ url }) => {
+            sub.remove();
+            resolve(url)
+          })
+          setTimeout(() => { try { sub.remove(); } catch {} resolve(''); }, 5000);
+        })
       break;
     }
     code = getQueryParam(weburl || '','code') || null

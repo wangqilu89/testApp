@@ -24,26 +24,28 @@ const getQueryParam = (url: string, name: string): string | null => {
   return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
 }
 
-const GetCode = async () : Promise <string|null> => {
-  if (platform === 'web' && typeof window != 'undefined') {
-    return getQueryParam(window.location.href,'code')
-    
+const GetCode = async () => {
+  let code = null
+  let weburl:string|null = ''
+  for (var i=0; i < 3;i++) {
+    switch (i) {
+      case 0:
+        weburl = window.location.href
+      break;
+      case 1:
+        weburl = await Linking.getInitialURL();
+      break;
+      case 2:
+        weburl = await new Promise<string>((resolve) => Linking.addEventListener('url', ({ url }) => {resolve(url)}))
+      break;
+    }
+    code = getQueryParam(weburl || '','code') || null
+    if (code) {
+      return code
+    }
   }
+}
 
-  // Native: check initial URL first
-  const initial = await Linking.getInitialURL();
-  if (initial) {
-    const c = getQueryParam(initial, 'code');
-    if (c) return c;
-  }
-  return new Promise((resolve)=> {
-    const sub = Linking.addEventListener('url', ({ url }) => {
-      const code = getQueryParam(url, 'code');
-      resolve(code);
-      sub.remove(); 
-    })
-  })
-};
 
 
 const OpenAuth = async () => {
@@ -169,13 +171,9 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
     const Init = async() => {
-      const initialUrl = await Linking.getInitialURL();
-      safeAlert('Code 1 (web href)', getQueryParam(window.location.href,'code') || '')
-      safeAlert('Code 2 (initialurl)',getQueryParam(initialUrl || '','code') || '')
-      const sub = Linking.addEventListener('url', ({ url }) => {
-        const code3 = getQueryParam(url, 'code') || '';
-        safeAlert('Code 3 (event)', code3);
-      });
+      const code = await GetCode()
+      console.log('code',code)
+      safeAlert('Code',code || '')
       
       /*
       const code = await GetCode()

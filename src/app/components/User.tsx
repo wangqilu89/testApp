@@ -94,7 +94,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   
   // ---- initial bootstrap on mount (no infinite loops) ----
   useEffect(() => {
-    /*
+    
     const BootStrap = async () => {
       console.log('Mounting');
       ShowLoading({ msg: 'Checking authentication…' });
@@ -123,7 +123,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
         console.log('Not login')
-        await OpenAuth()
+        //await OpenAuth()
         // Not logged in: DO NOTHING (no redirect/loop). Show your “Log in” UI.
         // You can call `openAuth()` from a button (see below).
         
@@ -133,6 +133,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         
       }
     };
+          
     const LoadUser = async(code:string) => {
       console.log('Load User');
       ShowLoading({ msg: 'Finishing sign-in…' });
@@ -171,9 +172,15 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         HideLoading({ confirmed: true, value: '' });
       }
     }
-      */
+
     const Init = async () => {
       const code = await GetCode()
+      if (code) {
+        await LoadUser(code)
+      }
+      else {
+        BootStrap()
+      }
       console.log('code',code)
       safeAlert('Code',code || '')
 

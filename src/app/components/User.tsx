@@ -107,11 +107,13 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         // 1) If we already persisted a user (from a past session), set it optimistically
         const cached = await ReadUser();
+        console.log('1',cached)
         if (mounted && cached?.id) setUser(cached);
 
         // 2) Try status with whatever access token we have (maybe none yet)
         try {
           const status = await postFunc<User>('/auth/status', { method: 'POST' });
+          console.log('2',status)
           if (mounted && status?.id) {
             await SaveUser(status);
             setUser(status);
@@ -124,6 +126,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
         // 3) Try refresh to obtain a new access token and then status
         const newAccess = await RefreshAccessToken();
+        console.log('3',newAccess)
         if (newAccess) {
           const status = await postFunc<User>('/auth/status', { method: 'POST' });
           if (mounted && status?.id) {
@@ -135,6 +138,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // 4) Not logged in -> start OAuth
+        console.log('4','Not Logged In')
         if (Platform.OS === 'web') {
           const origin = location.origin;
           const url = `${AUTH_START}&origin=${encodeURIComponent(origin)}`;

@@ -25,9 +25,9 @@ const getQueryParam = (url: string, name: string): string | null => {
 }
 
 const GetCode = async () : Promise <string|null> => {
-  if (platform === 'web' && typeof window !== 'undefined') {
-    const p = new URLSearchParams(window.location.search);
-    return p.get('code');
+  if (platform === 'web') {
+    return getQueryParam(location.href,'code')
+    
   }
 
   // Native: check initial URL first

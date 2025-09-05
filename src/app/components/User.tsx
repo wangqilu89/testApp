@@ -123,9 +123,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
         console.log('Not login')
-        //await OpenAuth()
-        // Not logged in: DO NOTHING (no redirect/loop). Show your “Log in” UI.
-        // You can call `openAuth()` from a button (see below).
+        //await logout()
         
       } 
       finally {
@@ -179,11 +177,10 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         await LoadUser(code)
       }
       else {
-        BootStrap()
+        await BootStrap()
       }
-      console.log('code',code)
-      safeAlert('Code',code || '')
-
+      //console.log('code',code)
+      //safeAlert('Code',code || '')
     }
     
     Init()

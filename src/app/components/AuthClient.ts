@@ -6,11 +6,7 @@ import {REDIRECT_URI,GetMemAccessToken,SetMemAccessToken,RefreshAccessToken,GetR
 
 const exchangeOneTimeCode = async (code: string) => {
     // ✅ correct signature: payload object + 'POST'
-    return postFunc<{ accessToken: string; refreshToken: string; user: any }>(
-      '/auth/exchange',
-      { code },
-      'POST'
-    );
+    return postFunc<{ accessToken: string; refreshToken: string; user: any }>('/auth/exchange',{ code },'POST');
   }
   
 const serverLogout = async () => {

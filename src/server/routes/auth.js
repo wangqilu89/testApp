@@ -128,10 +128,10 @@ module.exports = function authRoutesFactory({ redisClient }) {
         );
 
         if (platform === 'mobile') {
-          return res.redirect(`myapp://home?code=${encodeURIComponent(code)}`);
+          return res.redirect(`myapp://?code=${encodeURIComponent(code)}`);
         }
         else {
-          return res.redirect(`${origin}/home?code=${encodeURIComponent(code)}`);
+          return res.redirect(`${origin}/?code=${encodeURIComponent(code)}`);
         }
           
         /*

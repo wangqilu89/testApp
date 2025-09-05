@@ -138,12 +138,13 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // 4) Not logged in -> start OAuth
-        console.log('4','Not Logged In')
+        console.log('4','URL  ' + `${AUTH_START}&origin=${encodeURIComponent(origin)}`)
         if (Platform.OS === 'web') {
           const origin = location.origin;
           const url = `${AUTH_START}&origin=${encodeURIComponent(origin)}`;
           location.href = url;
-        } else {
+        } 
+        else {
           await WebBrowser.openAuthSessionAsync(AUTH_START, REDIRECT_URI);
           // When it returns, deep link handler will set tokens/user
         }

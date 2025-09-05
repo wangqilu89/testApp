@@ -24,6 +24,17 @@ const getQueryParam = (url: string, name: string): string | null => {
   return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
 }
 
+const GetCode = () : Promise <string|null> => {
+  return new Promise((resolve)=> {
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      const code = getQueryParam(url, 'code');
+      resolve(code);
+      sub.remove(); 
+    })
+  })
+};
+
+
 const OpenAuth = async () => {
   if (Platform.OS === 'web') {
     const origin = location.origin;
@@ -58,7 +69,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send'}),[user]);
-  const {code=null} = useLocalSearchParams<Partial<{ code:string}>>();
+  
   
   /*
   useEffect(() => {
@@ -177,18 +188,19 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         HideLoading({ confirmed: true, value: '' });
       }
     }
-
+    const Init = async() => {
+      const code = await GetCode()
+      console.log('code',code)
+      if (code) {
+        await LoadUser(code)
+      }
+      else {
+        await BootStrap();
+      }
+    }
     let mounted = true;
-    console.log('Code',code)
-    
-    
-    if (code) {
-      LoadUser(code)
-    }
-    else {
-      BootStrap();
-    }
-    
+    Init()
+
     return () => { mounted = false; };
   }, []);
 

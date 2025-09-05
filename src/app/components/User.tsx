@@ -136,8 +136,9 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
             return;
           }
         }
-
+        console.log('Not Login')
         // 4) Not logged in -> start OAuth
+        /*
         console.log('4' + Platform.OS,'URL  ' + `${AUTH_START}&origin=${encodeURIComponent(origin)}`)
         if (Platform.OS === 'web') {
           const origin = location.origin;
@@ -148,6 +149,8 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
           await WebBrowser.openAuthSessionAsync(AUTH_START, REDIRECT_URI);
           // When it returns, deep link handler will set tokens/user
         }
+        */
+
       } catch (e) {
         console.warn('Bootstrap auth failed', e);
         await serverLogout();

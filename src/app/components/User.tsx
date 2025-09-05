@@ -11,7 +11,7 @@ import { useColorScheme} from 'react-native';
 import { REDIRECT_URI,SetRefreshToken,RefreshAccessToken,SetMemAccessToken,SaveUser,ReadUser} from './AuthState';
 import { exchangeOneTimeCode,serverLogout } from './AuthClient';
 
-WebBrowser.maybeCompleteAuthSession();
+
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -27,7 +27,8 @@ const OpenAuth = async () => {
   if (Platform.OS === 'web') {
     const origin = location.origin;
     location.href = `${AUTH_START}&origin=${encodeURIComponent(origin)}`;
-  } else {
+  } 
+  else {
     await WebBrowser.openAuthSessionAsync(AUTH_START, REDIRECT_URI);
   }
 };
@@ -39,7 +40,6 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   let ColorScheme = useColorScheme();
   ColorScheme = ColorScheme??'light'
-
   
   
   const login = async (userData: User) => {
@@ -58,7 +58,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send'}),[user]);
 
   
-
+  /*
   useEffect(() => {
     const sub = Linking.addEventListener('url', async ({ url }) => {
       const code = getQueryParam(url, 'code');
@@ -96,7 +96,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => sub.remove();
   }, [router, ShowLoading, HideLoading]);
-
+*/
   // ---- initial bootstrap on mount (no infinite loops) ----
   useEffect(() => {
     let mounted = true;
@@ -130,7 +130,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         await OpenAuth()
         // Not logged in: DO NOTHING (no redirect/loop). Show your “Log in” UI.
         // You can call `openAuth()` from a button (see below).
-        setUser(null);
+        
       } finally {
         HideLoading({ confirmed: true, value: '' });
       }

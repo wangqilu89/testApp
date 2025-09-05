@@ -11,6 +11,7 @@ import { useColorScheme} from 'react-native';
 import { REDIRECT_URI,SetRefreshToken,RefreshAccessToken,SetMemAccessToken,SaveUser,ReadUser} from './AuthState';
 import { exchangeOneTimeCode,serverLogout } from './AuthClient';
 
+WebBrowser.maybeCompleteAuthSession();
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -22,6 +23,14 @@ const getQueryParam = (url: string, name: string): string | null => {
   return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
 }
 
+const OpenAuth = async () => {
+  if (Platform.OS === 'web') {
+    const origin = location.origin;
+    location.href = `${AUTH_START}&origin=${encodeURIComponent(origin)}`;
+  } else {
+    await WebBrowser.openAuthSessionAsync(AUTH_START, REDIRECT_URI);
+  }
+};
   
 const UserProvider = ({ children }: { children: React.ReactNode }) => {
   
@@ -41,21 +50,12 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     try { await serverLogout(); } catch {}
     setUser(null);
-
-    if (Platform.OS === 'web') {
-      const origin = location.origin;
-      const url = `${AUTH_START}&origin=${encodeURIComponent(origin)}`;
-      location.href = url;
-      return;
-    } else {
-      // Re-open OAuth flow
-      await WebBrowser.openAuthSessionAsync(AUTH_START, REDIRECT_URI);
-      // When the browser closes, the deep link handler below will process the code
-    }
+    await OpenAuth()
+    
   };
 
 
-  const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send?acc=1'}),[user]);
+  const BaseObj = useMemo(() => ({user:((REACT_ENV != 'actual')?USER_ID:(user?.id??'0')),restlet:RESTLET,middleware:SERVER_URL + '/netsuite/send'}),[user]);
 
   
 
@@ -100,76 +100,44 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   // ---- initial bootstrap on mount (no infinite loops) ----
   useEffect(() => {
     let mounted = true;
-
+  
     const bootstrap = async () => {
       ShowLoading({ msg: 'Checking authentication…' });
-
       try {
-        // 1) If we already persisted a user (from a past session), set it optimistically
         const cached = await ReadUser();
-        console.log('1',cached)
         if (mounted && cached?.id) setUser(cached);
-
-        // 2) Try status with whatever access token we have (maybe none yet)
+  
+        // Try status with whatever access token is in memory (maybe none yet)
         try {
-          const status = await postFunc<User>('/auth/status', { method: 'POST' });
-          console.log('2',status)
+          const status = await postFunc<User>('/auth/status', {}, 'POST');
           if (mounted && status?.id) {
             await SaveUser(status);
             setUser(status);
-            HideLoading({ confirmed: true, value: '' });
             return;
           }
-        } catch {
-          /* ignore; will refresh below */
-        }
-
-        // 3) Try refresh to obtain a new access token and then status
+        } catch {}
+  
+        // Try refresh -> then status
         const newAccess = await RefreshAccessToken();
-        console.log('3',newAccess)
         if (newAccess) {
-          const status = await postFunc<User>('/auth/status', { method: 'POST' });
+          const status = await postFunc<User>('/auth/status', {}, 'POST');
           if (mounted && status?.id) {
             await SaveUser(status);
             setUser(status);
-            HideLoading({ confirmed: true, value: '' });
             return;
           }
         }
-        console.log('Not Login')
-        // 4) Not logged in -> start OAuth
-        /*
-        console.log('4' + Platform.OS,'URL  ' + `${AUTH_START}&origin=${encodeURIComponent(origin)}`)
-        if (Platform.OS === 'web') {
-          const origin = location.origin;
-          const url = `${AUTH_START}&origin=${encodeURIComponent(origin)}`;
-          location.href = url;
-        } 
-        else {
-          await WebBrowser.openAuthSessionAsync(AUTH_START, REDIRECT_URI);
-          // When it returns, deep link handler will set tokens/user
-        }
-        */
-
-      } catch (e) {
-        console.warn('Bootstrap auth failed', e);
-        await serverLogout();
-        if (Platform.OS === 'web') {
-          const origin = location.origin;
-          const url = `${AUTH_START}&origin=${encodeURIComponent(origin)}`;
-          location.href = url;
-        } else {
-          await WebBrowser.openAuthSessionAsync(AUTH_START, REDIRECT_URI);
-        }
+  
+        // Not logged in: DO NOTHING (no redirect/loop). Show your “Log in” UI.
+        // You can call `openAuth()` from a button (see below).
+        setUser(null);
       } finally {
         HideLoading({ confirmed: true, value: '' });
       }
     };
-
+  
     bootstrap();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [ShowLoading, HideLoading]);
 
   return (

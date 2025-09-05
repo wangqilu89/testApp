@@ -25,7 +25,7 @@ const getQueryParam = (url: string, name: string): string | null => {
 }
 
 const GetCode = async () : Promise <string|null> => {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  if (platform === 'web' && typeof window !== 'undefined') {
     const p = new URLSearchParams(window.location.search);
     return p.get('code');
   }
@@ -162,6 +162,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
     const Init = async() => {
+      console.log('URL',location)
       const code = await GetCode()
       console.log('code',code)
       if (code) {

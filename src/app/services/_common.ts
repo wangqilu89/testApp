@@ -13,6 +13,7 @@ const { SERVER_URL, RESTLET,REACT_ENV,USER_ID} = Constants.expoConfig?.extra || 
 const postFunc = async <T = any>(path: string, payload:object,method:string = "POST",absolute: boolean = false ) : Promise<T> => {
   method = method.toUpperCase()
   const url = absolute ? path : `${SERVER_URL}${path}`;
+  console.log('Final URL',url)
   let {options:opts,headers} = await GetPostOptions(payload,method)
   let res = await fetch(url, opts);
   if (res.status === 401) {

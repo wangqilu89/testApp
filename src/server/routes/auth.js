@@ -123,7 +123,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
           JSON.stringify({
             accessToken: accessTokenJWT,
             refreshToken,
-            user: { id: userId, tenantId },
+            user: { ...nsUser, tenantId },
           })
         );
 

@@ -58,7 +58,7 @@ const FetchData = async (o:Record<string, any>) => {
   o.user ??= USER_ID;
   o.middleware ??= SERVER_URL + '/netsuite/send?acc=1'
   try {
-    let data = await postFunc(o.middleware,o);
+    let data = await postFunc(o.middleware,o,"POST",true);
     data = data|| []
     return data
   } 

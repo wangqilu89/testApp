@@ -111,8 +111,9 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         // Try status with whatever access token is in memory (maybe none yet)
         try {
           const status = await postFunc<User>('/auth/status', {}, 'POST');
+          console.log('Status 1',status)
           if (status?.id) {
-            console.log('Status 1',status)
+            
             await SaveUser(status);
             setUser(status);
             return;
@@ -123,8 +124,9 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         const newAccess = await RefreshAccessToken();
         if (newAccess) {
           const status = await postFunc<User>('/auth/status', {}, 'POST');
+          console.log('Status 2',status)
           if (status?.id) {
-            console.log('Status 2',status)
+            
             await SaveUser(status);
             setUser(status);
             return;

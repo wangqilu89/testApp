@@ -114,7 +114,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
         await redisClient.setEx(
             keyRT(refreshHash),
             REFRESH_TTL_S,
-            JSON.stringify({ userId, tenantId })
+            JSON.stringify({ ...nsUser, tenantId })
         );
         const code = crypto.randomBytes(24).toString('base64url');
         await redisClient.setEx(

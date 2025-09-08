@@ -12,6 +12,7 @@ const exchangeOneTimeCode = async (code: string) => {
 const serverLogout = async () => {
     const rt = await GetRefreshToken();
     try {
+      
       await fetch(`${SERVER_URL}/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-platform-native': '1' },

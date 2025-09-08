@@ -114,7 +114,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
         await redisClient.setEx(
             keyRT(refreshHash),
             REFRESH_TTL_S,
-            JSON.stringify({ ...nsUser, tenantId })
+            JSON.stringify({ userId,tenantId })
         );
         const code = crypto.randomBytes(24).toString('base64url');
         await redisClient.setEx(
@@ -123,7 +123,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
           JSON.stringify({
             accessToken: accessTokenJWT,
             refreshToken,
-            user: { ...nsUser, tenantId },
+            user: { id: userId, tenantId },
           })
         );
 
@@ -176,10 +176,10 @@ module.exports = function authRoutesFactory({ redisClient }) {
   //    POST /auth/exchange { code }
   router.post('/exchange', async (req, res) => {
     const { code } = req.body || {};
-    console.log('Exchange Code',code)
+   
     if (!code) return res.status(400).json({ error: 'Missing code' });
     const data = await redisClient.getDel(keyLoginCode(code)); // get & delete
-    console.log('Exchange Data',data)
+
     if (!data) return res.status(410).json({ error: 'Code expired or invalid' });
     const parsed = JSON.parse(data);
     return res.json(parsed);
@@ -256,7 +256,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
         audience: 'your-frontend',
         issuer: 'your-middleware',
       });
-      console.log('Payload Check',payload)
+      console.log('Get Payload',payload)
       // Basic success identity
       return res.json({
         id: Number(payload.sub),

@@ -101,7 +101,7 @@ function ApprovalCategoryScreen({ category,user,BaseObj,scheme}:PageProps) {
     input:{visible:true,label:'Please type in reason'}
   }
 
-  const ButtonAction = async (action:string,command:string,refresh:boolean,PromptObj:GenericObject) => {
+  const ButtonAction = async (action:string,command:string,refresh:boolean,PromptObj:GenericObject,user:User|null) => {
     if (selectedKeys.length === 0) {
       ShowPrompt({msg:"Please select at least one record."});
       return;
@@ -121,7 +121,7 @@ function ApprovalCategoryScreen({ category,user,BaseObj,scheme}:PageProps) {
           const item = list.find((i: GenericObject) => i.internalid === ids);
           if (item) {
             ids.split(',').forEach((id:string) => {
-              data.push({internalid:id,command:itemcmd,reason:result.value,transtype:item.transtype})
+              data.push({internalid:id,command:itemcmd,reason:result.value,transtype:item.transtype,user:user?.id||null})
             })
           }
         })
@@ -182,10 +182,10 @@ function ApprovalCategoryScreen({ category,user,BaseObj,scheme}:PageProps) {
               {selectedKeys.length > 0 ? (
                 <View style={{ width:'100%',flexDirection: 'row', justifyContent: 'space-around', marginTop:10,flex:-1}}>
                   
-                  <TouchableOpacity onPress={() => ButtonAction('Approve',`Approve : Approve ${ProperCase(category)}`,true,ApproveObj)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                  <TouchableOpacity onPress={() => ButtonAction('Approve',`Approve : Approve ${ProperCase(category)}`,true,ApproveObj,user)} style={{ backgroundColor: '#28a745',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Approve Selected</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => ButtonAction('Reject',`Approve : Reject ${ProperCase(category)}`,true,RejectObj)} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
+                  <TouchableOpacity onPress={() => ButtonAction('Reject',`Approve : Reject ${ProperCase(category)}`,true,RejectObj,user)} style={{ backgroundColor: '#dc3545',width:150,maxWidth:150,padding: 12,borderRadius: 8,marginBottom: 20, alignItems: 'center'}}>
                       <Text style={{ color: 'white', fontWeight: 'bold' }}>Reject Selected</Text>
                   </TouchableOpacity>
                   

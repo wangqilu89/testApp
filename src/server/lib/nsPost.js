@@ -25,7 +25,7 @@ function getOAuthHeader(url, method, tokenKey, tokenSecret, consumerKey, consume
 
 
 async function PostNS(req, res) {
-  
+  console.log('Request',req)
   const account = req.query.acc || '0';
   let ACCESS_TOKEN = null
   let ACCESS_TOKEN_SECRET = null

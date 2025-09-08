@@ -112,6 +112,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           const status = await postFunc<User>('/auth/status', {}, 'POST');
           if (status?.id) {
+            console.log(status)
             await SaveUser(status);
             setUser(status);
             return;

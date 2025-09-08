@@ -256,7 +256,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
         audience: 'your-frontend',
         issuer: 'your-middleware',
       });
-
+      console.log('Payload Check',payload)
       // Basic success identity
       return res.json({
         id: Number(payload.sub),

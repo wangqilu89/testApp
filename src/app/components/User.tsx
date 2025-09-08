@@ -112,7 +112,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           const status = await postFunc<User>('/auth/status', {}, 'POST');
           if (status?.id) {
-            console.log(status)
+            console.log('Status 1',status)
             await SaveUser(status);
             setUser(status);
             return;
@@ -124,6 +124,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         if (newAccess) {
           const status = await postFunc<User>('/auth/status', {}, 'POST');
           if (status?.id) {
+            console.log('Status 2',status)
             await SaveUser(status);
             setUser(status);
             return;

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 
 const { oauth, staticVar } = require('../lib/nsOAuth');
 const {  issueAccessToken,ACCESS_JWT_SECRET, REFRESH_TTL_S, sha256, newOpaque, keyRT, keyNS,keyLoginCode   } = require('../lib/jwtToken');
+const {  GetUserProfile,SetUserProfile,NSUserProfile  } = require('../lib/jwtToken');
 const { MIDDLEWARE_URL,authorizeUrl} = staticVar
 const {  PostNS } = require('../lib/nsPost'); // 👈 Import it
 
@@ -89,7 +90,9 @@ module.exports = function authRoutesFactory({ redisClient }) {
        
         
 
-        const nsUser = await handleStatusCheck(req)
+        const nsUser = await handleStatusCheck(req);
+        await SetUserProfile(redisClient, tenantId, userId, nsUser);
+
         if (!nsUser || !nsUser.id) {
           return res.status(401).json({ error: 'Unable to identify user from NetSuite' });
         }
@@ -110,7 +113,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
         const accessTokenJWT = issueAccessToken({ id: userId, tenantId });
         const refreshToken = newOpaque();
         const refreshHash = sha256(refreshToken);
-
+        
         await redisClient.setEx(
             keyRT(refreshHash),
             REFRESH_TTL_S,
@@ -123,7 +126,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
           JSON.stringify({
             accessToken: accessTokenJWT,
             refreshToken,
-            user: { id: userId, tenantId },
+            user: { nsUser},
           })
         );
 
@@ -256,14 +259,42 @@ module.exports = function authRoutesFactory({ redisClient }) {
         audience: 'your-frontend',
         issuer: 'your-middleware',
       });
-      console.log('Get Payload',payload)
-      // Basic success identity
-      return res.json({
-        id: Number(payload.sub),
-        tenantId: Number(payload.ten || 0),
-        role: payload.scp || [],
+
+      const userId = String(payload.sub);
+      const tenantId = String(payload.ten || '0');
+
+      // 1) Try cached profile
+      const cached = await GetUserProfile(redisClient, tenantId, userId);
+      if (cached) return res.json(cached);
+
+      // 2) Load TBA tokens and fetch once from NetSuite
+      const nsTokens = await redisClient.hGetAll(keyNS(tenantId, userId));
+      if (!nsTokens || !nsTokens.tokenId || !nsTokens.tokenSecret) {
+        // fallback to JWT identity if we can't fetch profile
+        return res.json({
+          id: Number(userId),
+          tenantId: Number(tenantId),
+          role: payload.scp || [],
+        });
+      }
+
+      const nsUser = await NSUserProfile({
+        nsTokens: { tokenId: nsTokens.tokenId, tokenSecret: nsTokens.tokenSecret },
       });
-    } catch (e) {
+      
+      if (!nsUser || !nsUser.id) {
+        return res.json({
+          id: Number(userId),
+          tenantId: Number(tenantId),
+          role: payload.scp || [],
+        });
+      }
+
+      const fullUser = await SetUserProfile(redisClient, tenantId, userId, nsUser);
+      return res.json(fullUser);
+      
+    } 
+    catch (e) {
       // Any failure -> not logged in
       return res.json({ id: 0, role: 0, group: 0 });
     }

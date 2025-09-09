@@ -4,7 +4,7 @@ const crypto = require('crypto');
 
 const { oauth, staticVar } = require('../lib/nsOAuth');
 const {  issueAccessToken,ACCESS_JWT_SECRET, REFRESH_TTL_S, sha256, newOpaque, keyRT, keyNS,keyLoginCode   } = require('../lib/jwtToken');
-const {  GetUserProfile,SetUserProfile,NSUserProfile  } = require('../lib/jwtToken');
+const {  GetUserProfile,SetUserProfile,NSUserProfile,keyUserProfile  } = require('../lib/jwtToken');
 const { MIDDLEWARE_URL,authorizeUrl} = staticVar
 const {  PostNS } = require('../lib/nsPost'); // 👈 Import it
 
@@ -65,17 +65,17 @@ module.exports = function authRoutesFactory({ redisClient }) {
         if (!nsUser || !nsUser.id) {
           return res.status(401).json({ error: 'Unable to identify user from NetSuite' });
         }
-        console.log('User Info',nsUser)
+       //console.log('User Info',nsUser)
         // 2) Persist TBA in Redis (server-only)
         const tenantId = String(nsUser.tenantId || 0);
         const userId = String(nsUser.id);
         const nsKey = keyNS(tenantId, userId);
-        console.log('Going to hSet')
+        //console.log('Going to hSet')
         await redisClient.hSet(nsKey, {
           tokenId: req.nsTokens.tokenId,
           tokenSecret: req.nsTokens.tokenSecret,
         });
-        console.log('Complete hSet')
+        //console.log('Complete hSet')
         // 3) Cache the **full** profile in Redis (short TTL)
         await SetUserProfile(redisClient, tenantId, userId, nsUser);
 

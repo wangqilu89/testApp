@@ -55,8 +55,8 @@ async function PostNS(req, res) {
     }
 
     const finalWeb = refObj['restlet'] || SUITELET
-    console.log('Access Token ' + account,ACCESS_TOKEN)
-    console.log('Access Secret ' + account,ACCESS_TOKEN_SECRET)
+    //console.log('Access Token ' + account,ACCESS_TOKEN)
+    //console.log('Access Secret ' + account,ACCESS_TOKEN_SECRET)
 
     const oauthHeader = getOAuthHeader(
       finalWeb,

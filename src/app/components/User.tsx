@@ -102,7 +102,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     
     const BootStrap = async () => {
-      console.log('Mounting');
+      //console.log('Mounting');
       ShowLoading({ msg: 'Checking authentication…' });
       try {
         const cached = await ReadUser();
@@ -111,7 +111,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         // Try status with whatever access token is in memory (maybe none yet)
         try {
           const status = await postFunc<User>('/auth/status', {}, 'POST');
-          console.log('Status 1',status)
+          //console.log('Status 1',status)
           if (status?.id) {
             
             await SaveUser(status);
@@ -124,7 +124,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         const newAccess = await RefreshAccessToken();
         if (newAccess) {
           const status = await postFunc<User>('/auth/status', {}, 'POST');
-          console.log('Status 2',status)
+          //console.log('Status 2',status)
           if (status?.id) {
             
             await SaveUser(status);
@@ -132,7 +132,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
             return;
           }
         }
-        console.log('Not login')
+        //console.log('Not login')
         await OpenAuth()
         
       } 
@@ -143,11 +143,11 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
     };
           
     const LoadUser = async(code:string) => {
-      console.log('Load User');
+      //console.log('Load User');
       ShowLoading({ msg: 'Finishing sign-in…' });
       try {
         const data = await exchangeOneTimeCode(code);
-        console.log('Exchanged Data',data)
+       // console.log('Exchanged Data',data)
         
         if (data?.accessToken && data?.refreshToken) {
           SetMemAccessToken(data.accessToken);
@@ -167,7 +167,7 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
         } 
         else {
           // fallback
-          console.log('Failed User')
+          //console.log('Failed User')
           await serverLogout();
           
         }

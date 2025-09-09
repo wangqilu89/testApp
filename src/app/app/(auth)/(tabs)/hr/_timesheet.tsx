@@ -288,7 +288,7 @@ const SubmitTime = ({ id='0', user,BaseObj,scheme,date}:TimesheetProps) => {
     let RawData = await FetchData({ ...BaseObj, command: "HR : Get Saved Timebill",data:{internalid:id,date:date}})
     RawData = RawData[0]
     RawData.date = new Date(RawData.date + 'T00:00:00.000Z')
-    console.log('Raw Duration',RawData.duration)
+    //console.log('Raw Duration',RawData.duration)
     setData(RawData)
    
   }

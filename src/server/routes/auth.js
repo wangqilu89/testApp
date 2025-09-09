@@ -70,11 +70,12 @@ module.exports = function authRoutesFactory({ redisClient }) {
         const tenantId = String(nsUser.tenantId || 0);
         const userId = String(nsUser.id);
         const nsKey = keyNS(tenantId, userId);
+        console.log('Going to hSet')
         await redisClient.hSet(nsKey, {
           tokenId: req.session.accessToken,
           tokenSecret: req.session.accessTokenSecret,
         });
-
+        console.log('Complete hSet')
         // 3) Cache the **full** profile in Redis (short TTL)
         await SetUserProfile(redisClient, tenantId, userId, nsUser);
 

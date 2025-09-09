@@ -98,7 +98,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
           JSON.stringify({
             accessToken: accessTokenJWT,
             refreshToken,
-            user: { nsUser},
+            user: {...nsUser},
           })
         );
 

@@ -85,31 +85,32 @@ const AuthTokenLib = ({redisClient}) => {
 
 }
 
-const NSUserProfile = async ({nsTokens}) => {
-  const req = {
-    body: {
+const NSUserProfile = async (req) => {
+  const savedBody = req.body
+  try {
+    req.body = {
       restlet: 'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=3356&deploy=1',
       command: 'App : Get User',
-    },
-    nsTokens, // { tokenId, tokenSecret }
-    query: {},
-    session: {},
-  };
-  const data = await new Promise((resolve, reject) => {
-    const res = {
-      json: (obj) => resolve(obj),
-      send: (obj) => resolve(obj),
-      status: (code) => ({
-        json: (o) => (code >= 400 ? reject(o) : resolve(o)),
-        send: (o) => (code >= 400 ? reject(o) : resolve(o)),
-      }),
     };
-    PostNS(req, res).catch(reject);
-  });
-  if (data && data.success && data.success.data) {
-    return data.success.data; // your full nsUser
+  
+    const data = await new Promise((resolve, reject) => {
+      const res = {
+        json: (obj) => resolve(obj),
+        send: (obj) => resolve(obj),
+        status: (code) => ({
+          json: (o) => (code >= 400 ? reject(o) : resolve(o)),
+          send: (o) => (code >= 400 ? reject(o) : resolve(o)),
+        }),
+      };
+      try { PostNS(req, res); } catch (e) { reject(e); }
+    
+    });
+    return data;
   }
-  return null;
+  finally {
+    req.body = savedBody
+  }
+  
 }
 
 const GetUserProfile = async (redisClient, tenantId, userId) => {
@@ -130,16 +131,22 @@ const SetUserProfile = async (redisClient, tenantId, userId, nsUser) => {
 }
 
 module.exports = {
-    issueAccessToken,
-    ACCESS_JWT_SECRET, 
-    REFRESH_TTL_S, 
-    sha256, 
-    newOpaque, 
-    keyRT, 
-    keyNS,
-    keyLoginCode ,
-    AuthTokenLib,
-    NSUserProfile,
-    GetUserProfile,
-    SetUserProfile
-}
+  ACCESS_TTL_S,
+  REFRESH_TTL_S,
+  ACCESS_JWT_SECRET,
+  PROFILE_TTL_S,
+
+  issueAccessToken,
+  sha256,
+  newOpaque,
+
+  keyRT,
+  keyNS,
+  keyLoginCode,
+  keyUserProfile,
+
+  AuthTokenLib,
+  NSUserProfile,
+  GetUserProfile,
+  SetUserProfile
+};

@@ -16,32 +16,6 @@ const nullValidation = (value) => {
     return false;
   }
 } 
-const handleStatusCheck = async (req) => {
-  const savedBody = req.body;
-  try {
-    req.body = {
-      restlet: 'https://6134818.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=3356&deploy=1',
-      command: 'App : Get User',
-    };
-
-    const data = await new Promise((resolve, reject) => {
-      const resLike = {
-        json: (obj) => resolve(obj),
-        send: (obj) => resolve(obj),
-        status: (code) => ({
-          json: (o) => (code >= 400 ? reject(o) : resolve(o)),
-          send: (o) => (code >= 400 ? reject(o) : resolve(o)),
-        }),
-      };
-      
-      try { PostNS(req, resLike); } catch (e) { reject(e); }
-    });
-    
-    return data; // <- nsUser
-  } finally {
-    req.body = savedBody; // restore no matter what
-  }
-};
 
 module.exports = function authRoutesFactory({ redisClient }) {
 
@@ -83,21 +57,16 @@ module.exports = function authRoutesFactory({ redisClient }) {
         }
         
         // TEMP: put tokens in session so PostNS can run once
-        req.session = req.session || {};
-        req.session.accessToken = accessToken.trim();
-        req.session.accessTokenSecret = accessTokenSecret.trim();
         req.nsTokens = {tokenId:accessToken.trim(),tokenSecret:accessTokenSecret.trim()}
-       
         
-
-        const nsUser = await handleStatusCheck(req);
-        await SetUserProfile(redisClient, tenantId, userId, nsUser);
-
+        // 1) Get NS user once (uses req.nsTokens)
+        const nsUser = await NSUserProfile(req);
+       
         if (!nsUser || !nsUser.id) {
           return res.status(401).json({ error: 'Unable to identify user from NetSuite' });
         }
 
-        // Persist NS TBA in Redis (server-only)
+        // 2) Persist TBA in Redis (server-only)
         const tenantId = String(nsUser.tenantId || 0);
         const userId = String(nsUser.id);
         const nsKey = keyNS(tenantId, userId);
@@ -106,10 +75,14 @@ module.exports = function authRoutesFactory({ redisClient }) {
           tokenSecret: req.session.accessTokenSecret,
         });
 
-        // Clear session NS tokens now (no longer needed on session)
+        // 3) Cache the **full** profile in Redis (short TTL)
+        await SetUserProfile(redisClient, tenantId, userId, nsUser);
+
+        // 4) Clear temp session NS tokens
         delete req.session.accessToken;
         delete req.session.accessTokenSecret;
 
+        // 5) Issue JWT + refresh
         const accessTokenJWT = issueAccessToken({ id: userId, tenantId });
         const refreshToken = newOpaque();
         const refreshHash = sha256(refreshToken);
@@ -119,6 +92,8 @@ module.exports = function authRoutesFactory({ redisClient }) {
             REFRESH_TTL_S,
             JSON.stringify({ userId,tenantId })
         );
+
+        // 6) One-time code payload for app/web exchange (include full user here)
         const code = crypto.randomBytes(24).toString('base64url');
         await redisClient.setEx(
           keyLoginCode(code),
@@ -130,42 +105,13 @@ module.exports = function authRoutesFactory({ redisClient }) {
           })
         );
 
+        // 7) Redirect with ?code=...
         if (platform === 'mobile') {
           return res.redirect(`myapp://?code=${encodeURIComponent(code)}`);
         }
         else {
           return res.redirect(`${origin}/?code=${encodeURIComponent(code)}`);
         }
-          
-        /*
-        if (platform === 'mobile') {
-          // For mobile, we don’t want to put tokens on the URL.
-          // Create a short-lived one-time code the app can exchange.
-          const code = crypto.randomBytes(24).toString('base64url');
-          await redisClient.setEx(
-              keyLoginCode(code),
-              180, // 3 minutes
-              JSON.stringify({
-                accessToken: accessTokenJWT,
-                refreshToken,
-                user: { id: userId, tenantId },
-              })
-          );
-          // Deep link back to React Native app
-          return res.redirect(`myapp://auth/callback?code=${encodeURIComponent(code)}&success=1`);
-        } 
-        else {
-          res.cookie('rt', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            path: '/auth',
-            maxAge: REFRESH_TTL_S * 1000,
-          });
-
-          return res.redirect(`${origin}/home`);
-        }
-        */
       }
     );
     }
@@ -235,7 +181,13 @@ module.exports = function authRoutesFactory({ redisClient }) {
 
       if (rt) {
         const h = sha256(rt);
+        const stored = await redisClient.get(keyRT(h));
+       
         await redisClient.del(keyRT(h));
+        if (stored) {
+          const { userId, tenantId } = JSON.parse(stored);
+          await redisClient.del(keyUserProfile(tenantId, userId)); // optional
+        }
       }
       // Clear cookie for web
       res.clearCookie('rt', { path: '/auth', httpOnly: true, sameSite: 'none', secure: process.env.NODE_ENV === 'production' });
@@ -277,10 +229,10 @@ module.exports = function authRoutesFactory({ redisClient }) {
           role: payload.scp || [],
         });
       }
-
-      const nsUser = await NSUserProfile({
-        nsTokens: { tokenId: nsTokens.tokenId, tokenSecret: nsTokens.tokenSecret },
-      });
+      
+      //Modify req
+      req.nsTokens = { tokenId: nsTokens.tokenId, tokenSecret: nsTokens.tokenSecret }
+      const nsUser = await NSUserProfile(req);
       
       if (!nsUser || !nsUser.id) {
         return res.json({

@@ -65,7 +65,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
         if (!nsUser || !nsUser.id) {
           return res.status(401).json({ error: 'Unable to identify user from NetSuite' });
         }
-
+        console.log('User Info',nsUser)
         // 2) Persist TBA in Redis (server-only)
         const tenantId = String(nsUser.tenantId || 0);
         const userId = String(nsUser.id);

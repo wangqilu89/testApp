@@ -72,18 +72,14 @@ module.exports = function authRoutesFactory({ redisClient }) {
         const nsKey = keyNS(tenantId, userId);
         console.log('Going to hSet')
         await redisClient.hSet(nsKey, {
-          tokenId: req.session.accessToken,
-          tokenSecret: req.session.accessTokenSecret,
+          tokenId: req.nsTokens.tokenId,
+          tokenSecret: req.nsTokens.tokenSecret,
         });
         console.log('Complete hSet')
         // 3) Cache the **full** profile in Redis (short TTL)
         await SetUserProfile(redisClient, tenantId, userId, nsUser);
 
-        // 4) Clear temp session NS tokens
-        delete req.session.accessToken;
-        delete req.session.accessTokenSecret;
-
-        // 5) Issue JWT + refresh
+        // 4) Issue JWT + refresh
         const accessTokenJWT = issueAccessToken({ id: userId, tenantId });
         const refreshToken = newOpaque();
         const refreshHash = sha256(refreshToken);

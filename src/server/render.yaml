@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: my-app
+    env: node
+    plan: starter          # or starter/standard depending on your needs
+    buildCommand: npm ci && npm run build
+    startCommand: node src/server/index.js
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: ACCESS_JWT_SECRET
+        sync: false
+      - key: OAUTH_CONSUMER_KEY
+        sync: false
+      - key: OAUTH_CONSUMER_SECRET
+        sync: false
+      - key: NETSUITE_ACCOUNT
+        sync: false
+
+cronJobs:
+  - name: refresh-token-cleanup
+    schedule: "0 * * * *" # every hour (cron syntax: minute hour day month day-of-week)
+    command: "node scripts/rt_cleanup.js"
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: ACCESS_JWT_SECRET
+        sync: false
+      - key: OAUTH_CONSUMER_KEY
+        sync: false
+      - key: OAUTH_CONSUMER_SECRET
+        sync: false
+      - key: NETSUITE_ACCOUNT
+        sync: false

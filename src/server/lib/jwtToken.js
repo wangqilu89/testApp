@@ -2,7 +2,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const {  PostNS } = require('./nsPost'); // 👈 Import it
+const {  PostNS,getOAuthHeader } = require('./nsPost'); 
 
 // ----------------- Helpers & constants -----------------
 const ACCESS_TTL_S = 10 * 60;              // 10 minutes
@@ -12,6 +12,7 @@ const PROFILE_TTL_S = 300; // 5 minutes
 
 // Redis keys
 const keyRT = (h) => `auth:rt:${h}`;                           // refresh allowlist
+const keyMap = (tenant, userId,h) => `auth:rtmap:${tenant}:${userId}:${h}`;    //Mapping keys
 const keyNS = (tenant, userId) => `ns:tba:${tenant}:${userId}`; // NetSuite TBA per tenant+user
 const keyLoginCode = (code) => `auth:code:${code}`;            // mobile one-time code
 const keyUserProfile = (tenantId, userId) => `user:profile:${tenantId}:${userId}`;
@@ -130,6 +131,63 @@ const SetUserProfile = async (redisClient, tenantId, userId, nsUser) => {
   return fullUser;
 }
 
+const DeleteUserProfile = async (redisClient,rt) => {
+  if (!rt) return;
+
+  const h = sha256(rt);
+  const stored = await redisClient.get(keyRT(h));
+  let userId = null
+  let tenantId = null
+  if (stored) {
+    try {
+      const result = JSON.parse(stored);
+      userId = result?.userId ?? null;
+      tenantId = result?.tenantId ?? null;
+
+    } catch {}
+  } 
+
+  if (h) {
+    //1) Delete Refresh Token
+    await redisClient.del(keyRT(h));
+  }
+  if (userId && tenantId) {
+    //2) Delete User Profile
+    await redisClient.del(keyUserProfile(tenantId, userId)); 
+    //3) Delete NS TBA
+
+    //A) Delete in NS
+    const nskey = keyNS(tenantId, userId)
+    const nsTokens = await redisClient.hGetAll(nskey);
+    if (nsTokens?.tokenId && nsTokens?.tokenSecret) {
+      try {
+        const revokeUrl = `https://${process.env.NETSUITE_ACCOUNT}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${process.env.OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
+        const oauthHeader = getOAuthHeader(
+          revokeUrl,
+          'GET',
+          nsTokens.tokenId,
+          nsTokens.tokenSecret,
+          process.env.OAUTH_CONSUMER_KEY,
+          process.env.OAUTH_CONSUMER_SECRET
+        );
+
+        await fetch(revokeUrl, { method: 'GET', headers: oauthHeader });
+      } 
+      catch (err) {
+        console.error('Failed to revoke NS token:', err.message);
+      }
+    }
+
+    //B) Delete in Redis
+    await redisClient.del(keyNS(tenantId, userId));  
+  }
+  if (h && userId && tenantId) {
+    //4) Delete Mirror Map
+    await redisClient.del(keyMap(tenantId, userId,h));  
+  }
+  
+}
+
 module.exports = {
   ACCESS_TTL_S,
   REFRESH_TTL_S,
@@ -141,12 +199,13 @@ module.exports = {
   newOpaque,
 
   keyRT,
+  keyMap,
   keyNS,
   keyLoginCode,
-  keyUserProfile,
 
   AuthTokenLib,
   NSUserProfile,
   GetUserProfile,
-  SetUserProfile
+  SetUserProfile,
+  DeleteUserProfile
 };

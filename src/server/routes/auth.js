@@ -3,10 +3,10 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 const { oauth, staticVar } = require('../lib/nsOAuth');
-const {  issueAccessToken,ACCESS_JWT_SECRET, REFRESH_TTL_S, sha256, newOpaque, keyRT, keyNS,keyLoginCode   } = require('../lib/jwtToken');
-const {  GetUserProfile,SetUserProfile,NSUserProfile,keyUserProfile  } = require('../lib/jwtToken');
+const {  issueAccessToken,ACCESS_JWT_SECRET, REFRESH_TTL_S, sha256, newOpaque, keyRT, keyNS,keyLoginCode,keyMap  } = require('../lib/jwtToken');
+const {  GetUserProfile,SetUserProfile,NSUserProfile,DeleteUserProfile  } = require('../lib/jwtToken');
 const { MIDDLEWARE_URL,authorizeUrl} = staticVar
-const {  PostNS } = require('../lib/nsPost'); // 👈 Import it
+
 
 
 const nullValidation = (value) => {
@@ -42,6 +42,7 @@ module.exports = function authRoutesFactory({ redisClient }) {
   router.get('/callback', (req, res) => {
     try {
     const { oauth_token, oauth_verifier } = req.query;
+    
     const tokenSecret = req.session?.tokenSecret;
     const platform = (!nullValidation(req.query.platform)? req.query.platform:(!nullValidation(req.session?.platform) ? req.session.platform : 'web'));// default to web if not provided
     const origin = (!nullValidation(req.session?.origin)?req.session.origin:MIDDLEWARE_URL);
@@ -81,14 +82,23 @@ module.exports = function authRoutesFactory({ redisClient }) {
 
         // 4) Issue JWT + refresh
         const accessTokenJWT = issueAccessToken({ id: userId, tenantId });
+        const expAt = Date.now() + REFRESH_TTL_S*1000; 
         const refreshToken = newOpaque();
         const refreshHash = sha256(refreshToken);
         
         await redisClient.setEx(
             keyRT(refreshHash),
             REFRESH_TTL_S,
-            JSON.stringify({ userId,tenantId })
+            JSON.stringify({ userId,tenantId,expAt })
         );
+
+        //5) Issue map Key
+        await redisClient.setEx(
+          keyMap(tenantId,userId,refreshHash),
+          REFRESH_TTL_S,
+          '1'
+        );
+        
 
         // 6) One-time code payload for app/web exchange (include full user here)
         const code = crypto.randomBytes(24).toString('base64url');
@@ -142,19 +152,30 @@ module.exports = function authRoutesFactory({ redisClient }) {
       if (!stored) return res.status(401).json({ error: 'Invalid refresh' });
 
       const payload = JSON.parse(stored);
+     
+      const remaining = Math.max(parseInt(payload.expAt) - Date.now(),0)
+
+      if (remaining <= 0) {
+        // hard-expired session
+        //Delete All Elements
+        await redisClient.del(rtKey);
+        return res.status(401).json({ error: 'Refresh expired' });
+      }
+      const remainingSec = Math.max(Math.floor(remaining / 1000), 1);
 
       // Rotate refresh
       await redisClient.del(keyRT(h));
       const newRT = newOpaque();
       const newHash = sha256(newRT);
-      await redisClient.setEx(keyRT(newHash), REFRESH_TTL_S, JSON.stringify(payload));
+      await redisClient.setEx(keyRT(newHash), remainingSec, JSON.stringify(payload));
 
       // New access
       const newAccess = issueAccessToken({ id: payload.userId, tenantId: payload.tenantId });
 
       if (isNative) {
         return res.json({ accessToken: newAccess, refreshToken: newRT });
-      } else {
+      } 
+      else {
         res.cookie('rt', newRT, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -175,16 +196,10 @@ module.exports = function authRoutesFactory({ redisClient }) {
     try {
       const isNative = !!req.header('x-platform-native');
       const rt = isNative ? req.body?.refreshToken : req.cookies?.rt;
-
+      
       if (rt) {
         const h = sha256(rt);
-        const stored = await redisClient.get(keyRT(h));
-       
-        await redisClient.del(keyRT(h));
-        if (stored) {
-          const { userId, tenantId } = JSON.parse(stored);
-          await redisClient.del(keyUserProfile(tenantId, userId)); // optional
-        }
+        await DeleteUserProfile(redisClient,h)
       }
       // Clear cookie for web
       res.clearCookie('rt', { path: '/auth', httpOnly: true, sameSite: 'none', secure: process.env.NODE_ENV === 'production' });

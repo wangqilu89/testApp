@@ -357,6 +357,14 @@ import { PageProps } from '@/types';
         return;
       }
 
+      if (apply.startdate.getFullYear() != apply.enddate.getFullYear()) {
+        ShowPrompt({
+          msg: "Leave dates must be within the same calendar year. Please change your dates.",
+          icon: { label: <Ionicons name="alert-circle" style={{ fontSize: 50, color: 'red' }}/>, visible: true },
+          cancel: { visible: false }
+        });
+        return;
+      }
       ShowLoading({msg:'Loading...'});
       const DataObj:GenericObject= {...apply,startdate:apply.startdate.toISOString().split('T')[0],enddate:apply.enddate.toISOString().split('T')[0]}
       const NewObj = {...BaseObj,command:'HR : Submit Leave',data:DataObj}

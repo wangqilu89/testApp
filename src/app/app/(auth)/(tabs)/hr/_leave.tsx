@@ -361,15 +361,27 @@ import { PageProps } from '@/types';
       const DataObj:GenericObject= {...apply,startdate:apply.startdate.toISOString().split('T')[0],enddate:apply.enddate.toISOString().split('T')[0]}
       const NewObj = {...BaseObj,command:'HR : Submit Leave',data:DataObj}
       const final = await FetchData(NewObj);
-      console.log('result',final)
+      
       const ConfirmObj = {
           msg:'Leave Request Submitted',
           icon:{label:<Ionicons name="checkmark"style={{fontSize:50,color:'green'}}/>,visible:true},
           cancel:{visible:false}
-        };
+       };
+      const ErrorObj = {
+        msg:'Error : ' + final.message,
+        icon:{label:<Ionicons name="alert-circle" style={{ fontSize: 50, color: 'red' }}/>,visible:true},
+        cancel:{visible:false}
+      };
       HideLoading({confirmed: true, value: ''})
-      let result = await ShowPrompt(ConfirmObj)
-      router.replace({ pathname:pathname as any,params: { category: 'leave' } })
+      if (final.value == 'Error') {
+        let result = await ShowPrompt(ErrorObj);
+        return;
+      }
+      else {
+        let result = await ShowPrompt(ConfirmObj)
+        router.replace({ pathname:pathname as any,params: { category: 'leave' } })
+      }
+      
     }
 
 

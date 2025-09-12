@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { createClient } = require('redis');
-const {DeleteUserProfile }= require('./lib/jwtToken'); // adjust path if needed
+const {DeleteUserProfile,keyRT }= require('./lib/jwtToken'); // adjust path if needed
 
 (async () => {
   const redisUrl = process.env.REDIS_URL;

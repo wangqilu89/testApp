@@ -220,8 +220,11 @@ import { PageProps } from '@/types';
       enddate: new Date(),
       startam: {internalid:'3',name:'Full Day'},
       endam: {internalid:'3',name:'Full Day'},
+      enrollment:'0',
       day: 1,
-      leave: {},
+      leave: null,
+      balance:0,
+      reason:'',
       file:null
     });
     const [leaveList, setLeaveList] = useState({...BaseObj,...({data: { date: apply.startdate.getFullYear(), shift: user?.shift ?? 0, subsidiary: user?.subsidiary ?? 0 },command: 'HR : Get Leave balance'})});
@@ -327,6 +330,33 @@ import { PageProps } from '@/types';
     }
 
     const HandleSubmit = async () => {
+      if (!apply.leave) {
+        ShowPrompt({
+          msg: "Please select a leave type before submitting",
+          icon: { label: <Ionicons name="alert-circle" style={{ fontSize: 50, color: 'red' }}/>, visible: true },
+          cancel: { visible: false }
+        });
+        return;
+      }
+
+      if (parseFloat(apply.balance) < parseFloat(apply.day)) {
+        ShowPrompt({
+          msg: "Requested Days for Leave exceeding total available balance of that Leave type. Please change Leave Type.",
+          icon: { label: <Ionicons name="alert-circle" style={{ fontSize: 50, color: 'red' }}/>, visible: true },
+          cancel: { visible: false }
+        });
+        return;
+      }
+
+      if ((apply.leave?.mandatory??false) && !apply.file) {
+        ShowPrompt({
+          msg: "Leave type require attachment. Please attach file.",
+          icon: { label: <Ionicons name="alert-circle" style={{ fontSize: 50, color: 'red' }}/>, visible: true },
+          cancel: { visible: false }
+        });
+        return;
+      }
+
       ShowLoading({msg:'Loading...'});
       const DataObj:GenericObject= {...apply,startdate:apply.startdate.toISOString().split('T')[0],enddate:apply.enddate.toISOString().split('T')[0]}
       const NewObj = {...BaseObj,command:'HR : Submit Leave',data:DataObj}
@@ -427,7 +457,7 @@ import { PageProps } from '@/types';
            mandatory={true} 
            def={apply.leave} 
            searchable={false} 
-           onChange={(item) => {updateApply('leave', item);updateApply('balance',item.balance)}} 
+           onChange={(item) => {updateApply('leave', item);updateApply('balance',item.balance);updateApply('enrollment',item.enrollment)}} 
            LoadObj={leaveList}
            scheme={scheme} 
          />

@@ -329,7 +329,7 @@ import { PageProps } from '@/types';
     const HandleSubmit = async () => {
       ShowLoading({msg:'Loading...'});
       const DataObj:GenericObject= {...apply,startdate:apply.startdate.toISOString().split('T')[0],enddate:apply.enddate.toISOString().split('T')[0]}
-      const NewObj = {...BaseObj,command:'HR : Submit Leave',data:apply}
+      const NewObj = {...BaseObj,command:'HR : Submit Leave',data:DataObj}
       const final = await FetchData(NewObj);
       const ConfirmObj = {
           msg:'Leave Request Submitted',

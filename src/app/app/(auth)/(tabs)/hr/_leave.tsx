@@ -324,7 +324,7 @@ import { PageProps } from '@/types';
       if (item) {
         updateApply('leave', item);
         updateApply('balance', item.balance);
-        ;updateApply('enrollment',item.enrollment)
+        updateApply('enrollment',item.enrollment);
       }
 
       setYear(YearStr);

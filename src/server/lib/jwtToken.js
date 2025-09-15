@@ -6,7 +6,7 @@ const {  PostNS,getOAuthHeader } = require('./nsPost');
 
 // ----------------- Helpers & constants -----------------
 const ACCESS_TTL_S = 10 * 60;              // 10 minutes
-const REFRESH_TTL_S = 30 * 24 * 3600;      // 30 days
+const REFRESH_TTL_S = 1 * 24 * 3600;      // 30 days
 const ACCESS_JWT_SECRET = process.env.ACCESS_JWT_SECRET || 'dev_access_secret';
 const PROFILE_TTL_S = 300; // 5 minutes
 

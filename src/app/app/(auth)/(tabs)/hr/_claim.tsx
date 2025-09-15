@@ -11,6 +11,12 @@ import {ThemedStyles} from '@/styles';
 import { GenericObject,MenuOption,PageProps, User,PageInfoColConfig,PageInfoRowProps,PageInfoColProps} from '@/types';
 import { SearchField } from '@/components/SearchField';
 
+interface MainProps extends PageProps {
+  'currency': string
+}
+
+
+
 const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
 
   interface RowProps extends Omit<PageInfoRowProps,'columns'> {
@@ -41,6 +47,12 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
     }
   });
 
+  const [newCurr,setNewCurr] = useState<GenericObject>({internalid:'1',name:'SGD'});
+
+  const {list:currencylist} = useListPost({
+    LoadObj:{...BaseObj,command:'HR : Get Currency' }
+  })
+
   const COLUMN_CONFIG: PageInfoColConfig= {
     header: [{internalid:'employee'},{internalid:'date'},{internalid:'name',name:'Document No'},{internalid:'val_amount',value:{handle:NumberComma}}],
     line: [{internalid:'category'},{internalid:'date'},{internalid:'project'},{internalid:'memo'},{internalid:'name',name:'Status'},{internalid:'val_amount'}]
@@ -64,40 +76,77 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
     )
   }
 
+
+
   const ButtonAction = async (action:string,command:string,refresh:boolean,PromptObj:GenericObject) => {
-    if (selectedKeys.length === 0) {
-      ShowPrompt({msg:"Please select at least one record."});
-      return;
+    if (action == 'Submit') {
+      if (selectedKeys.length === 0) {
+        ShowPrompt({msg:"Please select at least one record."});
+        return;
+      }
+      else {
+        let result:GenericObject
+        let proceed:boolean
+        do {
+          proceed = true
+          result = await ShowPrompt(PromptObj as any)
+          proceed = (!result.value && result.confirmed && PromptObj.input.visible)?false:true
+        } while (!proceed)
+        if (result.confirmed) {
+          const itemcmd = command.split(':')[1].trim()
+          let data:GenericObject[] = []
+          selectedKeys.forEach((id:string) => {
+            const item = list.find((i: GenericObject) => i.internalid === id);
+            if (item) {
+              data.push({internalid:id,command:itemcmd,reason:result.value,transtype:item.transtype})
+            }
+          })
+          const response = await HandleAction(action,command,refresh,data)
+        }
+        
+      }
     }
-    else {
+    else if (action == 'Create') {
       let result:GenericObject
       let proceed:boolean
       do {
-        proceed = true
-        result = await ShowPrompt(PromptObj as any)
-        proceed = (!result.value && result.confirmed && PromptObj.input.visible)?false:true
-      } while (!proceed)
-      if (result.confirmed) {
-        const itemcmd = command.split(':')[1].trim()
-        let data:GenericObject[] = []
-        selectedKeys.forEach((id:string) => {
-          const item = list.find((i: GenericObject) => i.internalid === id);
-          if (item) {
-            data.push({internalid:id,command:itemcmd,reason:result.value,transtype:item.transtype})
-          }
-        })
-        const response = await HandleAction(action,command,refresh,data)
-      }
+          proceed = true
+          result = await ShowPrompt(CreateObj as any)
+          proceed = (!result.value && result.confirmed && PromptObj.input.visible)?false:true
+        } while (!proceed)
+        if (result.confirmed) {
+          router.replace({ pathname:pathname as any,params: { category: 'submit-expense',currency:newCurr.internalid} })
+        }
       
     }
+    
   }
 
   const PromptObj = {
       msg: selectedKeys.length + ' claims will be submited.',
       icon:{label:<Ionicons name="help-outline"style={{fontSize:50,color:'orange'}}/>,visible:true},
       input:{visible:false}
-    }
+  }
 
+  const CreateObj = {
+    msg: <FormContainer scheme={scheme}>
+          <Text style={{ fontSize: 20,textAlign:'center'}}>Please select currency</Text>
+          <FormAutoComplete 
+            label=""  
+            mandatory={true} 
+            def={{internalid:'1',name:'SGD'}} 
+            searchable={false} 
+            onChange={(item)=>{setNewCurr(item)}}  
+            SearchObj={{ ...BaseObj, command: "HR : Get Currency" }} 
+            AddStyle={{StyleInput:{flex:1,marginRight:0}}}
+            scheme={scheme}
+          />
+        </FormContainer>
+    ,
+    icon:{visible:false},
+    input:{visible:false},
+    cancel:{visible:true}
+  }
   const RowInfo = ({selected,expanded,item,columns}:PageInfoRowProps) => {
     
     const DocColor = (StatusColors[item?.status]??Theme.text)
@@ -170,6 +219,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
     );
   };
 
+  
   return (
     <View style={[Page.container,{flexDirection:'column',justifyContent:'flex-start'}]}>
       <>
@@ -233,12 +283,12 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
   )
 }
 
-const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
+const ApplyClaim = ({ category,id, user,BaseObj,scheme,currency}: MainProps) => {
 
   //Defaults
   const [currentLine, setCurrentLine] = useState(0);
   const today = new Date()
-  const DefaultHeader =  {internalid:(id??'0').toString(),status:'Open',date:today,name:'To be Generated',employee:{id:BaseObj.user,name:user?.name},line:[]}
+  const DefaultHeader =  {internalid:(id??'0').toString(),status:'Open',date:today,name:'To be Generated',employee:{id:BaseObj.user,name:user?.name},currency:currency,line:[]}
   const DefaultLine:LineItem = {number:(currentLine + 1).toString(),date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:(id??'0') + '.' + (currentLine + 1),project:null,task:null,category:null,memo:'',val_amount:'0',file:null,edited:'F'}
   
   /*Declarations */
@@ -628,11 +678,11 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme}: PageProps) => {
   )
 }
 
-export const ExpenseClaim = ({ category, id, user,BaseObj,scheme}: PageProps) => {
+export const ExpenseClaim = ({ category, id, user,BaseObj,scheme,currency}: MainProps) => {
 
   switch (category) {
     case 'submit-expense':
-        return <ApplyClaim category={category} id={id??'0'} user={user} BaseObj={BaseObj} scheme={scheme??'light'} />
+        return <ApplyClaim category={category} id={id??'0'} user={user} BaseObj={BaseObj} scheme={scheme??'light'} currency={currency??'1'} />
     default :
         return <ExpenseMain user={user} BaseObj={BaseObj} scheme={scheme??'light'}  />
   }

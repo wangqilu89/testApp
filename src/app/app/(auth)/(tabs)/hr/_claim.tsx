@@ -131,6 +131,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
             label=""  
             mandatory={true} 
             searchable={false} 
+            def={{internalid:'1',name:'SGD'}}
             onChange={(item)=>{setNewCurr(item)}}  
             LoadObj={{ ...BaseObj, command: "HR : Get Currency" }} 
             AddStyle={{StyleInput:{flex:1,marginRight:0}}}
@@ -285,7 +286,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme,currency}: MainProps) => 
   const [currentLine, setCurrentLine] = useState(0);
   const today = new Date()
   const DefaultHeader =  {internalid:(id??'0').toString(),status:'Open',date:today,name:'To be Generated',employee:{id:BaseObj.user,name:user?.name},currency:currency,line:[]}
-  const DefaultLine:LineItem = {number:(currentLine + 1).toString(),date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:(id??'0') + '.' + (currentLine + 1),project:null,task:null,category:null,memo:'',val_amount:'0',file:null,edited:'F'}
+  const DefaultLine:LineItem = {number:(currentLine + 1).toString(),date:today,expense_date:today.toISOString().split('T')[0],internalid:(id??'0') + '.' + (currentLine + 1),project:null,task:null,category:null,memo:'',val_amount:'0',file:null,edited:'F'}
   
   /*Declarations */
   const { Page, Header, Listing, Form, ListHeader, CategoryButton, Theme } = ThemedStyles(scheme);
@@ -297,7 +298,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme,currency}: MainProps) => 
   
   const [showLine,setShowLine]= useState(false);
   const [claim,setClaim] = useState<ExpenseReport>(DefaultHeader);
-  const [line,setLine] = useState<LineItem>({number:'0',date:today,expense_date:today.getDate() + '/' + (today.getMonth() + 1) + '/'+ today.getFullYear(),internalid:claim.internalid + '.0',project:null,task:null,category:null,memo:'',val_amount:'0',file:null,edited:'F'});
+  const [line,setLine] = useState<LineItem>(DefaultLine);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [lineTask,setLineTask] = useState<GenericObject|null>(null);
   const memoTask = useMemo(() => line, [line.project]);
@@ -405,7 +406,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme,currency}: MainProps) => 
   }
 
   /* Functions */
-  const updateLine = (key:keyof typeof line,value: any) => {
+  const updateLine =  (key:keyof typeof line,value: any) => {
     setLine((prev) => {
       return {...prev, [key]: value }
     })
@@ -458,7 +459,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme,currency}: MainProps) => 
   };
   const submitLine = (item:LineItem) => {
       const refDate = item.date;
-      item.expense_date = refDate.getDate() + '/' + (refDate.getMonth() + 1) + '/' + refDate.getFullYear();
+      item.expense_date = refDate.toISOString().split('T')[0]
       setClaim((prev) => {
         const existingIndex = prev.line.findIndex(i => i.number === item.number);
         let updatedLine;
@@ -644,7 +645,7 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme,currency}: MainProps) => 
         <FormNumericInput label="Value " mandatory={true} def={line.val_amount} onChange={(text) => updateLine('val_amount', text)} scheme={scheme} />
         <FormAttachFile label="Attach File " def={line.file} onChange={(file) => {updateLine('file',file)}} scheme={scheme} />
         <View style={{flex:1}} />
-        <FormSubmit label={currentLine == parseInt(line.number)?'Add':'Update'} onPress={()=>{updateLine('edited','T');submitLine(line);setShowLine(false);}} scheme={scheme}/>
+        <FormSubmit label={currentLine == parseInt(line.number)?'Add':'Update'} onPress={()=>{submitLine({ ...line, edited: 'T' });setShowLine(false);}} scheme={scheme}/>
       </FormContainer>
     )
   }

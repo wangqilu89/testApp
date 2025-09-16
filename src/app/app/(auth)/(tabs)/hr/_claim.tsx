@@ -108,7 +108,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
       do {
           proceed = true
           result = await ShowPrompt(PromptObj as any)
-          proceed = (!result.value && result.confirmed)?false:true
+          proceed = (!result.value && result.confirmed && PromptObj.input.visible)?false:true
         } while (!proceed)
         if (result.confirmed) {
           router.replace({ pathname:pathname as any,params: { category: 'submit-expense',currency:newCurr.internalid} })

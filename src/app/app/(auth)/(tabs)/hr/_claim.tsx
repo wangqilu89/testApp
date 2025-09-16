@@ -49,10 +49,6 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
 
   const [newCurr,setNewCurr] = useState<GenericObject>({internalid:'1',name:'SGD'});
 
-  const {list:currencylist} = useListPost({
-    LoadObj:{...BaseObj,command:'HR : Get Currency' }
-  })
-
   const COLUMN_CONFIG: PageInfoColConfig= {
     header: [{internalid:'employee'},{internalid:'date'},{internalid:'name',name:'Document No'},{internalid:'val_amount',value:{handle:NumberComma}}],
     line: [{internalid:'category'},{internalid:'date'},{internalid:'project'},{internalid:'memo'},{internalid:'name',name:'Status'},{internalid:'val_amount'}]
@@ -111,8 +107,8 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
       let proceed:boolean
       do {
           proceed = true
-          result = await ShowPrompt(CreateObj as any)
-          proceed = (!result.value && result.confirmed && PromptObj.input.visible)?false:true
+          result = await ShowPrompt(PromptObj as any)
+          proceed = (!result.value && result.confirmed)?false:true
         } while (!proceed)
         if (result.confirmed) {
           router.replace({ pathname:pathname as any,params: { category: 'submit-expense',currency:newCurr.internalid} })
@@ -147,6 +143,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
     input:{visible:false},
     cancel:{visible:true}
   }
+  
   const RowInfo = ({selected,expanded,item,columns}:PageInfoRowProps) => {
     
     const DocColor = (StatusColors[item?.status]??Theme.text)
@@ -229,7 +226,7 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
                   <Ionicons name="chevron-back" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
               </TouchableOpacity>
               <Text style={[Header.text,{flex:1,width:'auto'}]}>List of Claims</Text>
-              <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => router.replace({ pathname:pathname as any,params: { category: 'submit-expense' } })}>
+              <TouchableOpacity style={{alignItems:'center',justifyContent:'center'}} onPress={() => {ButtonAction('Create','',true,CreateObj)}}>
                   <Ionicons name="add" style={[CategoryButton.icon,Header.text,{flex:1,fontSize:30}]} />
               </TouchableOpacity>
           </View>

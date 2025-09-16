@@ -130,10 +130,9 @@ const ExpenseMain = ({user,BaseObj,scheme}: PageProps) =>{
           <FormAutoComplete 
             label=""  
             mandatory={true} 
-            def={{internalid:'1',name:'SGD'}} 
             searchable={false} 
             onChange={(item)=>{setNewCurr(item)}}  
-            SearchObj={{ ...BaseObj, command: "HR : Get Currency" }} 
+            LoadObj={{ ...BaseObj, command: "HR : Get Currency" }} 
             AddStyle={{StyleInput:{flex:1,marginRight:0}}}
             scheme={scheme}
           />

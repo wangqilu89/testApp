@@ -324,6 +324,8 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme,currency}: MainProps) => 
     cancel:{visible:false}
   };
 
+  
+
   const ButtonAction = async (action:string) => {
     if (action === 'submit') {
       const LinePayload:GenericObject[] = []
@@ -334,9 +336,21 @@ const ApplyClaim = ({ category,id, user,BaseObj,scheme,currency}: MainProps) => 
       ShowLoading({msg:'Loading...'});
       const NewObj = {...BaseObj,command:'HR : Save Claim',data:newClaim}
       const final = await FetchData(NewObj);
+      const ErrorObj = {
+        msg:'Error : ' + final.message,
+        icon:{label:<Ionicons name="alert-circle" style={{ fontSize: 50, color: 'red' }}/>,visible:true},
+        cancel:{visible:false}
+      };
+
       HideLoading({confirmed: true, value: ''})
-      let result = await ShowPrompt(ConfirmObj)
-      router.replace({ pathname:pathname as any,params: { category: 'expense' } })
+      if (final.value == 'Error') {
+        let result = await ShowPrompt(ErrorObj);
+        return;
+      }
+      else {
+        let result = await ShowPrompt(ConfirmObj)
+        router.replace({ pathname:pathname as any,params: { category: 'expense' } })
+      }
     }
     else {
       let result:GenericObject

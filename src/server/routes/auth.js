@@ -193,11 +193,11 @@ module.exports = function authRoutesFactory({ redisClient }) {
 
   // 5) Logout: revoke refresh, clear cookie (web)
   router.post('/logout', async (req, res) => {
-    console.log('In Logout',req)
+    
     try {
       const isNative = !!req.header('x-platform-native');
       const rt = isNative ? req.body?.refreshToken : req.cookies?.rt;
-      console.log('RT',rt)
+     
       if (rt) {
         const h = sha256(rt);
         await DeleteUserProfile(redisClient,h)

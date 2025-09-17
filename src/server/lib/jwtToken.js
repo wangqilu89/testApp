@@ -131,10 +131,10 @@ const SetUserProfile = async (redisClient, tenantId, userId, nsUser) => {
   return fullUser;
 }
 
-const DeleteUserProfile = async (redisClient,rt) => {
-  if (!rt) return;
+const DeleteUserProfile = async (redisClient,h) => {
+  if (!h) return;
 
-  const h = sha256(rt);
+ 
   const stored = await redisClient.get(keyRT(h));
   let userId = null
   let tenantId = null

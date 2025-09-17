@@ -170,8 +170,9 @@ const DeleteUserProfile = async (redisClient,rt) => {
           process.env.OAUTH_CONSUMER_KEY,
           process.env.OAUTH_CONSUMER_SECRET
         );
-
-        await fetch(revokeUrl, { method: 'GET', headers: oauthHeader });
+        console.log('Revoke NS URL',revokeUrl)
+        var result = await fetch(revokeUrl, { method: 'GET', headers: oauthHeader });
+        console.log('Revoke NS',result)
       } 
       catch (err) {
         console.error('Failed to revoke NS token:', err.message);

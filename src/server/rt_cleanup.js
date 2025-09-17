@@ -19,6 +19,7 @@ const {DeleteUserProfile,keyRT }= require('./lib/jwtToken'); // adjust path if n
   for await (const mapKey of redisClient.scanIterator({ MATCH: 'auth:rtmap:*', COUNT: 1000 })) {
     // mapKey format: auth:rtmap:<tenantId>:<userId>:<hash>
     // parse parts:
+    
     const parts = mapKey.split(':'); // ['auth','rtmap',ten,user,hash]
     if (parts.length < 5) continue;
     const tenantId = parts[2];
@@ -29,6 +30,7 @@ const {DeleteUserProfile,keyRT }= require('./lib/jwtToken'); // adjust path if n
 
     // If corresponding refresh key no longer exists, cleanup
     const exists = await redisClient.exists(keyRT(h));
+    console.log(mapKey,exists)
     if (!exists) {
       await DeleteUserProfile(redisClient,h);
      

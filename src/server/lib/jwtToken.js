@@ -3,6 +3,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const {  PostNS,getOAuthHeader } = require('./nsPost'); 
+const { staticVar } = require('../lib/nsOAuth');
+const {ACCOUNT_ID,OAUTH_CONSUMER_KEY,OAUTH_CONSUMER_SECRET,OAUTH_TOKEN_KEY,OAUTH_TOKEN_SECRET} = staticVar
 
 // ----------------- Helpers & constants -----------------
 const ACCESS_TTL_S = 10 * 60;              // 10 minutes
@@ -161,15 +163,15 @@ const DeleteUserProfile = async (redisClient,h) => {
     const nsTokens = await redisClient.hGetAll(nskey);
     if (nsTokens?.tokenId && nsTokens?.tokenSecret) {
       try {
-        const revokeUrl = `https://${process.env.NETSUITE_ACCOUNT}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${process.env.OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
+        const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
         console.log('Revoke NS URL',revokeUrl);
         const oauthHeader = getOAuthHeader(
           revokeUrl,
           'GET',
           nsTokens.tokenId,
           nsTokens.tokenSecret,
-          process.env.OAUTH_CONSUMER_KEY,
-          process.env.OAUTH_CONSUMER_SECRET
+          OAUTH_CONSUMER_KEY,
+          OAUTH_CONSUMER_SECRET
         );
         
         var result = await fetch(revokeUrl, { method: 'GET', headers: oauthHeader });

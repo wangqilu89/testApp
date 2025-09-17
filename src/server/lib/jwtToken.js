@@ -164,14 +164,14 @@ const DeleteUserProfile = async (redisClient,h) => {
     if (nsTokens?.tokenId && nsTokens?.tokenSecret) {
       try {
         //const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/tokeninfo`;
-       //const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
-        const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${OAUTH_CONSUMER_SECRET}`;
+       const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
+        //const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${OAUTH_CONSUMER_SECRET}`;
        
         const oauthHeader = getOAuthHeader(
           revokeUrl,
           'GET',
-          nsTokens.tokenId,
-          nsTokens.tokenSecret,
+          OAUTH_TOKEN_KEY,
+          OAUTH_TOKEN_SECRET,
           OAUTH_CONSUMER_KEY,
           OAUTH_CONSUMER_SECRET
         );

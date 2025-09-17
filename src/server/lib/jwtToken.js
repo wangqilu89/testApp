@@ -163,8 +163,8 @@ const DeleteUserProfile = async (redisClient,h) => {
     const nsTokens = await redisClient.hGetAll(nskey);
     if (nsTokens?.tokenId && nsTokens?.tokenSecret) {
       try {
-         const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/tokeninfo`;
-        //const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
+         //const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/tokeninfo`;
+        const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
         console.log('Revoke NS URL',revokeUrl);
         const oauthHeader = getOAuthHeader(
           revokeUrl,
@@ -175,8 +175,17 @@ const DeleteUserProfile = async (redisClient,h) => {
           OAUTH_CONSUMER_SECRET
         );
         
-        var result = await fetch(revokeUrl, { method: 'GET', headers: oauthHeader });
-        console.log('Revoke NS',result)
+        const response  = await fetch(revokeUrl, { method: 'GET', headers: oauthHeader });
+        const text = await response.text();
+        
+          let parsed
+          try {
+            parsed = JSON.parse(text)
+          }
+          catch {
+            parsed = text;
+          }
+          console.log('Revoke NS',parsed)
       } 
       catch (err) {
         console.error('Failed to revoke NS token:', err.message);

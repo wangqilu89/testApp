@@ -102,5 +102,6 @@ async function PostNS(req, res) {
 }
 
 module.exports = {
-    PostNS
+    PostNS,
+    getOAuthHeader
 };

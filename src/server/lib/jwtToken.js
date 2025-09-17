@@ -162,6 +162,7 @@ const DeleteUserProfile = async (redisClient,h) => {
     if (nsTokens?.tokenId && nsTokens?.tokenSecret) {
       try {
         const revokeUrl = `https://${process.env.NETSUITE_ACCOUNT}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${process.env.OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
+        console.log('Revoke NS URL',revokeUrl);
         const oauthHeader = getOAuthHeader(
           revokeUrl,
           'GET',
@@ -170,7 +171,7 @@ const DeleteUserProfile = async (redisClient,h) => {
           process.env.OAUTH_CONSUMER_KEY,
           process.env.OAUTH_CONSUMER_SECRET
         );
-        console.log('Revoke NS URL',revokeUrl)
+        
         var result = await fetch(revokeUrl, { method: 'GET', headers: oauthHeader });
         console.log('Revoke NS',result)
       } 

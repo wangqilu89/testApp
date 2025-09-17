@@ -170,8 +170,8 @@ const DeleteUserProfile = async (redisClient,h) => {
         const oauthHeader = getOAuthHeader(
           revokeUrl,
           'GET',
-          OAUTH_TOKEN_KEY,
-          OAUTH_TOKEN_SECRET,
+          nsTokens.tokenId,
+          nsTokens.tokenSecret,
           OAUTH_CONSUMER_KEY,
           OAUTH_CONSUMER_SECRET
         );

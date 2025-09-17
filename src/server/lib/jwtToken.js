@@ -163,9 +163,10 @@ const DeleteUserProfile = async (redisClient,h) => {
     const nsTokens = await redisClient.hGetAll(nskey);
     if (nsTokens?.tokenId && nsTokens?.tokenSecret) {
       try {
-        const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/tokeninfo`;
-        //const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
-        console.log('Revoke NS URL',revokeUrl);
+        //const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/tokeninfo`;
+       //const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${nsTokens.tokenId}`;
+        const revokeUrl = `https://${ACCOUNT_ID}.restlets.api.netsuite.com/rest/revoketoken?consumerKey=${OAUTH_CONSUMER_KEY}&token=${OAUTH_CONSUMER_SECRET}`;
+       
         const oauthHeader = getOAuthHeader(
           revokeUrl,
           'GET',
